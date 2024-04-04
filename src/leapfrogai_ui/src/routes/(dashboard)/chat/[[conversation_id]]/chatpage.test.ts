@@ -5,7 +5,7 @@ import {
 	fakeConversations,
 	getFakeConversation,
 	getFakeMessage
-} from '../../../testUtils/fakeData';
+} from '../../../../testUtils/fakeData';
 import ChatPage from './+page.svelte';
 import ChatPageWithToast from './ChatPageWithToast.test.svelte';
 import userEvent from '@testing-library/user-event';
@@ -22,7 +22,7 @@ import {
 } from '$lib/mocks/chat-mocks';
 import { delay } from 'msw';
 
-const { getStores } = await vi.hoisted(() => import('../../../lib/mocks/svelte'));
+const { getStores } = await vi.hoisted(() => import('$lib/mocks/svelte'));
 
 describe('The Chat Page', () => {
 	it('changes the active chat thread', async () => {

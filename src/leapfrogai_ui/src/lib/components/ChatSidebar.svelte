@@ -6,21 +6,32 @@
 		OverflowMenuItem,
 		SideNav,
 		SideNavDivider,
+		SideNavItems,
 		SideNavLink,
 		SideNavMenu,
 		SideNavMenuItem,
 		TextInput
 	} from 'carbon-components-svelte';
-	import { AddComment, Download, Export, Settings } from 'carbon-icons-svelte';
+	import {
+		AddComment,
+		Download,
+		Export,
+		Settings,
+		WatsonHealthTextAnnotationToggle
+	} from 'carbon-icons-svelte';
 	import { dates } from '$helpers';
 	import { MAX_LABEL_SIZE } from '$lib/constants';
 	import { conversationsStore, toastStore } from '$stores';
 	import { page } from '$app/stores';
 
+	export let isSideNavOpen: boolean;
+
 	let deleteModalOpen = false;
 	let editConversationId: string | null = null;
 	let editLabelText: string | undefined = undefined;
 	let inputDisabled = false;
+
+	let sideNavIsHovered = false;
 
 	$: activeConversation = $conversationsStore.conversations.find(
 		(conversation) => conversation.id === $page.params.conversation_id
@@ -104,104 +115,127 @@
 
 		deleteModalOpen = false;
 	};
+
+	const handleMouseEnter = () => {
+		sideNavIsHovered = true;
+	};
+	const handleMouseExit = () => {
+		sideNavIsHovered = false;
+	};
 </script>
 
-<SideNav aria-label="side navigation" isOpen={true} style="background-color: g90;">
-	<div class="new-chat-container">
-		<Button
-			kind="secondary"
-			size="small"
-			icon={AddComment}
-			class="new-chat-btn"
-			id="new-chat-btn"
-			on:click={() => conversationsStore.changeConversation(null)}>New Chat</Button
-		>
-		<TextInput light size="sm" placeholder="Search..." />
-		<SideNavDivider />
-	</div>
+<SideNav
+	aria-label="side navigation"
+	bind:isOpen={isSideNavOpen}
+	style="background-color: g90;"
+	rail={!isSideNavOpen}
+>
+	<div on:mouseenter={handleMouseEnter} on:mouseleave={handleMouseExit} style="height: 100%">
+		{#if (!isSideNavOpen && sideNavIsHovered) || isSideNavOpen}
+			<div class="new-chat-container">
+				<Button
+					kind="secondary"
+					size="small"
+					icon={AddComment}
+					class="new-chat-btn"
+					id="new-chat-btn"
+					on:click={() => conversationsStore.changeConversation(null)}>New</Button
+				>
+				<TextInput light size="sm" placeholder="Search..." />
+				<SideNavDivider />
+			</div>
 
-	<div class="conversations" data-testid="conversations">
-		{#each dateCategories as category}
-			<SideNavMenu text={category} expanded data-testid="side-nav-menu">
-				{#if organizedConversations[category]}
-					{#each organizedConversations[category] as conversation (conversation.id)}
-						{@const editMode = editConversationId && editConversationId === conversation.id}
-						<div class:label-edit-mode={editMode}>
-							<SideNavMenuItem
-								data-testid="side-nav-menu-item-{conversation.label}"
-								isSelected={activeConversation?.id === conversation.id}
-								on:click={() => conversationsStore.changeConversation(conversation.id)}
-							>
-								<div class="menu-content">
-									{#if editMode}
-										<TextInput
-											bind:value={editLabelText}
-											size="sm"
-											class="edit-conversation"
-											on:keydown={(e) => handleEdit(e)}
-											on:blur={async () => {
-												await saveNewLabel();
-												resetEditMode();
-											}}
-											autofocus
-											maxlength={MAX_LABEL_SIZE}
-											readonly={inputDisabled}
-											aria-label="edit conversation"
-										/>
-									{:else}
-										<div data-testid="conversation-label-{conversation.id}" class="menu-text">
-											{conversation.label}
+			<div class="conversations" data-testid="conversations">
+				{#each dateCategories as category}
+					<SideNavMenu text={category} expanded data-testid="side-nav-menu">
+						{#if organizedConversations[category]}
+							{#each organizedConversations[category] as conversation (conversation.id)}
+								{@const editMode = editConversationId && editConversationId === conversation.id}
+								<div class:label-edit-mode={editMode}>
+									<SideNavMenuItem
+										data-testid="side-nav-menu-item-{conversation.label}"
+										isSelected={activeConversation?.id === conversation.id}
+										on:click={() => conversationsStore.changeConversation(conversation.id)}
+									>
+										<div class="menu-content">
+											{#if editMode}
+												<TextInput
+													bind:value={editLabelText}
+													size="sm"
+													class="edit-conversation"
+													on:keydown={(e) => handleEdit(e)}
+													on:blur={async () => {
+														await saveNewLabel();
+														resetEditMode();
+													}}
+													autofocus
+													maxlength={MAX_LABEL_SIZE}
+													readonly={inputDisabled}
+													aria-label="edit conversation"
+												/>
+											{:else}
+												<div data-testid="conversation-label-{conversation.id}" class="menu-text">
+													{conversation.label}
+												</div>
+												<OverflowMenu
+													on:click={(e) => {
+														e.stopPropagation();
+														if (activeConversation?.id !== conversation.id) {
+															conversationsStore.changeConversation(conversation.id);
+														}
+													}}
+													data-testid="overflow-menu-{conversation.label}"
+												>
+													<OverflowMenuItem
+														text="Edit"
+														on:click={() => {
+															editConversationId = conversation.id;
+															editLabelText = conversation.label;
+														}}
+													/>
+													<OverflowMenuItem
+														text="Delete"
+														on:click={() => (deleteModalOpen = true)}
+														data-testid="overflow-menu-delete-{conversation.label}"
+													/>
+												</OverflowMenu>
+											{/if}
 										</div>
-										<OverflowMenu
-											on:click={(e) => {
-												e.stopPropagation();
-												if (activeConversation?.id !== conversation.id) {
-													conversationsStore.changeConversation(conversation.id);
-												}
-											}}
-											data-testid="overflow-menu-{conversation.label}"
-										>
-											<OverflowMenuItem
-												text="Edit"
-												on:click={() => {
-													editConversationId = conversation.id;
-													editLabelText = conversation.label;
-												}}
-											/>
-											<OverflowMenuItem
-												text="Delete"
-												on:click={() => (deleteModalOpen = true)}
-												data-testid="overflow-menu-delete-{conversation.label}"
-											/>
-										</OverflowMenu>
-									{/if}
+									</SideNavMenuItem>
 								</div>
-							</SideNavMenuItem>
-						</div>
-					{/each}
-				{/if}
-			</SideNavMenu>
-		{/each}
-	</div>
-	<Modal
-		danger
-		bind:open={deleteModalOpen}
-		modalHeading="Delete Chat"
-		primaryButtonText="Delete"
-		secondaryButtonText="Cancel"
-		on:click:button--secondary={() => (deleteModalOpen = false)}
-		on:open
-		on:close
-		on:submit={handleDelete}
-		>Are you sure you want to delete your <strong
-			>{activeConversation?.label.substring(0, MAX_LABEL_SIZE)}</strong
-		> chat?</Modal
-	>
+							{/each}
+						{/if}
+					</SideNavMenu>
+				{/each}
+			</div>
+			<div class="sidenav-links">
+				<SideNavLink>Import Data<slot name="icon"><Download /></slot></SideNavLink>
+				<SideNavLink>Export Data<slot name="icon"><Export /></slot></SideNavLink>
+				<SideNavLink>System Settings<slot name="icon"><Settings /></slot></SideNavLink>
+			</div>
+		{:else}
+			<SideNavItems>
+				<Button icon={WatsonHealthTextAnnotationToggle} size="small" kind="secondary" />
 
-	<div class="sidenav-links">
-		<SideNavLink>Import Data<slot name="icon"><Download /></slot></SideNavLink>
-		<SideNavLink>Export Data<slot name="icon"><Export /></slot></SideNavLink>
-		<SideNavLink>System Settings<slot name="icon"><Settings /></slot></SideNavLink>
+				<Button icon={Download} size="small" kind="secondary" />
+				<Button icon={Export} size="small" kind="secondary" />
+			</SideNavItems>
+		{/if}
+
+		<Modal
+			danger
+			bind:open={deleteModalOpen}
+			modalHeading="Delete Chat"
+			primaryButtonText="Delete"
+			secondaryButtonText="Cancel"
+			on:click:button--secondary={() => (deleteModalOpen = false)}
+			on:open
+			on:close
+			on:submit={handleDelete}
+			>Are you sure you want to delete your <strong
+				>{activeConversation?.label.substring(0, MAX_LABEL_SIZE)}</strong
+			> chat?</Modal
+		>
 	</div>
 </SideNav>
 
@@ -211,6 +245,8 @@ https://github.com/carbon-design-system/carbon-components-svelte/issues/892
 We might also want to investigate the Layer component once implemented in  Carbon Components Svelte V11.
 -->
 <style lang="scss">
+	//todo - make both the rail and the regular sidebarnavitems span the entire height and move import/export bts to bottom
+
 	.new-chat-container {
 		display: flex;
 		flex-direction: column;
@@ -296,6 +332,20 @@ We might also want to investigate the Layer component once implemented in  Carbo
 		list-style: none;
 		height: calc(100vh - var(--header-height)) !important;
 		color: themes.$text-secondary !important;
+	}
+
+	// Override default behavior of fly out when using rail sidenav
+	// Use this instead if you don't want the rail to stay skinny on hover and not expand
+	// remove on:mousenter and on:mouseexit code
+	//:global(.bx--side-nav--rail) {
+	//	&:hover {
+	//		width: 3rem !important;
+	//	}
+	//}
+	//
+	:global(.bx--side-nav__items) {
+		text-align: center;
+		overflow: visible !important;
 	}
 
 	:global(.bx--side-nav__submenu) {
