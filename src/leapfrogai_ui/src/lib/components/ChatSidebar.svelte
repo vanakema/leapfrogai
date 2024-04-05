@@ -215,10 +215,19 @@
 			</div>
 		{:else}
 			<SideNavItems>
-				<Button icon={WatsonHealthTextAnnotationToggle} size="small" kind="secondary" />
+				<div class="side-nav-items-container">
+					<div>
+						<Button icon={WatsonHealthTextAnnotationToggle} size="small" kind="secondary" />
+					</div>
 
-				<Button icon={Download} size="small" kind="secondary" />
-				<Button icon={Export} size="small" kind="secondary" />
+					<div>
+						<SideNavDivider />
+						<div class="bottom-side-nav-icons-container">
+							<Download />
+							<Export />
+						</div>
+					</div>
+				</div>
 			</SideNavItems>
 		{/if}
 
@@ -242,10 +251,30 @@
 <!-- NOTE - Carbon Components Svelte does not yet support theming of the UI Shell components so several
 properties had to be manually overridden.
 https://github.com/carbon-design-system/carbon-components-svelte/issues/892
-We might also want to investigate the Layer component once implemented in  Carbon Components Svelte V11.
 -->
 <style lang="scss">
 	//todo - make both the rail and the regular sidebarnavitems span the entire height and move import/export bts to bottom
+
+	.side-nav-items-container {
+		height: 100%;
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		padding: 0 0 layout.$spacing-05 0;
+	}
+
+	.bottom-side-nav-icons-container {
+		display: flex;
+		align-items: center;
+		flex-direction: column;
+		gap: layout.$spacing-05;
+
+	}
+
+	:global(.bx--side-nav__divider) {
+		margin: layout.$spacing-05 0 layout.$spacing-05 0;
+		background-color: themes.$border-subtle-01;
+	}
 
 	.new-chat-container {
 		display: flex;
@@ -254,10 +283,6 @@ We might also want to investigate the Layer component once implemented in  Carbo
 		padding: 16px;
 		:global(button.new-chat-btn) {
 			width: 100%;
-		}
-		:global(.bx--side-nav__divider) {
-			margin: 8px 0 0 0;
-			background-color: themes.$border-subtle-01;
 		}
 	}
 	.sidenav-links {
@@ -346,6 +371,7 @@ We might also want to investigate the Layer component once implemented in  Carbo
 	:global(.bx--side-nav__items) {
 		text-align: center;
 		overflow: visible !important;
+		height: 100%;
 	}
 
 	:global(.bx--side-nav__submenu) {
@@ -360,7 +386,7 @@ We might also want to investigate the Layer component once implemented in  Carbo
 
 	.label-edit-mode {
 		:global(.bx--side-nav__link) {
-			padding: 0 layout.$spacing-04 0 layout.$spacing-07;
+			padding: 0 layout.$spacing-05 0 layout.$spacing-07;
 		}
 		:global(.bx--side-nav__link[aria-current='page']) {
 			background-color: themes.$layer-01 !important;
