@@ -23,6 +23,8 @@
 	import { MAX_LABEL_SIZE } from '$lib/constants';
 	import { conversationsStore, toastStore } from '$stores';
 	import { page } from '$app/stores';
+	import { browser } from '$app/environment';
+	import { onMount } from 'svelte';
 
 	export let isSideNavOpen: boolean;
 
@@ -30,6 +32,7 @@
 	let editConversationId: string | null = null;
 	let editLabelText: string | undefined = undefined;
 	let inputDisabled = false;
+	let disableScroll = false;
 
 	let sideNavIsHovered = false;
 
@@ -122,6 +125,27 @@
 	const handleMouseExit = () => {
 		sideNavIsHovered = false;
 	};
+
+	let activeConversationRef: HTMLElement | null;
+	let scrollBoxRef: HTMLElement;
+	let overflowMenuButtonRef: HTMLButtonElement;
+
+	$: if (browser)
+		activeConversationRef = document.getElementById(
+			`side-nav-menu-item-${$page.params.conversation_id}`
+		);
+
+	$: if (browser && activeConversationRef) {
+		const offset = activeConversationRef?.offsetTop;
+		const scroll = scrollBoxRef.scrollTop;
+		const element = document.getElementById(`overflow-menu-${$page.params.conversation_id}`);
+		if (element) {
+			element.style['position'] = 'fixed';
+			element.style['top'] = '0';
+			element.style['left'] = '0';
+			element.style['transform'] = `translate(224px, ${offset - scroll + 48}px)`;
+		}
+	}
 </script>
 
 <SideNav
@@ -132,87 +156,106 @@
 >
 	<div on:mouseenter={handleMouseEnter} on:mouseleave={handleMouseExit} style="height: 100%">
 		{#if (!isSideNavOpen && sideNavIsHovered) || isSideNavOpen}
-			<div class="new-chat-container">
-				<Button
-					kind="secondary"
-					size="small"
-					icon={AddComment}
-					class="new-chat-btn"
-					id="new-chat-btn"
-					on:click={() => conversationsStore.changeConversation(null)}>New</Button
-				>
-				<TextInput light size="sm" placeholder="Search..." />
-				<SideNavDivider />
-			</div>
+			<SideNavItems>
+				<div class="side-nav-items-container">
+					<div class="new-chat-container">
+						<Button
+							kind="secondary"
+							size="small"
+							icon={AddComment}
+							class="new-chat-btn"
+							id="new-chat-btn"
+							on:click={() => conversationsStore.changeConversation('')}>New</Button
+						>
+						<TextInput light size="sm" placeholder="Search..." />
+						<SideNavDivider />
+					</div>
 
-			<div class="conversations" data-testid="conversations">
-				{#each dateCategories as category}
-					<SideNavMenu text={category} expanded data-testid="side-nav-menu">
-						{#if organizedConversations[category]}
-							{#each organizedConversations[category] as conversation (conversation.id)}
-								{@const editMode = editConversationId && editConversationId === conversation.id}
-								<div class:label-edit-mode={editMode}>
-									<SideNavMenuItem
-										data-testid="side-nav-menu-item-{conversation.label}"
-										isSelected={activeConversation?.id === conversation.id}
-										on:click={() => conversationsStore.changeConversation(conversation.id)}
-									>
-										<div class="menu-content">
-											{#if editMode}
-												<TextInput
-													bind:value={editLabelText}
-													size="sm"
-													class="edit-conversation"
-													on:keydown={(e) => handleEdit(e)}
-													on:blur={async () => {
-														await saveNewLabel();
-														resetEditMode();
-													}}
-													autofocus
-													maxlength={MAX_LABEL_SIZE}
-													readonly={inputDisabled}
-													aria-label="edit conversation"
-												/>
-											{:else}
-												<div data-testid="conversation-label-{conversation.id}" class="menu-text">
-													{conversation.label}
-												</div>
-												<OverflowMenu
-													on:click={(e) => {
-														e.stopPropagation();
-														if (activeConversation?.id !== conversation.id) {
-															conversationsStore.changeConversation(conversation.id);
-														}
-													}}
-													data-testid="overflow-menu-{conversation.label}"
-												>
-													<OverflowMenuItem
-														text="Edit"
-														on:click={() => {
-															editConversationId = conversation.id;
-															editLabelText = conversation.label;
+					<div
+						class:noScroll={disableScroll}
+						bind:this={scrollBoxRef}
+						class="conversations"
+						data-testid="conversations"
+					>
+						{#each dateCategories as category}
+							<SideNavMenu text={category} expanded data-testid="side-nav-menu">
+								{#if organizedConversations[category]}
+									{#each organizedConversations[category] as conversation}
+										{@const editMode = editConversationId && editConversationId === conversation.id}
+
+										<SideNavMenuItem
+											data-testid="side-nav-menu-item-{conversation.label}"
+											id="side-nav-menu-item-{conversation.id}"
+											isSelected={activeConversation?.id === conversation.id}
+											on:click={() => conversationsStore.changeConversation(conversation.id)}
+										>
+											<div class="menu-content">
+												{#if editMode}
+													<TextInput
+														bind:value={editLabelText}
+														size="sm"
+														class="edit-conversation"
+														on:keydown={(e) => handleEdit(e)}
+														on:blur={async () => {
+															await saveNewLabel();
+															resetEditMode();
 														}}
+														autofocus
+														maxlength={MAX_LABEL_SIZE}
+														readonly={inputDisabled}
+														aria-label="edit conversation"
 													/>
-													<OverflowMenuItem
-														text="Delete"
-														on:click={() => (deleteModalOpen = true)}
-														data-testid="overflow-menu-delete-{conversation.label}"
-													/>
-												</OverflowMenu>
-											{/if}
-										</div>
-									</SideNavMenuItem>
-								</div>
-							{/each}
-						{/if}
-					</SideNavMenu>
-				{/each}
-			</div>
-			<div class="sidenav-links">
-				<SideNavLink>Import Data<slot name="icon"><Download /></slot></SideNavLink>
-				<SideNavLink>Export Data<slot name="icon"><Export /></slot></SideNavLink>
-				<SideNavLink>System Settings<slot name="icon"><Settings /></slot></SideNavLink>
-			</div>
+												{:else}
+													<div data-testid="conversation-label-{conversation.id}" class="menu-text">
+														{conversation.label}
+													</div>
+													<div>
+														<OverflowMenu
+															id={`overflow-menu-${conversation.id}`}
+															bind:buttonRef={overflowMenuButtonRef}
+															on:close={() => {
+																disableScroll = false;
+															}}
+															on:click={(e) => {
+																e.stopPropagation();
+																disableScroll = true;
+																if (activeConversation?.id !== conversation.id) {
+																	conversationsStore.changeConversation(conversation.id);
+																}
+															}}
+															data-testid="overflow-menu-{conversation.label}"
+														>
+															<OverflowMenuItem
+																text="Edit"
+																on:click={() => {
+																	editConversationId = conversation.id;
+																	editLabelText = conversation.label;
+																}}
+															/>
+															<OverflowMenuItem
+																text="Delete"
+																on:click={() => (deleteModalOpen = true)}
+																data-testid="overflow-menu-delete-{conversation.label}"
+															/>
+														</OverflowMenu>
+													</div>
+												{/if}
+											</div>
+										</SideNavMenuItem>
+									{/each}
+								{/if}
+							</SideNavMenu>
+						{/each}
+					</div>
+					<div>
+						<SideNavDivider />
+						<div class="bottom-side-nav-icons-container">
+							<SideNavLink>Import Data<slot name="icon"><Download /></slot></SideNavLink>
+							<SideNavLink>Export Data<slot name="icon"><Export /></slot></SideNavLink>
+						</div>
+					</div>
+				</div>
+			</SideNavItems>
 		{:else}
 			<SideNavItems>
 				<div class="side-nav-items-container">
@@ -222,7 +265,7 @@
 
 					<div>
 						<SideNavDivider />
-						<div class="bottom-side-nav-icons-container">
+						<div class="bottom-side-nav-icons-container-rail">
 							<Download />
 							<Export />
 						</div>
@@ -253,47 +296,46 @@ properties had to be manually overridden.
 https://github.com/carbon-design-system/carbon-components-svelte/issues/892
 -->
 <style lang="scss">
-	//todo - make both the rail and the regular sidebarnavitems span the entire height and move import/export bts to bottom
-
+	.noScroll {
+		overflow-y: hidden !important;
+	}
 	.side-nav-items-container {
 		height: 100%;
 		display: flex;
 		flex-direction: column;
 		justify-content: space-between;
 		padding: 0 0 layout.$spacing-05 0;
+		:global(.bx--side-nav__divider) {
+			margin: layout.$spacing-03 0 0 0;
+			background-color: themes.$border-subtle-01;
+		}
 	}
 
-	.bottom-side-nav-icons-container {
+	.bottom-side-nav-icons-container-rail {
 		display: flex;
 		align-items: center;
 		flex-direction: column;
 		gap: layout.$spacing-05;
-
+		padding: layout.$spacing-03 0;
 	}
 
-	:global(.bx--side-nav__divider) {
-		margin: layout.$spacing-05 0 layout.$spacing-05 0;
-		background-color: themes.$border-subtle-01;
+	.bottom-side-nav-icons-container {
+		display: flex;
+		flex-direction: column;
+		justify-content: space-between;
+		padding: layout.$spacing-03 0;
 	}
 
 	.new-chat-container {
 		display: flex;
 		flex-direction: column;
-		gap: 8px;
-		padding: 16px;
+		gap: layout.$spacing-03;
+		padding: layout.$spacing-05;
 		:global(button.new-chat-btn) {
 			width: 100%;
 		}
 	}
-	.sidenav-links {
-		display: flex;
-		flex-direction: column;
-		padding: 8px 0 8px 0;
-		stroke: themes.$text-secondary;
-		:global(.bx--side-nav__link-text) {
-			color: themes.$text-secondary;
-		}
-	}
+
 	.menu-content {
 		width: 100% !important;
 		position: relative;
@@ -311,6 +353,7 @@ https://github.com/carbon-design-system/carbon-components-svelte/issues/892
 		:global(.bx--overflow-menu) {
 			width: 16px;
 			height: 32px;
+			z-index: 1;
 		}
 	}
 
@@ -320,10 +363,12 @@ https://github.com/carbon-design-system/carbon-components-svelte/issues/892
 	// The !important is necessary for the changes to work in production builds.
 	.conversations {
 		flex-grow: 1;
-		overflow-y: scroll;
 		scrollbar-width: none;
-		border-bottom: 2px solid themes.$border-subtle-01;
-		overflow: visible !important;
+		overflow-y: auto;
+	}
+
+	:global(.bx--overflow-menu-options--open) {
+		left: 20px;
 	}
 
 	:global(.bx--side-nav__navigation) {
@@ -348,6 +393,7 @@ https://github.com/carbon-design-system/carbon-components-svelte/issues/892
 		display: flex;
 		flex-grow: 1;
 		justify-content: space-between;
+		text-align: left;
 		overflow: visible !important;
 		color: themes.$text-secondary !important;
 	}
