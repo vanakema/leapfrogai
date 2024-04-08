@@ -18,12 +18,12 @@
 		Export,
 		WatsonHealthTextAnnotationToggle
 	} from 'carbon-icons-svelte';
+	import { fade } from 'svelte/transition';
 	import { dates } from '$helpers';
 	import { MAX_LABEL_SIZE } from '$lib/constants';
 	import { conversationsStore, toastStore } from '$stores';
 	import { page } from '$app/stores';
 	import { browser } from '$app/environment';
-	import { onMount } from 'svelte';
 
 	export let isSideNavOpen: boolean;
 
@@ -33,6 +33,9 @@
 	let inputDisabled = false;
 	let disableScroll = false;
 	let editMode = false;
+	let railMode;
+
+	$: railMode = !isSideNavOpen;
 
 	$: editMode =
 		!!$page.params.conversation_id && editConversationId === $page.params.conversation_id;
@@ -130,9 +133,11 @@
 	};
 
 	const handleMouseEnter = () => {
+		console.log('enter');
 		sideNavIsHovered = true;
 	};
 	const handleMouseExit = () => {
+		console.log('exit');
 		sideNavIsHovered = false;
 	};
 
@@ -150,8 +155,16 @@
 	let scrollOffset = 0;
 	$: if (browser && activeConversationRef) {
 		menuOffset = activeConversationRef?.offsetTop;
-		scrollOffset = scrollBoxRef.scrollTop;
+		scrollOffset = scrollBoxRef?.scrollTop;
+	} else {
+		if (!activeConversationRef) {
+			menuOffset = 0;
+			scrollOffset = 0;
+		}
 	}
+
+	$: console.log('isHovered', sideNavIsHovered);
+	$: console.log('railMode', railMode);
 
 	// TODO - edit is highlighted on click, normal?
 </script>
@@ -160,10 +173,10 @@
 	aria-label="side navigation"
 	bind:isOpen={isSideNavOpen}
 	style="background-color: g90;"
-	rail={!isSideNavOpen}
+	rail={railMode}
 >
 	<div on:mouseenter={handleMouseEnter} on:mouseleave={handleMouseExit} style="height: 100%">
-		{#if (!isSideNavOpen && sideNavIsHovered) || isSideNavOpen}
+		{#if (railMode && sideNavIsHovered) || isSideNavOpen}
 			<SideNavItems>
 				<div class="side-nav-items-container">
 					<div class="new-chat-container">
@@ -224,6 +237,7 @@
 															}}
 															on:click={(e) => {
 																e.stopPropagation();
+																isSideNavOpen = true; // force sidenav to stay open
 																overflowMenuOpen = true;
 																handleActiveConversationChange(conversation.id);
 																disableScroll = true;

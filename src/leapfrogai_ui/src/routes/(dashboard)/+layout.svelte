@@ -52,7 +52,7 @@
 		</HeaderAction>
 	</HeaderUtilities>
 </Header>
-<ChatSidebar {isSideNavOpen} />
+<ChatSidebar bind:isSideNavOpen />
 
 <Content>
 	<slot />
