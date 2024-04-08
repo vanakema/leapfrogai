@@ -18,7 +18,6 @@
 		Export,
 		WatsonHealthTextAnnotationToggle
 	} from 'carbon-icons-svelte';
-	import { fade } from 'svelte/transition';
 	import { dates } from '$helpers';
 	import { MAX_LABEL_SIZE } from '$lib/constants';
 	import { conversationsStore, toastStore } from '$stores';
@@ -33,14 +32,13 @@
 	let inputDisabled = false;
 	let disableScroll = false;
 	let editMode = false;
-	let railMode;
+	let railMode = false;
+	let sideNavIsHovered = false;
 
 	$: railMode = !isSideNavOpen;
 
 	$: editMode =
 		!!$page.params.conversation_id && editConversationId === $page.params.conversation_id;
-
-	let sideNavIsHovered = false;
 
 	$: activeConversation = $conversationsStore.conversations.find(
 		(conversation) => conversation.id === $page.params.conversation_id
@@ -133,11 +131,15 @@
 	};
 
 	const handleMouseEnter = () => {
-		console.log('enter');
+		// There is a bug that seems to be outside our control where if you move your mouse
+		// really quickly in and out of the sidenav, on:mouseleave={handleMouseExit} does not get called
+		// so the sidenav items show up, but the rail does not stay expanded.
+		// It's an edge case, but if we just set the navbar to open when the rail is hovered,
+		// this is no longer an issue
 		sideNavIsHovered = true;
+		isSideNavOpen = true;
 	};
 	const handleMouseExit = () => {
-		console.log('exit');
 		sideNavIsHovered = false;
 	};
 
@@ -162,11 +164,6 @@
 			scrollOffset = 0;
 		}
 	}
-
-	$: console.log('isHovered', sideNavIsHovered);
-	$: console.log('railMode', railMode);
-
-	// TODO - edit is highlighted on click, normal?
 </script>
 
 <SideNav

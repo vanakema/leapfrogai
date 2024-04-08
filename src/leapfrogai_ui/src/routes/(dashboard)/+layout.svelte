@@ -14,6 +14,7 @@
 	let signOutForm: HTMLFormElement;
 	let isSideNavOpen = false;
 
+
 	$: conversationLabel = $conversationsStore.conversations.find(
 		(conversation) => conversation.id === $page.params.conversation_id
 	)?.label;
