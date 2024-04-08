@@ -183,6 +183,7 @@
 							icon={AddComment}
 							class="new-chat-btn"
 							id="new-chat-btn"
+							aria-label="new conversation"
 							on:click={() => handleActiveConversationChange('')}>New</Button
 						>
 						<TextInput light size="sm" placeholder="Search..." />
@@ -280,7 +281,12 @@
 			<SideNavItems>
 				<div class="side-nav-items-container">
 					<div>
-						<Button icon={WatsonHealthTextAnnotationToggle} size="small" kind="secondary" />
+						<Button
+							icon={WatsonHealthTextAnnotationToggle}
+							size="small"
+							kind="secondary"
+							aria-label="new conversation"
+						/>
 					</div>
 
 					<div>
