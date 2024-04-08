@@ -16,7 +16,6 @@
 		AddComment,
 		Download,
 		Export,
-		Settings,
 		WatsonHealthTextAnnotationToggle
 	} from 'carbon-icons-svelte';
 	import { dates } from '$helpers';
@@ -33,6 +32,10 @@
 	let editLabelText: string | undefined = undefined;
 	let inputDisabled = false;
 	let disableScroll = false;
+	let editMode = false;
+
+	$: editMode =
+		!!$page.params.conversation_id && editConversationId === $page.params.conversation_id;
 
 	let sideNavIsHovered = false;
 
@@ -55,6 +58,7 @@
 	);
 
 	const resetEditMode = () => {
+		disableScroll = false;
 		editConversationId = null;
 		editLabelText = undefined;
 		inputDisabled = false;
@@ -84,14 +88,20 @@
 		}
 	};
 
-	const handleEdit = async (e: KeyboardEvent) => {
-		if (e.key === 'Escape') {
-			resetEditMode();
-			return;
-		}
-
-		if (e.key === 'Enter' || e.key === 'Tab') {
+	const handleEdit = async (e: KeyboardEvent | FocusEvent) => {
+		if (e.type === 'blur') {
 			await saveNewLabel();
+		}
+		if (e.type === 'keydown') {
+			const keyboardEvent = e as KeyboardEvent;
+			if (keyboardEvent.key === 'Escape') {
+				resetEditMode();
+				return;
+			}
+
+			if (keyboardEvent.key === 'Enter' || keyboardEvent.key === 'Tab') {
+				await saveNewLabel();
+			}
 		}
 	};
 
@@ -130,22 +140,20 @@
 	let scrollBoxRef: HTMLElement;
 	let overflowMenuButtonRef: HTMLButtonElement;
 
-	$: if (browser)
-		activeConversationRef = document.getElementById(
-			`side-nav-menu-item-${$page.params.conversation_id}`
-		);
+	const handleActiveConversationChange = (id: string) => {
+		conversationsStore.changeConversation(id);
+		activeConversationRef = document.getElementById(`side-nav-menu-item-${id}`);
+	};
 
+	let overflowMenuOpen = false;
+	let menuOffset = 0;
+	let scrollOffset = 0;
 	$: if (browser && activeConversationRef) {
-		const offset = activeConversationRef?.offsetTop;
-		const scroll = scrollBoxRef.scrollTop;
-		const element = document.getElementById(`overflow-menu-${$page.params.conversation_id}`);
-		if (element) {
-			element.style['position'] = 'fixed';
-			element.style['top'] = '0';
-			element.style['left'] = '0';
-			element.style['transform'] = `translate(224px, ${offset - scroll + 48}px)`;
-		}
+		menuOffset = activeConversationRef?.offsetTop;
+		scrollOffset = scrollBoxRef.scrollTop;
 	}
+
+	// TODO - edit is highlighted on click, normal?
 </script>
 
 <SideNav
@@ -165,14 +173,14 @@
 							icon={AddComment}
 							class="new-chat-btn"
 							id="new-chat-btn"
-							on:click={() => conversationsStore.changeConversation('')}>New</Button
+							on:click={() => handleActiveConversationChange('')}>New</Button
 						>
 						<TextInput light size="sm" placeholder="Search..." />
 						<SideNavDivider />
 					</div>
 
 					<div
-						class:noScroll={disableScroll}
+						class:noScroll={disableScroll || editMode}
 						bind:this={scrollBoxRef}
 						class="conversations"
 						data-testid="conversations"
@@ -181,24 +189,21 @@
 							<SideNavMenu text={category} expanded data-testid="side-nav-menu">
 								{#if organizedConversations[category]}
 									{#each organizedConversations[category] as conversation}
-										{@const editMode = editConversationId && editConversationId === conversation.id}
-
 										<SideNavMenuItem
 											data-testid="side-nav-menu-item-{conversation.label}"
 											id="side-nav-menu-item-{conversation.id}"
 											isSelected={activeConversation?.id === conversation.id}
-											on:click={() => conversationsStore.changeConversation(conversation.id)}
+											on:click={() => handleActiveConversationChange(conversation.id)}
 										>
 											<div class="menu-content">
-												{#if editMode}
+												{#if editMode && activeConversation?.id === conversation.id}
 													<TextInput
 														bind:value={editLabelText}
 														size="sm"
 														class="edit-conversation"
 														on:keydown={(e) => handleEdit(e)}
-														on:blur={async () => {
-															await saveNewLabel();
-															resetEditMode();
+														on:blur={(e) => {
+															handleEdit(e);
 														}}
 														autofocus
 														maxlength={MAX_LABEL_SIZE}
@@ -214,20 +219,24 @@
 															id={`overflow-menu-${conversation.id}`}
 															bind:buttonRef={overflowMenuButtonRef}
 															on:close={() => {
+																overflowMenuOpen = false;
 																disableScroll = false;
 															}}
 															on:click={(e) => {
 																e.stopPropagation();
+																overflowMenuOpen = true;
+																handleActiveConversationChange(conversation.id);
 																disableScroll = true;
-																if (activeConversation?.id !== conversation.id) {
-																	conversationsStore.changeConversation(conversation.id);
-																}
 															}}
 															data-testid="overflow-menu-{conversation.label}"
+															style={overflowMenuOpen && activeConversation?.id === conversation.id
+																? `position: fixed; top: 0; left: 0; transform: translate(224px, ${menuOffset - scrollOffset + 48}px)`
+																: ''}
 														>
 															<OverflowMenuItem
 																text="Edit"
 																on:click={() => {
+																	disableScroll = true;
 																	editConversationId = conversation.id;
 																	editLabelText = conversation.label;
 																}}
@@ -367,8 +376,8 @@ https://github.com/carbon-design-system/carbon-components-svelte/issues/892
 		overflow-y: auto;
 	}
 
-	:global(.bx--overflow-menu-options--open) {
-		left: 20px;
+	:global(.bx--overflow-menu-options) {
+		left: 20px !important;
 	}
 
 	:global(.bx--side-nav__navigation) {
