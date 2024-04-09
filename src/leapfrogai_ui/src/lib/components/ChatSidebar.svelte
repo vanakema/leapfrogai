@@ -23,6 +23,7 @@
 	import { conversationsStore, toastStore } from '$stores';
 	import { page } from '$app/stores';
 	import { browser } from '$app/environment';
+	import ImportExport from '$components/ImportExport.svelte';
 
 	export let isSideNavOpen: boolean;
 
@@ -271,10 +272,7 @@
 					</div>
 					<div>
 						<SideNavDivider />
-						<div class="bottom-side-nav-icons-container">
-							<SideNavLink>Import Data<slot name="icon"><Download /></slot></SideNavLink>
-							<SideNavLink>Export Data<slot name="icon"><Export /></slot></SideNavLink>
-						</div>
+						<ImportExport rail={false} />
 					</div>
 				</div>
 			</SideNavItems>
@@ -292,10 +290,7 @@
 
 					<div>
 						<SideNavDivider />
-						<div class="bottom-side-nav-icons-container-rail">
-							<Download />
-							<Export />
-						</div>
+						<ImportExport rail />
 					</div>
 				</div>
 			</SideNavItems>
@@ -336,21 +331,6 @@ https://github.com/carbon-design-system/carbon-components-svelte/issues/892
 			margin: layout.$spacing-03 0 0 0;
 			background-color: themes.$border-subtle-01;
 		}
-	}
-
-	.bottom-side-nav-icons-container-rail {
-		display: flex;
-		align-items: center;
-		flex-direction: column;
-		gap: layout.$spacing-05;
-		padding: layout.$spacing-03 0;
-	}
-
-	.bottom-side-nav-icons-container {
-		display: flex;
-		flex-direction: column;
-		justify-content: space-between;
-		padding: layout.$spacing-03 0;
 	}
 
 	.new-chat-container {
@@ -441,6 +421,7 @@ https://github.com/carbon-design-system/carbon-components-svelte/issues/892
 	//	}
 	//}
 	//
+
 	:global(.bx--side-nav__items) {
 		text-align: center;
 		overflow: visible !important;
