@@ -6,7 +6,7 @@ import {
 	mockEditConversationLabelError
 } from '$lib/mocks/chat-mocks';
 import { conversationsStore, toastStore } from '$stores';
-import { fireEvent, render, screen, within } from '@testing-library/svelte';
+import {fireEvent, render, screen, within} from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import { fakeConversations } from '../../testUtils/fakeData';
 import { vi } from 'vitest';
@@ -23,9 +23,9 @@ const editConversationLabel = async (
 		'button',
 		{ name: /menu/i }
 	);
-	await fireEvent.click(overflowMenu);
+	await userEvent.click(overflowMenu);
 	const editBtn = within(overflowMenu).getByRole('menuitem', { name: /edit/i });
-	await fireEvent.click(editBtn);
+	await userEvent.click(editBtn);
 
 	const editInput = await screen.findByLabelText('edit conversation');
 	await userEvent.clear(editInput);
@@ -195,9 +195,9 @@ describe('ChatSidebar', () => {
 		const overflowMenu = within(
 			screen.getByTestId(`side-nav-menu-item-${fakeConversations[0].label}`)
 		).getByRole('button', { name: /menu/i });
-		await fireEvent.click(overflowMenu);
+		await userEvent.click(overflowMenu);
 		const editBtn = within(overflowMenu).getByRole('menuitem', { name: /edit/i });
-		await fireEvent.click(editBtn);
+		await userEvent.click(editBtn);
 		const editInput = screen.getByLabelText('edit conversation');
 		await userEvent.clear(editInput);
 		await userEvent.type(editInput, newLabelText);
@@ -257,9 +257,9 @@ describe('ChatSidebar', () => {
 
 		// Not using the helper function b/c we need to reference the editInput at the end
 		const overflowMenu = screen.getAllByLabelText('menu')[0];
-		await fireEvent.click(overflowMenu);
+		await userEvent.click(overflowMenu);
 		const editBtn = within(overflowMenu).getByText('Edit');
-		await fireEvent.click(editBtn);
+		await userEvent.click(editBtn);
 		const editInput = screen.getByLabelText('edit conversation');
 		await userEvent.clear(editInput);
 		await userEvent.type(editInput, newLabelText);
