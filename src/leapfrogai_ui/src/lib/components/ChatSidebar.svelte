@@ -27,22 +27,26 @@
 	export let isSideNavOpen: boolean;
 
 	let deleteModalOpen = false;
+	let editMode = false;
 	let editConversationId: string | null = null;
 	let editLabelText: string | undefined = undefined;
-	let inputDisabled = false;
-	let disableScroll = false;
-	let editMode = false;
+	let editLabelInputDisabled = false;
 	let railMode = false;
+	let disableScroll = false;
 	let sideNavIsHovered = false;
+	let overflowMenuOpen = false;
+	let menuOffset = 0;
+	let scrollOffset = 0;
+	let activeConversationRef: HTMLElement | null;
+	let scrollBoxRef: HTMLElement;
 
-	$: railMode = !isSideNavOpen;
-
-	$: editMode =
-		!!$page.params.conversation_id && editConversationId === $page.params.conversation_id;
+	$: railMode = !isSideNavOpen; // rail mode is the thin sidenav from carbon
 
 	$: activeConversation = $conversationsStore.conversations.find(
 		(conversation) => conversation.id === $page.params.conversation_id
 	);
+
+	$: editMode = !!activeConversation?.id && editConversationId === activeConversation.id;
 
 	$: organizedConversations = dates.organizeConversationsByDate($conversationsStore.conversations);
 
@@ -62,12 +66,12 @@
 		disableScroll = false;
 		editConversationId = null;
 		editLabelText = undefined;
-		inputDisabled = false;
+		editLabelInputDisabled = false;
 	};
 
 	const saveNewLabel = async () => {
 		if (editConversationId && editLabelText) {
-			inputDisabled = true;
+			editLabelInputDisabled = true;
 			const response = await fetch('/api/conversations/update/label', {
 				method: 'PUT',
 				body: JSON.stringify({ id: editConversationId, label: editLabelText }),
@@ -130,6 +134,7 @@
 		deleteModalOpen = false;
 	};
 
+	// Hover over rail sidenav
 	const handleMouseEnter = () => {
 		// There is a bug that seems to be outside our control where if you move your mouse
 		// really quickly in and out of the sidenav, on:mouseleave={handleMouseExit} does not get called
@@ -143,18 +148,13 @@
 		sideNavIsHovered = false;
 	};
 
-	let activeConversationRef: HTMLElement | null;
-	let scrollBoxRef: HTMLElement;
-	let overflowMenuButtonRef: HTMLButtonElement;
-
 	const handleActiveConversationChange = (id: string) => {
 		conversationsStore.changeConversation(id);
 		activeConversationRef = document.getElementById(`side-nav-menu-item-${id}`);
 	};
 
-	let overflowMenuOpen = false;
-	let menuOffset = 0;
-	let scrollOffset = 0;
+	// To properly display the overflow menu items for each conversation, we have to calculate the height they
+	// should be displayed at due to the carbon override for allowing overflow
 	$: if (browser && activeConversationRef) {
 		menuOffset = activeConversationRef?.offsetTop;
 		scrollOffset = scrollBoxRef?.scrollTop;
@@ -218,7 +218,7 @@
 														}}
 														autofocus
 														maxlength={MAX_LABEL_SIZE}
-														readonly={inputDisabled}
+														readonly={editLabelInputDisabled}
 														aria-label="edit conversation"
 													/>
 												{:else}
@@ -228,7 +228,6 @@
 													<div>
 														<OverflowMenu
 															id={`overflow-menu-${conversation.id}`}
-															bind:buttonRef={overflowMenuButtonRef}
 															on:close={() => {
 																overflowMenuOpen = false;
 																disableScroll = false;
@@ -248,15 +247,17 @@
 															<OverflowMenuItem
 																text="Edit"
 																on:click={() => {
-																	disableScroll = true;
 																	editConversationId = conversation.id;
 																	editLabelText = conversation.label;
 																}}
 															/>
+
 															<OverflowMenuItem
-																text="Delete"
-																on:click={() => (deleteModalOpen = true)}
 																data-testid="overflow-menu-delete-{conversation.label}"
+																text="Delete"
+																on:click={() => {
+																	deleteModalOpen = true;
+																}}
 															/>
 														</OverflowMenu>
 													</div>
