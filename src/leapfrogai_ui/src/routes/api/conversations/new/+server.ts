@@ -9,7 +9,7 @@ export async function POST({ request, locals: { supabase, getSession } }) {
 	}
 
 	// Validate request body
-	let requestData: { label: string };
+	let requestData: Omit<Conversation, 'user_id' | 'messages'>;
 	try {
 		requestData = await request.json();
 		const isValid = await newConversationSchema.isValid(requestData);
@@ -18,9 +18,9 @@ export async function POST({ request, locals: { supabase, getSession } }) {
 		error(400, 'Bad Request');
 	}
 
-	const conversation: Omit<Conversation, 'id' | 'inserted_at' | 'messages'> = {
-		label: requestData.label,
-		user_id: session.user.id
+	const conversation: Omit<Conversation, 'messages'> = {
+		...requestData,
+		user_id: session.user.id,
 	};
 
 	// TODO if there is an error, the chats continue to stream, but they are not saved
@@ -29,7 +29,7 @@ export async function POST({ request, locals: { supabase, getSession } }) {
 
 	const { error: responseError, data: createdConversation } = await supabase
 		.from('conversations')
-		.insert(conversation)
+		.upsert(conversation)
 		.select()
 		.returns<Conversation[]>();
 

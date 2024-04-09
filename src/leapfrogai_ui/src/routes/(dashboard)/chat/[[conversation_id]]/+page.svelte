@@ -29,7 +29,11 @@
 			})),
 		onFinish: async (message: AIMessage) => {
 			if (activeConversation?.id) {
-				await conversationsStore.newMessage(activeConversation?.id, message.content, 'system');
+				await conversationsStore.newMessage({
+					conversation_id: activeConversation?.id,
+					content: message.content,
+					role: 'system'
+				});
 			}
 		}
 	});
@@ -45,14 +49,23 @@
 		e.preventDefault();
 		if (!activeConversation?.id) {
 			// new conversation thread
+			// TODO - error handle
 			await conversationsStore.newConversation($input);
 			await tick(); // allow store to update
 			if (activeConversation?.id) {
-				await conversationsStore.newMessage(activeConversation?.id, $input, 'user');
+				await conversationsStore.newMessage({
+					conversation_id: activeConversation?.id,
+					content: $input,
+					role: 'user'
+				});
 			}
 		} else {
 			// store user input
-			await conversationsStore.newMessage(activeConversation?.id, $input, 'user');
+			await conversationsStore.newMessage({
+				conversation_id: activeConversation?.id,
+				content: $input,
+				role: 'user'
+			});
 		}
 
 		handleSubmit(e); // submit to AI (/api/chat)
@@ -62,11 +75,11 @@
 		if ($isLoading) {
 			stop();
 			if (activeConversation?.id) {
-				await conversationsStore.newMessage(
-					activeConversation?.id,
-					$messages[$messages.length - 1].content, // save last message
-					'system'
-				);
+				await conversationsStore.newMessage({
+					conversation_id: activeConversation?.id,
+					content: $messages[$messages.length - 1].content, // save last message
+					role: 'system'
+				});
 			}
 		}
 	};

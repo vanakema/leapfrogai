@@ -1,17 +1,27 @@
-type Conversation = {
-	id: string;
+type NewConversationInput = {
+	id?: string;
 	label: string;
+	inserted_at?: string;
+};
+
+type Conversation = NewConversationInput & {
+	id: string;
 	user_id: string;
 	messages: Message[];
+	label: string;
 	inserted_at: string;
 };
 
-type Message = {
-	id: string;
-	role: 'user' | 'system';
-	user_id: string;
+type NewMessageInput = {
+	id?: string;
 	conversation_id: string;
 	content: string;
+	role: 'system' | 'user';
+	inserted_at? : string;
+};
+type Message = NewMessageInput & {
+	id: string;
+	user_id: string;
 	inserted_at: string;
 };
 

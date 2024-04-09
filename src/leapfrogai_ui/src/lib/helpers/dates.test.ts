@@ -160,7 +160,6 @@ describe('date helpers', () => {
 					).toDateString()
 				})
 			];
-			console.log(conversations.map((c) => c.inserted_at));
 
 			const expectedOrganizedConversations = {
 				Today: [conversations[0]],

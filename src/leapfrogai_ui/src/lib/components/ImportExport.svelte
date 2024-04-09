@@ -2,12 +2,46 @@
 	import { Download, Export } from 'carbon-icons-svelte';
 	import { Button } from 'carbon-components-svelte';
 	import LFFileUploader from '$components/LFFileUploader.svelte';
-	import { conversationsStore } from '$stores';
+	import { conversationsStore, toastStore } from '$stores';
+	import { conversationsSchema } from '../../schemas/chat';
 
 	export let rail = false;
 
-	const onUpload = (files: FileList) => {
-		console.log(files);
+	const readFileAsJson = (file: File): Promise<any> => {
+		return new Promise((resolve, reject) => {
+			const reader = new FileReader();
+
+			reader.onload = (event: ProgressEvent<FileReader>) => {
+				if (event.target && typeof event.target.result === 'string') {
+					try {
+						const jsonObject = JSON.parse(event.target.result);
+						resolve(jsonObject);
+					} catch (error) {
+						reject(error);
+					}
+				}
+			};
+			reader.onerror = (error) => {
+				reject(error);
+			};
+			reader.readAsText(file);
+		});
+	};
+
+	const onUpload = async (files: FileList) => {
+		const conversations = await readFileAsJson(files[0]);
+		console.log(conversations);
+		try {
+			await conversationsSchema.validate(conversations);
+			await conversationsStore.importConversations(conversations);
+		} catch (e) {
+			console.log(e);
+			toastStore.addToast({
+				kind: 'error',
+				title: 'Error',
+				subtitle: `Conversations are incorrectly formatted.`
+			});
+		}
 	};
 
 	const onExport = () => {
@@ -16,13 +50,11 @@
 			encodeURIComponent(JSON.stringify($conversationsStore.conversations));
 		const downloadAnchorNode = document.createElement('a');
 
-
 		downloadAnchorNode.setAttribute('href', dataStr);
 		downloadAnchorNode.setAttribute('download', 'conversations.json');
 		document.body.appendChild(downloadAnchorNode);
 		downloadAnchorNode.click();
 		downloadAnchorNode.remove();
-
 	};
 </script>
 

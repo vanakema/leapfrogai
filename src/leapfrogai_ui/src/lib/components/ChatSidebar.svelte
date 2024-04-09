@@ -7,17 +7,11 @@
 		SideNav,
 		SideNavDivider,
 		SideNavItems,
-		SideNavLink,
 		SideNavMenu,
 		SideNavMenuItem,
 		TextInput
 	} from 'carbon-components-svelte';
-	import {
-		AddComment,
-		Download,
-		Export,
-		WatsonHealthTextAnnotationToggle
-	} from 'carbon-icons-svelte';
+	import { AddComment, WatsonHealthTextAnnotationToggle } from 'carbon-icons-svelte';
 	import { dates } from '$helpers';
 	import { MAX_LABEL_SIZE } from '$lib/constants';
 	import { conversationsStore, toastStore } from '$stores';
