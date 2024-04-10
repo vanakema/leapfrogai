@@ -13,7 +13,7 @@
 	let loading = false;
 	let signOutForm: HTMLFormElement;
 	let isSideNavOpen = true;
-	$: outerWidth = 0;
+	$: innerWidth = 0;
 
 	$: conversationLabel = $conversationsStore.conversations.find(
 		(conversation) => conversation.id === $page.params.conversation_id
@@ -37,11 +37,11 @@
 	<title>{conversationLabel || $page.data.title}</title>
 </svelte:head>
 
-<svelte:window bind:outerWidth />
+<svelte:window bind:innerWidth />
 
 <Theme bind:theme />
 
-<Header persistentHamburgerMenu={outerWidth  ? outerWidth < 1056 : false} bind:isSideNavOpen>
+<Header persistentHamburgerMenu={innerWidth ? innerWidth < 1056 : false} bind:isSideNavOpen>
 	<span slot="platform"><img alt="LeapfrogAI Logo" src={logo} class="logo" /></span>
 	<HeaderUtilities>
 		<HeaderAction aria-label="User" title="User" icon={UserAvatar}>
