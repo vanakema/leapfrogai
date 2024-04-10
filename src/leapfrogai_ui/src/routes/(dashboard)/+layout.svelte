@@ -12,8 +12,8 @@
 	let theme: CarbonTheme | undefined = 'g90';
 	let loading = false;
 	let signOutForm: HTMLFormElement;
-	let isSideNavOpen = false;
-
+	let isSideNavOpen = true;
+	$: innerWidth = 0;
 
 	$: conversationLabel = $conversationsStore.conversations.find(
 		(conversation) => conversation.id === $page.params.conversation_id
@@ -31,15 +31,18 @@
 		// to prevent that
 		isSideNavOpen = true;
 	});
+
 </script>
 
 <svelte:head>
 	<title>{conversationLabel || $page.data.title}</title>
 </svelte:head>
 
+<svelte:window bind:innerWidth />
+
 <Theme bind:theme />
 
-<Header persistentHamburgerMenu bind:isSideNavOpen>
+<Header persistentHamburgerMenu={innerWidth ? innerWidth < 1056 : false} bind:isSideNavOpen>
 	<span slot="platform"><img alt="LeapfrogAI Logo" src={logo} class="logo" /></span>
 	<HeaderUtilities>
 		<HeaderAction aria-label="User" title="User" icon={UserAvatar}>

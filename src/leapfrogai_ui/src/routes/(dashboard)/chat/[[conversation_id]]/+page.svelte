@@ -1,6 +1,6 @@
 <script lang="ts">
-	import { ChatSidebar, PoweredByDU } from '$components';
-	import { Button, Content, TextInput, Tile } from 'carbon-components-svelte';
+	import { PoweredByDU } from '$components';
+	import { Button, TextInput, Tile } from 'carbon-components-svelte';
 	import { afterUpdate, onMount, tick } from 'svelte';
 	import { conversationsStore, toastStore } from '$stores';
 	import { ArrowRight, Attachment, UserAvatar } from 'carbon-icons-svelte';

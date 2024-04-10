@@ -8,9 +8,10 @@ import {
 import { conversationsStore, toastStore } from '$stores';
 import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
-import { fakeConversations } from '../../testUtils/fakeData';
+import { fakeConversations, getFakeConversation } from '../../testUtils/fakeData';
 import { vi } from 'vitest';
 import stores from '$app/stores';
+import * as navigation from '$app/navigation';
 
 const { getStores } = await vi.hoisted(() => import('../../lib/mocks/svelte'));
 
@@ -61,6 +62,8 @@ vi.mock('$app/stores', (): typeof stores => {
 		updated
 	};
 });
+
+
 
 describe('ChatSidebar', () => {
 	it('renders conversations', async () => {
@@ -282,15 +285,21 @@ describe('ChatSidebar', () => {
 		expect(editInput).not.toBeInTheDocument();
 	});
 
-	it('it shows the conversations when in rail mode and hovered', async () => {
-		conversationsStore.set({
-			conversations: fakeConversations
-		});
-		render(ChatSidebar, { isSideNavOpen: false });
-		expect(screen.queryByTestId('conversations')).not.toBeInTheDocument();
-		await userEvent.hover(screen.getByLabelText('new conversation'));
-		const conversations = screen.getByTestId('conversations');
-		expect(within(conversations).getByText(fakeConversations[0].label)).toBeInTheDocument();
-	});
+	it('changes the active chat thread', async () => {
+		const goToSpy = vi.spyOn(navigation, 'goto');
 
+		const fakeConversation = getFakeConversation({ numMessages: 6 });
+
+		conversationsStore.set({
+			conversations: [fakeConversation]
+		});
+
+		render(ChatSidebar, { isSideNavOpen: true });
+
+		expect(screen.queryByText(fakeConversation.messages[0].content)).not.toBeInTheDocument();
+
+		await userEvent.click(screen.getByText(fakeConversation.label));
+
+		expect(goToSpy).toHaveBeenCalledTimes(1);expect(goToSpy).toHaveBeenCalledWith(`/chat/${fakeConversation.id}`);
+	});
 });

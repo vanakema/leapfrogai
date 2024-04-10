@@ -72,11 +72,4 @@ test('Can switch conversation threads', async ({ page }) => {
 	await deleteConversation(page, newMessage3);
 });
 
-test('it can collapse and open the sidenav', async ({ page }) => {
-	await loadPage(page);
-	await expect(page.getByText('Today')).toHaveCount(1);
-	await page.getByRole('banner').getByRole('button').first().click();
-	await expect(page.getByText('Today')).toHaveCount(0);
-	await page.getByRole('button').first().click();
-	await expect(page.getByText('Today')).toHaveCount(1);
-});
+

@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/svelte';
+import { render, screen, within } from '@testing-library/svelte';
 import { conversationsStore } from '$stores';
 
 import {
@@ -28,24 +28,6 @@ import { delay } from 'msw';
 const { getStores } = await vi.hoisted(() => import('$lib/mocks/svelte'));
 
 describe('The Chat Page', () => {
-	it('changes the active chat thread', async () => {
-		const goToSpy = vi.spyOn(navigation, 'goto');
-
-		const fakeConversation = getFakeConversation({ numMessages: 6 });
-
-		conversationsStore.set({
-			conversations: [fakeConversation]
-		});
-
-		render(ChatPage);
-
-		expect(screen.queryByText(fakeConversation.messages[0].content)).not.toBeInTheDocument();
-
-		await userEvent.click(screen.getByText(fakeConversation.label));
-
-		expect(goToSpy).toHaveBeenCalledTimes(1);
-		expect(goToSpy).toHaveBeenCalledWith(`/chat/${fakeConversation.id}`);
-	});
 
 	it('it renders all the messages', async () => {
 		conversationsStore.set({
