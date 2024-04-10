@@ -41,7 +41,7 @@
 
 <Theme bind:theme />
 
-<Header persistentHamburgerMenu={outerWidth < 1056 || false} bind:isSideNavOpen>
+<Header persistentHamburgerMenu={outerWidth  ? outerWidth < 1056 : false} bind:isSideNavOpen>
 	<span slot="platform"><img alt="LeapfrogAI Logo" src={logo} class="logo" /></span>
 	<HeaderUtilities>
 		<HeaderAction aria-label="User" title="User" icon={UserAvatar}>
