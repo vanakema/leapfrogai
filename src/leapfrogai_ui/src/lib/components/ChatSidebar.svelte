@@ -12,12 +12,7 @@
 		SideNavMenuItem,
 		TextInput
 	} from 'carbon-components-svelte';
-	import {
-		AddComment,
-		Download,
-		Export,
-		WatsonHealthTextAnnotationToggle
-	} from 'carbon-icons-svelte';
+	import { AddComment, Download, Export } from 'carbon-icons-svelte';
 	import { dates } from '$helpers';
 	import { MAX_LABEL_SIZE } from '$lib/constants';
 	import { conversationsStore, toastStore } from '$stores';
@@ -31,16 +26,12 @@
 	let editConversationId: string | null = null;
 	let editLabelText: string | undefined = undefined;
 	let editLabelInputDisabled = false;
-	let railMode = false;
 	let disableScroll = false;
-	let sideNavIsHovered = false;
 	let overflowMenuOpen = false;
 	let menuOffset = 0;
 	let scrollOffset = 0;
 	let activeConversationRef: HTMLElement | null;
 	let scrollBoxRef: HTMLElement;
-
-	$: railMode = !isSideNavOpen; // rail mode is the thin sidenav from carbon
 
 	$: activeConversation = $conversationsStore.conversations.find(
 		(conversation) => conversation.id === $page.params.conversation_id
@@ -134,20 +125,6 @@
 		deleteModalOpen = false;
 	};
 
-	// Hover over rail sidenav
-	const handleMouseEnter = () => {
-		// There is a bug that seems to be outside our control where if you move your mouse
-		// really quickly in and out of the sidenav, on:mouseleave={handleMouseExit} does not get called
-		// so the sidenav items show up, but the rail does not stay expanded.
-		// It's an edge case, but if we just set the navbar to open when the rail is hovered,
-		// this is no longer an issue
-		sideNavIsHovered = true;
-		isSideNavOpen = true;
-	};
-	const handleMouseExit = () => {
-		sideNavIsHovered = false;
-	};
-
 	const handleActiveConversationChange = (id: string) => {
 		conversationsStore.changeConversation(id);
 		activeConversationRef = document.getElementById(`side-nav-menu-item-${id}`);
@@ -166,140 +143,111 @@
 	}
 </script>
 
-<SideNav
-	aria-label="side navigation"
-	bind:isOpen={isSideNavOpen}
-	style="background-color: g90;"
-	rail={railMode}
->
-	<div on:mouseenter={handleMouseEnter} on:mouseleave={handleMouseExit} style="height: 100%">
-		{#if (railMode && sideNavIsHovered) || isSideNavOpen}
-			<SideNavItems>
-				<div class="side-nav-items-container">
-					<div class="new-chat-container">
-						<Button
-							kind="secondary"
-							size="small"
-							icon={AddComment}
-							class="new-chat-btn"
-							id="new-chat-btn"
-							aria-label="new conversation"
-							on:click={() => handleActiveConversationChange('')}>New</Button
-						>
-						<TextInput light size="sm" placeholder="Search..." />
-						<SideNavDivider />
-					</div>
-
-					<div
-						class:noScroll={disableScroll || editMode}
-						bind:this={scrollBoxRef}
-						class="conversations"
-						data-testid="conversations"
+<SideNav bind:isOpen={isSideNavOpen} aria-label="side navigation" style="background-color: g90;">
+	<div style="height: 100%">
+		<SideNavItems>
+			<div class="side-nav-items-container">
+				<div class="new-chat-container">
+					<Button
+						kind="secondary"
+						size="small"
+						icon={AddComment}
+						class="new-chat-btn"
+						id="new-chat-btn"
+						aria-label="new conversation"
+						on:click={() => handleActiveConversationChange('')}>New</Button
 					>
-						{#each dateCategories as category}
-							<SideNavMenu text={category} expanded data-testid="side-nav-menu">
-								{#if organizedConversations[category]}
-									{#each organizedConversations[category] as conversation}
-										<SideNavMenuItem
-											data-testid="side-nav-menu-item-{conversation.label}"
-											id="side-nav-menu-item-{conversation.id}"
-											isSelected={activeConversation?.id === conversation.id}
-											on:click={() => handleActiveConversationChange(conversation.id)}
-										>
-											<div class="menu-content">
-												{#if editMode && activeConversation?.id === conversation.id}
-													<TextInput
-														bind:value={editLabelText}
-														size="sm"
-														class="edit-conversation"
-														on:keydown={(e) => handleEdit(e)}
-														on:blur={(e) => {
-															handleEdit(e);
+					<TextInput light size="sm" placeholder="Search..." />
+					<SideNavDivider />
+				</div>
+
+				<div
+					class:noScroll={disableScroll || editMode}
+					bind:this={scrollBoxRef}
+					class="conversations"
+					data-testid="conversations"
+				>
+					{#each dateCategories as category}
+						<SideNavMenu text={category} expanded data-testid="side-nav-menu">
+							{#if organizedConversations[category]}
+								{#each organizedConversations[category] as conversation}
+									<SideNavMenuItem
+										data-testid="side-nav-menu-item-{conversation.label}"
+										id="side-nav-menu-item-{conversation.id}"
+										isSelected={activeConversation?.id === conversation.id}
+										on:click={() => handleActiveConversationChange(conversation.id)}
+									>
+										<div class="menu-content">
+											{#if editMode && activeConversation?.id === conversation.id}
+												<TextInput
+													bind:value={editLabelText}
+													size="sm"
+													class="edit-conversation"
+													on:keydown={(e) => handleEdit(e)}
+													on:blur={(e) => {
+														handleEdit(e);
+													}}
+													autofocus
+													maxlength={MAX_LABEL_SIZE}
+													readonly={editLabelInputDisabled}
+													aria-label="edit conversation"
+												/>
+											{:else}
+												<div data-testid="conversation-label-{conversation.id}" class="menu-text">
+													{conversation.label}
+												</div>
+												<div>
+													<OverflowMenu
+														id={`overflow-menu-${conversation.id}`}
+														on:close={() => {
+															overflowMenuOpen = false;
+															disableScroll = false;
 														}}
-														autofocus
-														maxlength={MAX_LABEL_SIZE}
-														readonly={editLabelInputDisabled}
-														aria-label="edit conversation"
-													/>
-												{:else}
-													<div data-testid="conversation-label-{conversation.id}" class="menu-text">
-														{conversation.label}
-													</div>
-													<div>
-														<OverflowMenu
-															id={`overflow-menu-${conversation.id}`}
-															on:close={() => {
-																overflowMenuOpen = false;
-																disableScroll = false;
+														on:click={(e) => {
+															e.stopPropagation();
+															overflowMenuOpen = true;
+															handleActiveConversationChange(conversation.id);
+															disableScroll = true;
+														}}
+														data-testid="overflow-menu-{conversation.label}"
+														style={overflowMenuOpen && activeConversation?.id === conversation.id
+															? `position: fixed; top: 0; left: 0; transform: translate(224px, ${menuOffset - scrollOffset + 48}px)`
+															: ''}
+													>
+														<OverflowMenuItem
+															text="Edit"
+															on:click={() => {
+																editConversationId = conversation.id;
+																editLabelText = conversation.label;
 															}}
-															on:click={(e) => {
-																e.stopPropagation();
-																isSideNavOpen = true; // force sidenav to stay open
-																overflowMenuOpen = true;
-																handleActiveConversationChange(conversation.id);
-																disableScroll = true;
-															}}
-															data-testid="overflow-menu-{conversation.label}"
-															style={overflowMenuOpen && activeConversation?.id === conversation.id
-																? `position: fixed; top: 0; left: 0; transform: translate(224px, ${menuOffset - scrollOffset + 48}px)`
-																: ''}
-														>
-															<OverflowMenuItem
-																text="Edit"
-																on:click={() => {
-																	editConversationId = conversation.id;
-																	editLabelText = conversation.label;
-																}}
-															/>
+														/>
 
-															<OverflowMenuItem
-																data-testid="overflow-menu-delete-{conversation.label}"
-																text="Delete"
-																on:click={() => {
-																	deleteModalOpen = true;
-																}}
-															/>
-														</OverflowMenu>
-													</div>
-												{/if}
-											</div>
-										</SideNavMenuItem>
-									{/each}
-								{/if}
-							</SideNavMenu>
-						{/each}
-					</div>
-					<div>
-						<SideNavDivider />
-						<div class="bottom-side-nav-icons-container">
-							<SideNavLink>Import Data<slot name="icon"><Download /></slot></SideNavLink>
-							<SideNavLink>Export Data<slot name="icon"><Export /></slot></SideNavLink>
-						</div>
+														<OverflowMenuItem
+															data-testid="overflow-menu-delete-{conversation.label}"
+															text="Delete"
+															on:click={() => {
+																deleteModalOpen = true;
+															}}
+														/>
+													</OverflowMenu>
+												</div>
+											{/if}
+										</div>
+									</SideNavMenuItem>
+								{/each}
+							{/if}
+						</SideNavMenu>
+					{/each}
+				</div>
+				<div>
+					<SideNavDivider />
+					<div class="bottom-side-nav-icons-container">
+						<SideNavLink>Import Data<slot name="icon"><Download /></slot></SideNavLink>
+						<SideNavLink>Export Data<slot name="icon"><Export /></slot></SideNavLink>
 					</div>
 				</div>
-			</SideNavItems>
-		{:else}
-			<SideNavItems>
-				<div class="side-nav-items-container">
-					<div>
-						<Button
-							icon={WatsonHealthTextAnnotationToggle}
-							size="small"
-							kind="secondary"
-							aria-label="new conversation"
-						/>
-					</div>
-
-					<div>
-						<SideNavDivider />
-						<div class="bottom-side-nav-icons-container-rail">
-							<Download />
-							<Export />
-						</div>
-					</div>
-				</div>
-			</SideNavItems>
-		{/if}
+			</div>
+		</SideNavItems>
 
 		<Modal
 			danger
@@ -315,8 +263,8 @@
 				>{activeConversation?.label.substring(0, MAX_LABEL_SIZE)}</strong
 			> chat?</Modal
 		>
-	</div>
-</SideNav>
+	</div></SideNav
+>
 
 <!-- NOTE - Carbon Components Svelte does not yet support theming of the UI Shell components so several
 properties had to be manually overridden.
@@ -432,15 +380,6 @@ https://github.com/carbon-design-system/carbon-components-svelte/issues/892
 		color: themes.$text-secondary !important;
 	}
 
-	// Override default behavior of fly out when using rail sidenav
-	// Use this instead if you don't want the rail to stay skinny on hover and not expand
-	// remove on:mousenter and on:mouseexit code
-	//:global(.bx--side-nav--rail) {
-	//	&:hover {
-	//		width: 3rem !important;
-	//	}
-	//}
-	//
 	:global(.bx--side-nav__items) {
 		text-align: center;
 		overflow: visible !important;

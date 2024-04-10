@@ -1,4 +1,4 @@
-import { render, screen } from '@testing-library/svelte';
+import { render, screen, within } from '@testing-library/svelte';
 import { conversationsStore } from '$stores';
 
 import {
@@ -172,5 +172,16 @@ describe('The Chat Page', () => {
 
 			await screen.findAllByText('Error getting AI Response');
 		});
+	});
+
+	// Note - testing here because we the whole layout (including header) to test
+	it('hides the sidenav on small screens', () => {
+		render(ChatPage);
+		const banner = screen.getByRole('banner');
+		expect(within(banner).getAllByRole('button')).toHaveLength(0);
+
+		global.outerWidth = 800;
+		global.dispatchEvent(new Event('resize'));
+		expect(within(banner).getAllByRole('button')).toHaveLength(1);
 	});
 });

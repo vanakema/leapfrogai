@@ -72,11 +72,8 @@ test('Can switch conversation threads', async ({ page }) => {
 	await deleteConversation(page, newMessage3);
 });
 
-test('it can collapse and open the sidenav', async ({ page }) => {
-	await loadPage(page);
-	await expect(page.getByText('Today')).toHaveCount(1);
-	await page.getByRole('banner').getByRole('button').first().click();
-	await expect(page.getByText('Today')).toHaveCount(0);
-	await page.getByRole('button').first().click();
-	await expect(page.getByText('Today')).toHaveCount(1);
-});
+
+
+// Note - testing that the sidenav is hidden when on small screens and not expanded by the menu button was deemed not possible with
+// playwright because Carbon doesn't actually hide it in a way that playwright can detect, https://playwright.dev/docs/actionability#visible
+// Carbon uses transform: translateX(-16rem) to move it off the screen, but Playwright still sees it

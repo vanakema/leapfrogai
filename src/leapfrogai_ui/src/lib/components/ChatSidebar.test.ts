@@ -282,15 +282,6 @@ describe('ChatSidebar', () => {
 		expect(editInput).not.toBeInTheDocument();
 	});
 
-	it('it shows the conversations when in rail mode and hovered', async () => {
-		conversationsStore.set({
-			conversations: fakeConversations
-		});
-		render(ChatSidebar, { isSideNavOpen: false });
-		expect(screen.queryByTestId('conversations')).not.toBeInTheDocument()
-		await userEvent.hover(screen.getByLabelText('new conversation'));
-		const conversations =  screen.getByTestId('conversations');
-		expect (within(conversations).getByText(fakeConversations[0].label)).toBeInTheDocument();
 
-	});
+
 });
