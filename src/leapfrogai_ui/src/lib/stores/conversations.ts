@@ -24,7 +24,8 @@ const createConversation = async (input: NewConversationInput) => {
 			'Content-Type': 'application/json'
 		}
 	});
-	if (!res.ok) return res.json();
+
+	if (res.ok) return res.json();
 
 	return error(500, 'Error creating conversation');
 };
@@ -40,6 +41,7 @@ const createMessage = async (input: NewMessageInput) => {
 		}
 	});
 	if (res.ok) return res.json();
+
 	return error(500, 'Error saving message');
 };
 
@@ -82,7 +84,9 @@ const createConversationsStore = () => {
 
 		newMessage: async (message: NewMessageInput) => {
 			try {
+
 				const newMessage = await createMessage(message);
+
 				if (newMessage) {
 					update((old) => {
 						const updatedConversations = [...old.conversations];

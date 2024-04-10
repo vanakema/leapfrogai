@@ -18,9 +18,12 @@ import {
 	mockChatCompletion,
 	mockChatCompletionError,
 	mockNewConversation,
-	mockNewMessage
+	mockNewMessage,
+	mockNewMessageError
 } from '$lib/mocks/chat-mocks';
 import { delay } from 'msw';
+import {mockAppStore} from "$lib/mocks/svelte";
+
 
 const { getStores } = await vi.hoisted(() => import('$lib/mocks/svelte'));
 
@@ -171,6 +174,54 @@ describe('The Chat Page', () => {
 			await user.click(submitBtn);
 
 			await screen.findAllByText('Error getting AI Response');
+		});
+		it('displays an error message when there is an error saving the response', async () => {
+			mockAppStore({ activeConversationId: fakeConversations[0].id });
+
+			// vi.mock('$app/stores', (): typeof stores => {
+			// 	const page: typeof stores.page = {
+			// 		subscribe(fn) {
+			// 			return getStores({
+			// 				url: `http://localhost/chat/${fakeConversations[0].id}`,
+			// 				params: { conversation_id: fakeConversations[0].id }
+			// 			}).page.subscribe(fn);
+			// 		}
+			// 	};
+			// 	const navigating: typeof stores.navigating = {
+			// 		subscribe(fn) {
+			// 			return getStores().navigating.subscribe(fn);
+			// 		}
+			// 	};
+			// 	const updated: typeof stores.updated = {
+			// 		subscribe(fn) {
+			// 			return getStores().updated.subscribe(fn);
+			// 		},
+			// 		check: () => Promise.resolve(false)
+			// 	};
+			//
+			// 	return {
+			// 		getStores,
+			// 		navigating,
+			// 		page,
+			// 		updated
+			// 	};
+			// });
+
+			conversationsStore.set({
+				conversations: fakeConversations
+			});
+
+			mockChatCompletion();
+			mockNewMessageError();
+
+			const { getByLabelText } = render(ChatPageWithToast);
+
+			const input = getByLabelText('message input') as HTMLInputElement;
+			const submitBtn = getByLabelText('send');
+
+			await userEvent.type(input, question);
+			await userEvent.click(submitBtn);
+			await screen.findAllByText('Error creating message.');
 		});
 	});
 });
