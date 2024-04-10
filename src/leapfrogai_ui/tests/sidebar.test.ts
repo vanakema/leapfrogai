@@ -60,7 +60,7 @@ test('Can switch conversation threads', async ({ page }) => {
 	await sendMessage(page, newMessage2);
 	await expect(messages).toHaveCount(4);
 
-	await page.getByText('New').click();
+	await page.getByText('New Chat').click();
 	await sendMessage(page, newMessage3);
 	await expect(messages).toHaveCount(2);
 

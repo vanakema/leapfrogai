@@ -30,12 +30,10 @@
 
 	const onUpload = async (files: FileList) => {
 		const conversations = await readFileAsJson(files[0]);
-		console.log(conversations);
 		try {
-			await conversationsSchema.validate(conversations);
+			await conversationsSchema.validate(conversations); // TODO - not working
 			await conversationsStore.importConversations(conversations);
 		} catch (e) {
-			console.log(e);
 			toastStore.addToast({
 				kind: 'error',
 				title: 'Error',

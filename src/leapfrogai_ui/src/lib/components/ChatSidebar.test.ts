@@ -292,4 +292,5 @@ describe('ChatSidebar', () => {
 		const conversations = screen.getByTestId('conversations');
 		expect(within(conversations).getByText(fakeConversations[0].label)).toBeInTheDocument();
 	});
+
 });

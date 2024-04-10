@@ -2,14 +2,11 @@ import { type Readable, readable } from 'svelte/store';
 import type { Navigation, Page } from '@sveltejs/kit';
 import { fakeConversations } from '../../testUtils/fakeData';
 import { faker } from '@faker-js/faker';
-import {vi} from "vitest";
-import stores from "$app/stores";
 
 type GetStoresOverrides = {
 	url: string;
 	params: Record<string, string>;
 };
-
 
 export const getStores = (
 	options: GetStoresOverrides = { url: 'http://localhost', params: {} }
@@ -37,4 +34,3 @@ export const getStores = (
 
 	return { navigating, page, updated };
 };
-
