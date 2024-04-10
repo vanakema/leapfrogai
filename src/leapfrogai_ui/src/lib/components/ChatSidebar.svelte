@@ -155,7 +155,7 @@
 						class="new-chat-btn"
 						id="new-chat-btn"
 						aria-label="new conversation"
-						on:click={() => handleActiveConversationChange('')}>New</Button
+						on:click={() => handleActiveConversationChange('')}>New Chat</Button
 					>
 					<TextInput light size="sm" placeholder="Search..." />
 					<SideNavDivider />

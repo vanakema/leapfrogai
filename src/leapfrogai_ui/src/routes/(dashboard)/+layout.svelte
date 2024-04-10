@@ -31,6 +31,7 @@
 		// to prevent that
 		isSideNavOpen = true;
 	});
+
 </script>
 
 <svelte:head>

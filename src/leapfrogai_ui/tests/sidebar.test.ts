@@ -73,7 +73,3 @@ test('Can switch conversation threads', async ({ page }) => {
 });
 
 
-
-// Note - testing that the sidenav is hidden when on small screens and not expanded by the menu button was deemed not possible with
-// playwright because Carbon doesn't actually hide it in a way that playwright can detect, https://playwright.dev/docs/actionability#visible
-// Carbon uses transform: translateX(-16rem) to move it off the screen, but Playwright still sees it

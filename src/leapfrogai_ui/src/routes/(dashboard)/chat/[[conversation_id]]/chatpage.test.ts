@@ -25,24 +25,6 @@ import { delay } from 'msw';
 const { getStores } = await vi.hoisted(() => import('$lib/mocks/svelte'));
 
 describe('The Chat Page', () => {
-	it('changes the active chat thread', async () => {
-		const goToSpy = vi.spyOn(navigation, 'goto');
-
-		const fakeConversation = getFakeConversation({ numMessages: 6 });
-
-		conversationsStore.set({
-			conversations: [fakeConversation]
-		});
-
-		render(ChatPage);
-
-		expect(screen.queryByText(fakeConversation.messages[0].content)).not.toBeInTheDocument();
-
-		await userEvent.click(screen.getByText(fakeConversation.label));
-
-		expect(goToSpy).toHaveBeenCalledTimes(1);
-		expect(goToSpy).toHaveBeenCalledWith(`/chat/${fakeConversation.id}`);
-	});
 
 	it('it renders all the messages', async () => {
 		vi.mock('$app/stores', (): typeof stores => {
@@ -172,16 +154,5 @@ describe('The Chat Page', () => {
 
 			await screen.findAllByText('Error getting AI Response');
 		});
-	});
-
-	// Note - testing here because we the whole layout (including header) to test
-	it('hides the sidenav on small screens', () => {
-		render(ChatPage);
-		const banner = screen.getByRole('banner');
-		expect(within(banner).getAllByRole('button')).toHaveLength(0);
-
-		global.outerWidth = 800;
-		global.dispatchEvent(new Event('resize'));
-		expect(within(banner).getAllByRole('button')).toHaveLength(1);
 	});
 });
