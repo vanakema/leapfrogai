@@ -29,13 +29,21 @@
 	const onUpload = async (files: FileList) => {
 		const conversations = await readFileAsJson(files[0]);
 		try {
-			await conversationsSchema.validate(conversations); // TODO - not working
-			await conversationsStore.importConversations(conversations);
-		} catch (e) {
+			await conversationsSchema.validate(conversations);
+		} catch {
 			toastStore.addToast({
 				kind: 'error',
 				title: 'Error',
 				subtitle: `Conversations are incorrectly formatted.`
+			});
+		}
+		try {
+			await conversationsStore.importConversations(conversations);
+		} catch {
+			toastStore.addToast({
+				kind: 'error',
+				title: 'Error',
+				subtitle: `Error importing conversations.`
 			});
 		}
 	};

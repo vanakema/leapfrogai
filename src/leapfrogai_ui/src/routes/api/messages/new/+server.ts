@@ -22,7 +22,7 @@ export async function POST({ request, locals: { supabase, getSession } }) {
 
 	const { error: responseError, data: createdMessage } = await supabase
 		.from('messages')
-		.upsert(message)
+		.insert(message)
 		.select()
 		.returns<Message[]>();
 

@@ -2,7 +2,7 @@ import { writable } from 'svelte/store';
 import { MAX_LABEL_SIZE } from '$lib/constants';
 import { goto } from '$app/navigation';
 import { error } from '@sveltejs/kit';
-import { conversationsStore, toastStore } from '$stores/index';
+import { toastStore } from '$stores/index';
 
 type ConversationsStore = {
 	conversations: Conversation[];
@@ -75,7 +75,7 @@ const updateConversationLabel = async (editConversationId: string, editLabelText
 	return error(500, 'Error updating conversation label');
 };
 
-// TODO - test error handling
+
 const createConversationsStore = () => {
 	const { subscribe, set, update } = writable<ConversationsStore>({ ...defaultValues });
 	return {
@@ -187,7 +187,6 @@ const createConversationsStore = () => {
 			for (const conversation of data) {
 				try {
 					const createdConversation = await createConversation({
-						id: conversation.id,
 						label: conversation.label,
 						inserted_at: conversation.inserted_at
 					});
@@ -196,7 +195,6 @@ const createConversationsStore = () => {
 					const { messages } = conversation;
 					for (const message of messages) {
 						const createdMessage = await createMessage({
-							id: message.id,
 							role: message.role,
 							content: message.content,
 							conversation_id: createdConversation.id,
@@ -215,7 +213,6 @@ const createConversationsStore = () => {
 			}
 
 			update((old) => {
-				// TODO - should the UI overwrite old conversations with the new versions, or skip those? (handle here)
 				return {
 					...old,
 					conversations: [...old.conversations, ...newConversations]

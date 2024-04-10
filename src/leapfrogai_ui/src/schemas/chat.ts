@@ -1,7 +1,6 @@
 import { array, object, ObjectSchema, string } from 'yup';
 import { MAX_LABEL_SIZE } from '$lib/constants';
 
-
 export const messageSchema: ObjectSchema<Message> = object({
 	id: string().uuid().required(),
 	user_id: string().uuid().required(),
@@ -13,20 +12,17 @@ export const messageSchema: ObjectSchema<Message> = object({
 	.noUnknown(true)
 	.strict();
 
-// TODO - fix types, then check that it correctly validates json files
-export const messagesSchema: ObjectSchema<Message[]> = array().of(messageSchema);
-
 export const conversationSchema: ObjectSchema<Conversation> = object({
 	id: string().uuid().required(),
 	user_id: string().uuid().required(),
-	messages: array().of(messagesSchema),
+	messages: array().of(messageSchema).required(),
 	label: string().required(),
 	inserted_at: string().required()
 })
 	.noUnknown(true)
 	.strict();
 
-export const conversationsSchema: ObjectSchema<Conversation[]> = array().of(conversationSchema);
+export const conversationsSchema = array().of(conversationSchema);
 
 export const messageInputSchema: ObjectSchema<AIMessage> = object({
 	content: string().required(),
@@ -56,8 +52,7 @@ export const uuidSchema = object({
 
 const labelSchema = string().min(1).max(MAX_LABEL_SIZE).required();
 
-export const newConversationSchema = object({
-	id: string().uuid().optional(),
+export const newConversationInputSchema = object({
 	label: labelSchema,
 	inserted_at: string().optional()
 })

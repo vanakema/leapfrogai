@@ -1,5 +1,4 @@
 type NewConversationInput = {
-	id?: string;
 	label: string;
 	inserted_at?: string;
 };
@@ -13,7 +12,6 @@ type Conversation = NewConversationInput & {
 };
 
 type NewMessageInput = {
-	id?: string;
 	conversation_id: string;
 	content: string;
 	role: 'system' | 'user';
