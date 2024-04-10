@@ -67,23 +67,7 @@
 	const saveNewLabel = async () => {
 		if (editConversationId && editLabelText) {
 			editLabelInputDisabled = true;
-			const response = await fetch('/api/conversations/update/label', {
-				method: 'PUT',
-				body: JSON.stringify({ id: editConversationId, label: editLabelText }),
-				headers: {
-					'Content-Type': 'application/json'
-				}
-			});
-
-			if (response.ok) {
-				conversationsStore.updateConversationLabel(editConversationId, editLabelText);
-			} else {
-				toastStore.addToast({
-					kind: 'error',
-					title: 'Error',
-					subtitle: 'Error updating label'
-				});
-			}
+			await conversationsStore.updateConversationLabel(editConversationId, editLabelText);
 			resetEditMode();
 		}
 	};
@@ -107,23 +91,7 @@
 
 	const handleDelete = async () => {
 		if (activeConversation?.id) {
-			// A constraint on messages table will cascade delete all messages when the conversation is deleted
-			const res = await fetch('/api/conversations/delete', {
-				method: 'DELETE',
-				body: JSON.stringify({ conversationId: activeConversation.id }),
-				headers: {
-					'Content-Type': 'application/json'
-				}
-			});
-			if (res.ok) {
-				conversationsStore.deleteConversation(activeConversation.id);
-			} else {
-				toastStore.addToast({
-					kind: 'error',
-					title: 'Error',
-					subtitle: 'Error deleting conversation'
-				});
-			}
+			await conversationsStore.deleteConversation(activeConversation.id);
 		}
 
 		deleteModalOpen = false;

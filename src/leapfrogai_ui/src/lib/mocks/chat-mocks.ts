@@ -75,9 +75,13 @@ export const mockNewMessage = (fakeMessage: Message) => {
 	);
 };
 
+export const mockNewConversationError = () => {
+	server.use(http.post('/api/conversations/new', () => new HttpResponse(null, { status: 500 })));
+};
 export const mockNewMessageError = () => {
 	server.use(http.post('/api/messages/new', () => new HttpResponse(null, { status: 500 })));
 };
+
 
 export const mockDeleteConversation = () => {
 	server.use(

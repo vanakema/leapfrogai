@@ -2,7 +2,7 @@ import { writable } from 'svelte/store';
 import { MAX_LABEL_SIZE } from '$lib/constants';
 import { goto } from '$app/navigation';
 import { error } from '@sveltejs/kit';
-import { toastStore } from '$stores/index';
+import { conversationsStore, toastStore } from '$stores/index';
 
 type ConversationsStore = {
 	conversations: Conversation[];
@@ -45,6 +45,36 @@ const createMessage = async (input: NewMessageInput) => {
 	return error(500, 'Error saving message');
 };
 
+const deleteConversation = async (id: String) => {
+	// A constraint on messages table will cascade delete all messages when the conversation is deleted
+	const res = await fetch('/api/conversations/delete', {
+		method: 'DELETE',
+		body: JSON.stringify({ conversationId: id }),
+		headers: {
+			'Content-Type': 'application/json'
+		}
+	});
+
+	if (res.ok) return;
+
+	return error(500, 'Error deleting conversation');
+};
+
+const updateConversationLabel = async (editConversationId: string, editLabelText: string) => {
+	const res = await fetch('/api/conversations/update/label', {
+		method: 'PUT',
+		body: JSON.stringify({ id: editConversationId, label: editLabelText }),
+		headers: {
+			'Content-Type': 'application/json'
+		}
+	});
+
+	if (res.ok) {
+		return;
+	}
+	return error(500, 'Error updating conversation label');
+};
+
 // TODO - test error handling
 const createConversationsStore = () => {
 	const { subscribe, set, update } = writable<ConversationsStore>({ ...defaultValues });
@@ -84,7 +114,6 @@ const createConversationsStore = () => {
 
 		newMessage: async (message: NewMessageInput) => {
 			try {
-
 				const newMessage = await createMessage(message);
 
 				if (newMessage) {
@@ -113,29 +142,46 @@ const createConversationsStore = () => {
 				});
 			}
 		},
-		// TODO - the api call in chatsidebar should be moved to here in the store, then error handle following pattern
 		deleteConversation: async (id: string) => {
-			update((old) => ({
-				...old,
-				conversations: old.conversations.filter((c) => c.id !== id)
-			}));
-			await goto('/chat');
-		},
-		// TODO - the api call in chatsidebar should be moved to here in the store, then error handle following pattern
-		updateConversationLabel: (id: string, newLabel: string) =>
-			update((old) => {
-				const updatedConversationIndex = old.conversations.findIndex((c) => c.id === id);
-				const updatedConversation = { ...old.conversations[updatedConversationIndex] };
-				updatedConversation.label = newLabel;
-
-				const updatedConversations = [...old.conversations];
-				updatedConversations[updatedConversationIndex] = updatedConversation;
-
-				return {
+			try {
+				await deleteConversation(id);
+				update((old) => ({
 					...old,
-					conversations: updatedConversations
-				};
-			}),
+					conversations: old.conversations.filter((c) => c.id !== id)
+				}));
+				await goto('/chat');
+			} catch {
+				toastStore.addToast({
+					kind: 'error',
+					title: 'Error',
+					subtitle: `Error deleting conversation.`
+				});
+			}
+		},
+		updateConversationLabel: async (id: string, newLabel: string) => {
+			try {
+				await updateConversationLabel(id, newLabel);
+				return update((old) => {
+					const updatedConversationIndex = old.conversations.findIndex((c) => c.id === id);
+					const updatedConversation = { ...old.conversations[updatedConversationIndex] };
+					updatedConversation.label = newLabel;
+
+					const updatedConversations = [...old.conversations];
+					updatedConversations[updatedConversationIndex] = updatedConversation;
+
+					return {
+						...old,
+						conversations: updatedConversations
+					};
+				});
+			} catch (e) {
+				toastStore.addToast({
+					kind: 'error',
+					title: 'Error',
+					subtitle: 'Error updating label.'
+				});
+			}
+		},
 		importConversations: async (data: Conversation[]) => {
 			const newConversations: Conversation[] = [];
 			for (const conversation of data) {

@@ -10,7 +10,7 @@ import ChatPage from './+page.svelte';
 import ChatPageWithToast from './ChatPageWithToast.test.svelte';
 import userEvent from '@testing-library/user-event';
 import stores from '$app/stores';
-import { vi } from 'vitest';
+import { beforeAll, vi } from 'vitest';
 
 import * as navigation from '$app/navigation';
 
@@ -18,13 +18,13 @@ import {
 	mockChatCompletion,
 	mockChatCompletionError,
 	mockNewConversation,
+	mockNewConversationError,
 	mockNewMessage,
 	mockNewMessageError
 } from '$lib/mocks/chat-mocks';
 import { delay } from 'msw';
-import {mockAppStore} from "$lib/mocks/svelte";
 
-
+//Calls to vi.mock are hoisted to the top of the file, so you don't have access to variables declared in the global file scope unless they are defined with vi.hoisted before the call.
 const { getStores } = await vi.hoisted(() => import('$lib/mocks/svelte'));
 
 describe('The Chat Page', () => {
@@ -48,43 +48,12 @@ describe('The Chat Page', () => {
 	});
 
 	it('it renders all the messages', async () => {
-		vi.mock('$app/stores', (): typeof stores => {
-			const page: typeof stores.page = {
-				subscribe(fn) {
-					return getStores({
-						url: `http://localhost/chat/${fakeConversations[0].id}`,
-						params: { conversation_id: fakeConversations[0].id }
-					}).page.subscribe(fn);
-				}
-			};
-			const navigating: typeof stores.navigating = {
-				subscribe(fn) {
-					return getStores().navigating.subscribe(fn);
-				}
-			};
-			const updated: typeof stores.updated = {
-				subscribe(fn) {
-					return getStores().updated.subscribe(fn);
-				},
-				check: () => Promise.resolve(false)
-			};
-
-			return {
-				getStores,
-				navigating,
-				page,
-				updated
-			};
-		});
-
 		conversationsStore.set({
 			conversations: fakeConversations
 		});
 
 		render(ChatPage);
 
-		// TODO - the $messages from useChat are not getting populated by setMessages so this test fails
-		// The test does show that the conversation_id and activeConversation are being set correctly
 		for (let i = 0; i < fakeConversations[0].messages.length; i++) {
 			await screen.findByText(fakeConversations[0].messages[0].content);
 		}
@@ -175,44 +144,14 @@ describe('The Chat Page', () => {
 
 			await screen.findAllByText('Error getting AI Response');
 		});
-		it('displays an error message when there is an error saving the response', async () => {
-			mockAppStore({ activeConversationId: fakeConversations[0].id });
 
-			// vi.mock('$app/stores', (): typeof stores => {
-			// 	const page: typeof stores.page = {
-			// 		subscribe(fn) {
-			// 			return getStores({
-			// 				url: `http://localhost/chat/${fakeConversations[0].id}`,
-			// 				params: { conversation_id: fakeConversations[0].id }
-			// 			}).page.subscribe(fn);
-			// 		}
-			// 	};
-			// 	const navigating: typeof stores.navigating = {
-			// 		subscribe(fn) {
-			// 			return getStores().navigating.subscribe(fn);
-			// 		}
-			// 	};
-			// 	const updated: typeof stores.updated = {
-			// 		subscribe(fn) {
-			// 			return getStores().updated.subscribe(fn);
-			// 		},
-			// 		check: () => Promise.resolve(false)
-			// 	};
-			//
-			// 	return {
-			// 		getStores,
-			// 		navigating,
-			// 		page,
-			// 		updated
-			// 	};
-			// });
-
+		it('displays an error message when there is an error saving the new conversation', async () => {
 			conversationsStore.set({
-				conversations: fakeConversations
+				conversations: []
 			});
 
 			mockChatCompletion();
-			mockNewMessageError();
+			mockNewConversationError();
 
 			const { getByLabelText } = render(ChatPageWithToast);
 
@@ -221,7 +160,58 @@ describe('The Chat Page', () => {
 
 			await userEvent.type(input, question);
 			await userEvent.click(submitBtn);
-			await screen.findAllByText('Error creating message.');
+			await screen.findAllByText('Error saving conversation.');
+		});
+
+		describe('when there is an active conversation selected', () => {
+			beforeAll(() => {
+				vi.mock('$app/stores', (): typeof stores => {
+					const page: typeof stores.page = {
+						subscribe(fn) {
+							return getStores({
+								url: `http://localhost/chat/${fakeConversations[0].id}`,
+								params: { conversation_id: fakeConversations[0].id }
+							}).page.subscribe(fn);
+						}
+					};
+					const navigating: typeof stores.navigating = {
+						subscribe(fn) {
+							return getStores().navigating.subscribe(fn);
+						}
+					};
+					const updated: typeof stores.updated = {
+						subscribe(fn) {
+							return getStores().updated.subscribe(fn);
+						},
+						check: () => Promise.resolve(false)
+					};
+
+					return {
+						getStores,
+						navigating,
+						page,
+						updated
+					};
+				});
+			});
+
+			it('displays an error message when there is an error saving the response', async () => {
+				conversationsStore.set({
+					conversations: fakeConversations
+				});
+
+				mockChatCompletion();
+				mockNewMessageError();
+
+				const { getByLabelText } = render(ChatPageWithToast);
+
+				const input = getByLabelText('message input') as HTMLInputElement;
+				const submitBtn = getByLabelText('send');
+
+				await userEvent.type(input, question);
+				await userEvent.click(submitBtn);
+				await screen.findAllByText('Error creating message.');
+			});
 		});
 	});
 });

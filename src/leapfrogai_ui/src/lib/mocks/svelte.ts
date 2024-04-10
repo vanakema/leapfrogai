@@ -9,6 +9,8 @@ type GetStoresOverrides = {
 	url: string;
 	params: Record<string, string>;
 };
+
+
 export const getStores = (
 	options: GetStoresOverrides = { url: 'http://localhost', params: {} }
 ) => {
@@ -36,36 +38,3 @@ export const getStores = (
 	return { navigating, page, updated };
 };
 
-export const mockAppStore = ({
-								 activeConversationId,
-							 }: {
-	activeConversationId: string;
-}) =>
-	vi.mock('$app/stores', (): typeof stores => {
-		const page: typeof stores.page = {
-			subscribe(fn) {
-				return getStores({
-					url: `http://localhost/chat/${fakeConversations[0].id}`,
-					params: { conversation_id: activeConversationId }
-				}).page.subscribe(fn);
-			}
-		};
-		const navigating: typeof stores.navigating = {
-			subscribe(fn) {
-				return getStores().navigating.subscribe(fn);
-			}
-		};
-		const updated: typeof stores.updated = {
-			subscribe(fn) {
-				return getStores().updated.subscribe(fn);
-			},
-			check: () => Promise.resolve(false)
-		};
-
-		return {
-			getStores,
-			navigating,
-			page,
-			updated
-		};
-	});

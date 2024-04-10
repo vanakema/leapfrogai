@@ -6,7 +6,7 @@ import {
 	mockEditConversationLabelError
 } from '$lib/mocks/chat-mocks';
 import { conversationsStore, toastStore } from '$stores';
-import {fireEvent, render, screen, within} from '@testing-library/svelte';
+import { fireEvent, render, screen, within } from '@testing-library/svelte';
 import userEvent from '@testing-library/user-event';
 import { fakeConversations } from '../../testUtils/fakeData';
 import { vi } from 'vitest';
@@ -287,10 +287,9 @@ describe('ChatSidebar', () => {
 			conversations: fakeConversations
 		});
 		render(ChatSidebar, { isSideNavOpen: false });
-		expect(screen.queryByTestId('conversations')).not.toBeInTheDocument()
+		expect(screen.queryByTestId('conversations')).not.toBeInTheDocument();
 		await userEvent.hover(screen.getByLabelText('new conversation'));
-		const conversations =  screen.getByTestId('conversations');
-		expect (within(conversations).getByText(fakeConversations[0].label)).toBeInTheDocument();
-
+		const conversations = screen.getByTestId('conversations');
+		expect(within(conversations).getByText(fakeConversations[0].label)).toBeInTheDocument();
 	});
 });
