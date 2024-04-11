@@ -77,4 +77,11 @@ describe('Import and Export data', () => {
 		// @ts-ignore
 		encodeURIComponent = originalEncode;
 	});
+
+	it("only allows uploading of JSON files", async () => {
+		render(ImportExport);
+		const uploadBtn = screen.getByLabelText(/import data/i);
+
+		expect(uploadBtn).toHaveAttribute('accept', 'application/json')
+	})
 });
