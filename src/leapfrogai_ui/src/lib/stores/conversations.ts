@@ -191,7 +191,7 @@ const createConversationsStore = () => {
 						inserted_at: conversation.inserted_at
 					});
 					createdConversation.messages = [];
-
+					console.log(createdConversation)
 					const { messages } = conversation;
 					for (const message of messages) {
 						const createdMessage = await createMessage({
@@ -211,7 +211,6 @@ const createConversationsStore = () => {
 					});
 				}
 			}
-
 			update((old) => {
 				return {
 					...old,

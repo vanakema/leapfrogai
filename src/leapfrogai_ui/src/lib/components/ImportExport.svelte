@@ -27,8 +27,9 @@
 	};
 
 	const onUpload = async (files: FileList) => {
-		const conversations = await readFileAsJson(files[0]);
+		let conversations: Conversation[] = [];
 		try {
+			conversations = await readFileAsJson(files[0]);
 			await conversationsSchema.validate(conversations);
 		} catch {
 			toastStore.addToast({
@@ -36,29 +37,30 @@
 				title: 'Error',
 				subtitle: `Conversations are incorrectly formatted.`
 			});
+			return;
 		}
+		await conversationsStore.importConversations(conversations);
+	};
+
+	const onExport = () => {
 		try {
-			await conversationsStore.importConversations(conversations);
+			const dataStr =
+				'data:text/json; charset=utf-8,' +
+				encodeURIComponent(JSON.stringify($conversationsStore.conversations));
+			const downloadAnchorNode = document.createElement('a');
+
+			downloadAnchorNode.setAttribute('href', dataStr);
+			downloadAnchorNode.setAttribute('download', 'conversations.json');
+			document.body.appendChild(downloadAnchorNode);
+			downloadAnchorNode.click();
+			downloadAnchorNode.remove();
 		} catch {
 			toastStore.addToast({
 				kind: 'error',
 				title: 'Error',
-				subtitle: `Error importing conversations.`
+				subtitle: `Error exporting conversations.`
 			});
 		}
-	};
-
-	const onExport = () => {
-		const dataStr =
-			'data:text/json; charset=utf-8,' +
-			encodeURIComponent(JSON.stringify($conversationsStore.conversations));
-		const downloadAnchorNode = document.createElement('a');
-
-		downloadAnchorNode.setAttribute('href', dataStr);
-		downloadAnchorNode.setAttribute('download', 'conversations.json');
-		document.body.appendChild(downloadAnchorNode);
-		downloadAnchorNode.click();
-		downloadAnchorNode.remove();
 	};
 </script>
 
