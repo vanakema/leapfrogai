@@ -3,7 +3,7 @@ create table
   thread_objects (
     id uuid primary key DEFAULT uuid_generate_v4(),
     object text,
-    created_at bigint,
+    created_at bigint default extract(epoch from now()) not null,
     metadata jsonb
   );
 
@@ -12,7 +12,7 @@ create table
   message_objects (
     id uuid primary key DEFAULT uuid_generate_v4(),
     object text,
-    created_at bigint,
+    created_at bigint default extract(epoch from now()) not null,
     thread_id uuid,
     role text,
     content jsonb,
@@ -27,7 +27,7 @@ create table
   message_file_objects (
     id uuid primary key DEFAULT uuid_generate_v4(),
     object text,
-    created_at bigint,
+    created_at bigint default extract(epoch from now()) not null,
     message_id uuid,
     file_id uuid
   );
@@ -37,7 +37,7 @@ create table
   run_objects (
     run_id uuid primary key DEFAULT uuid_generate_v4(),
     object text,
-    created_at bigint,
+    created_at bigint default extract(epoch from now()) not null,
     assistant_id uuid,
     thread_id uuid,
     status text,
@@ -67,7 +67,7 @@ create table
   run_step_objects (
     step_id uuid primary key DEFAULT uuid_generate_v4(),
     object text,
-    created_at bigint,
+    created_at bigint default extract(epoch from now()) not null,
     run_id uuid,
     assistant_id uuid,
     thread_id uuid,
