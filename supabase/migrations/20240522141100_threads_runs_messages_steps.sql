@@ -2,23 +2,19 @@
 create table
   thread_objects (
     id uuid primary key DEFAULT uuid_generate_v4(),
-    object text,
     created_at bigint default extract(epoch from now()) not null,
-    metadata jsonb
+    metadata jsonb,
   );
 
 -- Create a table to store the OpenAI Message Objects
 create table
   message_objects (
     id uuid primary key DEFAULT uuid_generate_v4(),
-    object text,
     created_at bigint default extract(epoch from now()) not null,
-    thread_id uuid,
+    thread_id uuid references thread_objects(id),
     role text,
     content jsonb,
     file_ids uuid[],
-    assistant_id uuid,
-    run_id uuid,
     metadata jsonb
   );
 
