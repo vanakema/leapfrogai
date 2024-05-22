@@ -46,6 +46,7 @@ create table
     last_error jsonb,
     model text,
     instructions text,
+    stream boolean,
     tools text[],
     file_ids uuid[],
     metadata jsonb,
