@@ -15,6 +15,7 @@ create table
     created_at bigint default extract(epoch from now()) not null,
     thread_id uuid references thread_objects(id),
     role text,
+    created_run_id references run_objects(run_id), -- The run_id the message was created by
     content jsonb,
     metadata jsonb
   );
