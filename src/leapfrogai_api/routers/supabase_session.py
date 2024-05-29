@@ -31,10 +31,16 @@ async def init_supabase_client(
         options=ClientOptions(auto_refresh_token=False),
     )
 
-    # Set up a session for this client, a dummy refresh_token is used to prevent validation errors
-    await client.auth.set_session(
-        access_token=auth_creds.credentials, refresh_token="dummy"
-    )
+    try:
+        # Set up a session for this client, a dummy refresh_token is used to prevent validation errors
+        await client.auth.set_session(
+            access_token=auth_creds.credentials, refresh_token="dummy"
+        )
+    except errors.AuthApiError as err:
+        if "Invalid Refresh Token" in err.message:
+            raise errors.AuthApiError("Token has expired, generate a new token", err.status)
+        else:
+            raise err
 
     await validate_user_authorization(
         session=client, authorization=auth_creds.credentials
