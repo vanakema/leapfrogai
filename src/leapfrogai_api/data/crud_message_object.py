@@ -1,6 +1,5 @@
 """CRUD Operations for Message."""
 
-
 from pydantic import Field
 from openai.types.beta.threads import Message
 from supabase_py_async import AsyncClient
