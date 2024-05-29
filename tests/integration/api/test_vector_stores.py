@@ -2,6 +2,7 @@
 
 import json
 import os
+import time
 
 import pytest
 from fastapi import Response, status
@@ -75,6 +76,7 @@ def create_file(read_testfile):  # pylint: disable=redefined-outer-name, unused-
 
 
 vector_store_response: Response
+expired_vector_store_response: Response
 
 
 # Create a vector store with the previously created file and fake embeddings
@@ -83,6 +85,7 @@ def create_vector_store(create_file):
     """Create a vector store for testing. Requires a running Supabase instance."""
 
     global vector_store_response  # pylint: disable=global-statement
+    global expired_vector_store_response  # pylint: disable=global-statement
 
     # Mock out the embeddings creation using a fake
     leapfrogai_api.backend.rag.index.embeddings_type = FakeEmbeddingsWrapper
@@ -90,12 +93,23 @@ def create_vector_store(create_file):
     request = CreateVectorStoreRequest(
         file_ids=[create_file["id"]],
         name="test",
-        expires_after=ExpiresAfter(anchor="last_active_at", days=0),
+        expires_after=ExpiresAfter(anchor="last_active_at", days=10),
         metadata={},
     )
 
     vector_store_response = vector_store_client.post(
         "/openai/v1/vector_stores", json=request.model_dump()
+    )
+
+    expired_request = CreateVectorStoreRequest(
+        file_ids=[create_file["id"]],
+        name="test2",
+        expires_after=ExpiresAfter(anchor="last_active_at", days=0),
+        metadata={},
+    )
+
+    expired_vector_store_response = vector_store_client.post(
+        "/openai/v1/vector_stores", json=expired_request.model_dump()
     )
 
 
@@ -105,6 +119,13 @@ def test_create():
     assert VectorStore.model_validate(
         vector_store_response.json()
     ), "Create should create a VectorStore."
+
+
+def test_create_expired():
+    assert expired_vector_store_response.status_code == status.HTTP_200_OK
+    assert VectorStore.model_validate(
+        expired_vector_store_response.json()
+    ), "Create should create a VectorStore, even if expired."
 
 
 def test_get():
@@ -119,6 +140,18 @@ def test_get():
     ), f"Get should return VectorStore {vector_store_id}."
 
 
+def test_get_expired():
+    time.sleep(1)  # Wait an arbitrary amount of time for the vector store to expire
+    expired_vector_store_id = expired_vector_store_response.json()["id"]
+    get_expired_response = vector_store_client.get(
+        f"/openai/v1/vector_stores/{expired_vector_store_id}"
+    )
+    assert get_expired_response.status_code == status.HTTP_200_OK
+    assert (
+        get_expired_response.json() is None
+    ), f"Get should not return VectorStore {expired_vector_store_id}."
+
+
 def test_list():
     """Test listing vector stores. Requires a running Supabase instance."""
     list_response = vector_store_client.get("/openai/v1/vector_stores")
@@ -129,11 +162,21 @@ def test_list():
         ), "Should return a list of VectorStore."
 
 
-def test_modify():
+def test_list_expired():
+    time.sleep(1)  # Wait an arbitrary amount of time for the vector store to expire
+    list_expired_response = vector_store_client.get("/openai/v1/vector_stores")
+    assert list_expired_response.status_code == status.HTTP_200_OK
+    for vector_store_object in list_expired_response.json()["data"]:
+        assert (
+            vector_store_object["id"] is not expired_vector_store_response.json()["id"]
+        ), "Expired vector store should not exists in results"
+
+
+def test_modify(create_file):
     """Test modifying a vector store. Requires a running Supabase instance."""
     vector_store_id = vector_store_response.json()["id"]
     request = ModifyVectorStoreRequest(
-        file_ids=[],
+        file_ids=[create_file["id"]],
         name="test1",
         expires_after=ExpiresAfter(anchor="last_active_at", days=0),
         metadata={},
@@ -150,6 +193,23 @@ def test_modify():
     assert modify_response.json()["name"] == "test1", "Should be modified."
 
 
+def test_modify_expired(create_file):
+    with pytest.raises(Exception) as e_info:
+        expired_vector_store_id = expired_vector_store_response.json()["id"]
+        expired_request = ModifyVectorStoreRequest(
+            file_ids=[create_file["id"]],
+            name="test2",
+            expires_after=ExpiresAfter(anchor="last_active_at", days=0),
+            metadata={},
+        )
+
+        vector_store_client.post(
+            f"/openai/v1/vector_stores/{expired_vector_store_id}",
+            json=expired_request.model_dump(),
+        )
+    assert e_info.match("Vector store not found")
+
+
 def test_get_modified():
     """Test getting a modified vector store. Requires a running Supabase instance."""
     vector_store_id = vector_store_response.json()["id"]
@@ -161,6 +221,16 @@ def test_get_modified():
         get_modified_response.json()
     ), f"Get should return modified VectorStore {vector_store_id}."
     assert get_modified_response.json()["name"] == "test1", "Should be modified."
+
+
+def test_get_modified_expired():
+    """Test getting a modified vector store. Requires a running Supabase instance."""
+    vector_store_id = expired_vector_store_response.json()["id"]
+    get_modified_response = vector_store_client.get(
+        f"/openai/v1/vector_stores/{vector_store_id}"
+    )
+    assert get_modified_response.status_code == status.HTTP_200_OK
+    assert get_modified_response.json() is None
 
 
 def test_delete():
