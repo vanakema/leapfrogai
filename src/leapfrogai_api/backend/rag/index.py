@@ -14,7 +14,9 @@ from leapfrogai_api.backend.rag.document_loader import load_file, split
 from leapfrogai_api.data.async_supabase_vector_store import AsyncSupabaseVectorStore
 
 # Allows for overwriting type of embeddings that will be instantiated
-embeddings_type: type[Embeddings] | type[LeapfrogAIEmbeddings] | None = LeapfrogAIEmbeddings
+embeddings_type: type[Embeddings] | type[LeapfrogAIEmbeddings] | None = (
+    LeapfrogAIEmbeddings
+)
 
 
 class IndexingService:
@@ -29,7 +31,7 @@ class IndexingService:
         crud_vector_store_file = CRUDVectorStoreFile(db=self.db)
 
         if await crud_vector_store_file.get(
-                vector_store_id=vector_store_id, file_id=file_id
+            vector_store_id=vector_store_id, file_id=file_id
         ):
             raise ValueError("File already indexed")
 

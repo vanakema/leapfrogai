@@ -1,4 +1,5 @@
 """Test the API endpoints for assistants."""
+
 import json
 import os
 
@@ -22,7 +23,6 @@ INSTRUCTOR_XL_EMBEDDING_SIZE: int = 768
 
 # Used to mock the creation of embeddings as the remote embeddings service is unavailable in this test
 class FakeEmbeddingsWrapper(FakeEmbeddings):
-
     def __init__(self):
         super().__init__(size=INSTRUCTOR_XL_EMBEDDING_SIZE)
 
@@ -51,7 +51,7 @@ def read_testfile():
     """Read the test file content."""
 
     with open(
-            os.path.dirname(__file__) + "/../../../tests/data/test.txt", "rb"
+        os.path.dirname(__file__) + "/../../../tests/data/test.txt", "rb"
     ) as testfile:
         testfile_content = testfile.read()
 
@@ -88,7 +88,7 @@ def create_vector_store(create_file):
     leapfrogai_api.backend.rag.index.embeddings_type = FakeEmbeddingsWrapper
 
     request = CreateVectorStoreRequest(
-        file_ids=[create_file['id']],
+        file_ids=[create_file["id"]],
         name="test",
         expires_after=ExpiresAfter(anchor="last_active_at", days=0),
         metadata={},
@@ -110,7 +110,9 @@ def test_create():
 def test_get():
     """Test getting a vector store. Requires a running Supabase instance."""
     vector_store_id = vector_store_response.json()["id"]
-    get_response = vector_store_client.get(f"/openai/v1/vector_stores/{vector_store_id}")
+    get_response = vector_store_client.get(
+        f"/openai/v1/vector_stores/{vector_store_id}"
+    )
     assert get_response.status_code == status.HTTP_200_OK
     assert VectorStore.model_validate(
         get_response.json()
@@ -151,7 +153,9 @@ def test_modify():
 def test_get_modified():
     """Test getting a modified vector store. Requires a running Supabase instance."""
     vector_store_id = vector_store_response.json()["id"]
-    get_modified_response = vector_store_client.get(f"/openai/v1/vector_stores/{vector_store_id}")
+    get_modified_response = vector_store_client.get(
+        f"/openai/v1/vector_stores/{vector_store_id}"
+    )
     assert get_modified_response.status_code == status.HTTP_200_OK
     assert VectorStore.model_validate(
         get_modified_response.json()
@@ -162,7 +166,9 @@ def test_get_modified():
 def test_delete():
     """Test deleting a vector store. Requires a running Supabase instance."""
     vector_store_id = vector_store_response.json()["id"]
-    delete_response = vector_store_client.delete(f"/openai/v1/vector_stores/{vector_store_id}")
+    delete_response = vector_store_client.delete(
+        f"/openai/v1/vector_stores/{vector_store_id}"
+    )
     assert delete_response.status_code == status.HTTP_200_OK
     assert VectorStoreDeleted.model_validate(
         delete_response.json()
@@ -173,21 +179,25 @@ def test_delete():
 def test_delete_twice():
     """Test deleting a vector store twice. Requires a running Supabase instance."""
     vector_store_id = vector_store_response.json()["id"]
-    delete_response = vector_store_client.delete(f"/openai/v1/vector_stores/{vector_store_id}")
+    delete_response = vector_store_client.delete(
+        f"/openai/v1/vector_stores/{vector_store_id}"
+    )
     assert delete_response.status_code == status.HTTP_200_OK
     assert VectorStoreDeleted.model_validate(
         delete_response.json()
     ), "Should return a VectorStoreDeleted object."
     assert (
-            delete_response.json()["deleted"] is False
+        delete_response.json()["deleted"] is False
     ), "Should not be able to delete twice."
 
 
 def test_get_nonexistent():
     """Test getting a nonexistent vector store. Requires a running Supabase instance."""
     vector_store_id = vector_store_response.json()["id"]
-    get_response = vector_store_client.get(f"/openai/v1/vector_stores/{vector_store_id}")
+    get_response = vector_store_client.get(
+        f"/openai/v1/vector_stores/{vector_store_id}"
+    )
     assert get_response.status_code == status.HTTP_200_OK
     assert (
-            get_response.json() is None
+        get_response.json() is None
     ), f"Get should not return deleted VectorStore {vector_store_id}."
