@@ -38,7 +38,9 @@ async def init_supabase_client(
         )
     except errors.AuthApiError as err:
         if "Invalid Refresh Token" in err.message:
-            raise errors.AuthApiError("Token has expired, generate a new token", err.status)
+            raise errors.AuthApiError(
+                "Token has expired, generate a new token", err.status
+            )
         else:
             raise err
 
