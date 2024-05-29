@@ -5,6 +5,7 @@ A mostly OpenAI compliant API surface.
 ## Requirements
 
 - Supabase
+- Libreoffice ([Unstructured dependency via LangChain](https://python.langchain.com/docs/integrations/providers/unstructured/) for docx parsing)
 
 ## Local Development
 
@@ -12,9 +13,9 @@ A mostly OpenAI compliant API surface.
 
     ``` bash
     supabase start # from /leapfrogai
-    
+
     supabase db reset # clears all data and reinitializes migrations
-    
+
     supabase status # to check status and see your keys
     ```
 
@@ -22,7 +23,7 @@ A mostly OpenAI compliant API surface.
    ```bash
    curl -X POST 'http://localhost:54321/auth/v1/signup' \-H "apikey: <anon-key>" \-H "Content-Type: application/json" \-d '{ "email": "<email>", "password": "<password>", "confirmPassword": "<password>"}'
    ```
-   
+
    * Replace `<anon-key>` with your anon-key which can be found in the environment variable `SUPABASE_ANON_KEY`
    * Replace `<email>`, and `<password>` with your design Supabase account credentials
 
@@ -41,7 +42,7 @@ A mostly OpenAI compliant API surface.
     export SUPABASE_ANON_KEY="<YOUR_KEY>" # supabase status will show you the keys
     ```
 
-5. Make calls to the api swagger endpoint at `http://localhost:8080/docs` using your JWT token as the `HTTPBearer` token. 
+5. Make calls to the api swagger endpoint at `http://localhost:8080/docs` using your JWT token as the `HTTPBearer` token.
    * Hit `Authorize` on the swagger page to enter your JWT token
 
 ## Integration Tests
