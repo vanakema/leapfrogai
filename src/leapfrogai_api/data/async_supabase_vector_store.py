@@ -27,8 +27,6 @@ class AsyncSupabaseVectorStore:
         self.embedding: Embeddings = embedding
         # The name of the database table. Defaults to "vector_content".
         self.table_name: str = "vector_content"
-        # The chunk size for batch operations. Defaults to 500.
-        self.chunk_size: int = 500
         # The name of the query to execute. Defaults to "match_vectors".
         self.query_name: str = "match_vectors"
 
