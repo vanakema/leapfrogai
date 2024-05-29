@@ -28,8 +28,6 @@ create table
     metadata jsonb
   );
 
-CREATE TYPE run_status AS ENUM ('queued', 'in_progress', 'requires_action', 'cancelling', 'cancelled', 'failed', 'completed', 'incomplete', 'expired');
-
 -- Create a table to store the OpenAI Run Objects
 create table
   run_objects (
@@ -39,7 +37,7 @@ create table
     created_at timestamp without time zone DEFAULT NOW(),
     thread_id uuid references thread_objects(id),
     assistant_id uuid references assistant_objects(id),
-    status run_status,
+    status text check (status in ('queued', 'in_progress', 'requires_action', 'cancelling', 'cancelled', 'failed', 'completed', 'incomplete', 'expired')),
     required_action jsonb,
     last_error jsonb,
     expires_at timestamp without time zone,
