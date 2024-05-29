@@ -1,5 +1,7 @@
 """CRUD Operations for VectorStore."""
 
+import time
+
 from pydantic import Field
 from openai.types.beta import VectorStore
 from supabase_py_async import AsyncClient
@@ -27,11 +29,36 @@ class CRUDVectorStore(CRUDBase[AuthVectorStore]):
 
     async def get(self, id_: str) -> AuthVectorStore | None:
         """Get a vector store by its ID."""
-        return await super().get(id_=id_)
+
+        vector_store: AuthVectorStore | None = await super().get(id_=id_)
+
+        if await self.delete_when_expired(vector_store):
+            return None
+
+        return vector_store
 
     async def list(self) -> list[AuthVectorStore] | None:
         """List all vector stores."""
-        return await super().list()
+
+        vector_stores: list[AuthVectorStore] | None = await super().list()
+        non_expired_vector_stores: list[AuthVectorStore] | None = None
+
+        if vector_stores:
+            # Iterate through each vector store and delete expired entries
+            for vector_store in vector_stores:
+                vector_store_deleted: bool = await self.delete_when_expired(
+                    vector_store
+                )
+
+                if vector_store_deleted:
+                    continue
+                else:
+                    if non_expired_vector_stores:
+                        non_expired_vector_stores.append(vector_store)
+                    else:
+                        non_expired_vector_stores = [vector_store]
+
+        return non_expired_vector_stores
 
     async def update(self, id_: str, object_: VectorStore) -> AuthVectorStore | None:
         """Update a vector store by its ID."""
@@ -52,3 +79,14 @@ class CRUDVectorStore(CRUDBase[AuthVectorStore]):
     async def delete(self, id_: str) -> bool:
         """Delete a vector store by its ID."""
         return await super().delete(id_=id_)
+
+    async def delete_when_expired(self, vector_store: AuthVectorStore | None) -> bool:
+        """Delete vector stores when they are expired"""
+
+        if vector_store and vector_store.expires_at and vector_store.expires_after:
+            current_time = int(time.time())
+
+            if current_time > vector_store.expires_at:
+                await self.delete(id_=vector_store.id)
+                return True
+        return False

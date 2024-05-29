@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException, status
 from openai.types.beta import VectorStore, VectorStoreDeleted
 from openai.types.beta.vector_store import FileCounts
 from openai.types.beta.vector_stores import VectorStoreFile, VectorStoreFileDeleted
+
 from leapfrogai_api.backend.rag.index import IndexingService, FileAlreadyIndexedError
 from leapfrogai_api.backend.types import (
     CreateVectorStoreRequest,
@@ -29,6 +30,10 @@ async def create_vector_store(
     """Create a vector store."""
     crud_vector_store = CRUDVectorStore(db=session)
 
+    last_active_at = int(time.time())
+
+    expires_after, expires_at = request.get_expiry(last_active_at)
+
     vector_store = VectorStore(
         id="",  # Leave blank to have Postgres generate a UUID
         bytes=0,  # Automatically calculated by DB
@@ -36,13 +41,13 @@ async def create_vector_store(
         file_counts=FileCounts(
             cancelled=0, completed=0, failed=0, in_progress=0, total=0
         ),
-        last_active_at=int(time.time()),  # Set to current time
+        last_active_at=last_active_at,  # Set to current time
         metadata=request.metadata,
         name=request.name,
         object="vector_store",
         status="in_progress",
-        expires_after=None,  # TODO: Handle expires_after
-        expires_at=None,  # TODO: Handle expires_at
+        expires_after=expires_after,
+        expires_at=expires_at,
     )
     try:
         new_vector_store = await crud_vector_store.create(object_=vector_store)
@@ -129,8 +134,8 @@ async def modify_vector_store(
             name=getattr(request, "name", old_vector_store.name),
             object="vector_store",
             status="in_progress",
-            expires_after=None,  # TODO: Handle expires_after
-            expires_at=None,  # TODO: Handle expires_at
+            expires_after=old_vector_store.expires_after,
+            expires_at=old_vector_store.expires_at,
         )
 
         await crud_vector_store.update(
@@ -173,9 +178,13 @@ async def modify_vector_store(
 
         new_vector_store.status = "completed"
 
-        new_vector_store.last_active_at = int(
-            time.time()
-        )  # Update after indexing files
+        last_active_at = int(time.time())
+        new_vector_store.last_active_at = last_active_at  # Update after indexing files
+        expires_after, expires_at = request.get_expiry(last_active_at)
+
+        if expires_at and expires_at:
+            new_vector_store.expires_after = expires_after
+            new_vector_store.expires_at = expires_at
 
         return await crud_vector_store.update(
             id_=vector_store_id,

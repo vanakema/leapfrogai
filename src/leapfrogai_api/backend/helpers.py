@@ -1,5 +1,6 @@
 """Helper functions for the OpenAI backend."""
 
+import datetime
 from typing import BinaryIO, Iterator
 import grpc
 import leapfrogai_sdk as lfai
@@ -102,3 +103,27 @@ def read_chunks(file: BinaryIO, chunk_size: int) -> Iterator[lfai.AudioRequest]:
         if not chunk:
             break
         yield lfai.AudioRequest(chunk_data=chunk)
+
+
+def add_days_to_timestamp(timestamp: int, days: int) -> int:
+    """
+    Adds a specified number of days to a timestamp. Used to when updating the VectorStore.
+
+    Args:
+        timestamp(int): An integer representing a timestamp.
+        days(int): The number of days to add.
+
+    Returns:
+        An integer representing the new timestamp with the added days.
+    """
+
+    # Convert the timestamp to a datetime object
+    datetime_obj = datetime.datetime.fromtimestamp(timestamp)
+
+    # Add the specified number of days
+    new_datetime_obj = datetime_obj + datetime.timedelta(days=days)
+
+    # Convert the new datetime object back to a timestamp
+    new_timestamp = new_datetime_obj.timestamp()
+
+    return int(new_timestamp)

@@ -10,6 +10,9 @@ from openai.types.beta import VectorStore
 from openai.types.beta import Assistant, AssistantTool
 from openai.types.beta.assistant import ToolResources
 
+from leapfrogai_api.backend.helpers import add_days_to_timestamp
+
+
 ##########
 # GENERIC
 ##########
@@ -288,6 +291,26 @@ class CreateVectorStoreRequest(BaseModel):
     name: str | None = None
     expires_after: ExpiresAfter | None = ExpiresAfter(anchor="last_active_at", days=0)
     metadata: dict | None = {}
+
+    def can_expire(self) -> bool:
+        return self.expires_after is not None
+
+    def get_expiry(self, last_active_at: int) -> tuple[ExpiresAfter | None, int | None]:
+        """
+        Return expiration details based on the provided last_active_at unix timestamp
+
+        Args:
+            last_active_at(int): An integer representing a timestamp when the vector store was last active.
+
+        Returns:
+            A tuple of when the vector store should expire and the timestamp of the expiry date.
+        """
+        if self.can_expire():
+            return self.expires_after, add_days_to_timestamp(
+                last_active_at, self.expires_after.days
+            )
+        else:
+            return None, None
 
 
 class ModifyVectorStoreRequest(CreateVectorStoreRequest):
