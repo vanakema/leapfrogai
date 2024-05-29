@@ -19,6 +19,10 @@ embeddings_type: type[Embeddings] | type[LeapfrogAIEmbeddings] | None = (
 )
 
 
+class FileAlreadyIndexedError(Exception):
+    pass
+
+
 class IndexingService:
     """Service for indexing files into a vector store."""
 
@@ -33,7 +37,7 @@ class IndexingService:
         if await crud_vector_store_file.get(
             vector_store_id=vector_store_id, file_id=file_id
         ):
-            raise ValueError("File already indexed")
+            raise FileAlreadyIndexedError("File already indexed")
 
         crud_file_object = CRUDFileObject(db=self.db)
         crud_file_bucket = CRUDFileBucket(db=self.db, model=UploadFile)

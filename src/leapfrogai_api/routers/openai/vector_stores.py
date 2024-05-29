@@ -1,11 +1,12 @@
 """OpenAI Compliant Vector Store API Router."""
 
+import logging
 import time
 from fastapi import APIRouter, HTTPException, status
 from openai.types.beta import VectorStore, VectorStoreDeleted
 from openai.types.beta.vector_store import FileCounts
 from openai.types.beta.vector_stores import VectorStoreFile, VectorStoreFileDeleted
-from leapfrogai_api.backend.rag.index import IndexingService
+from leapfrogai_api.backend.rag.index import IndexingService, FileAlreadyIndexedError
 from leapfrogai_api.backend.types import (
     CreateVectorStoreRequest,
     ListVectorStoresResponse,
@@ -143,12 +144,22 @@ async def modify_vector_store(
         ) from exc
 
     try:
-        if request.file_ids != []:
+        if request.file_ids:
             indexing_service = IndexingService(db=session)
+
             for file_id in request.file_ids:
-                response = await indexing_service.index_file(
-                    vector_store_id=vector_store_id, file_id=file_id
-                )
+                try:
+                    response = await indexing_service.index_file(
+                        vector_store_id=vector_store_id, file_id=file_id
+                    )
+                except FileAlreadyIndexedError:
+                    """Skip this file if it has already been indexed"""
+                    logging.info(
+                        f"File {file_id} already exists and cannot be re-indexed"
+                    )
+                    continue
+                except Exception as exc:
+                    raise exc
 
                 if response.status == "completed":
                     new_vector_store.file_counts.completed += 1
