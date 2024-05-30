@@ -356,15 +356,15 @@ class CreateThreadRequest(BaseModel):
     """Request object for creating a thread."""
 
     messages: list[Message] | None
-    metadata: dict | None = {}
     tool_resources: ToolResources | None = ToolResources()
+    metadata: dict | None = {}
 
 
 class ModifyThreadRequest(BaseModel):
     """Request object for modifying a thread."""
     
-    metadata: dict | None = {}
     tool_resources: ToolResources | None = ToolResources()
+    metadata: dict | None = {}
 
 ################
 # LEAPFROGAI RAG
