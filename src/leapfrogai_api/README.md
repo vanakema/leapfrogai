@@ -34,9 +34,8 @@ A mostly OpenAI compliant API surface.
 4. Create a JWT token
     ```bash
     make supabase-jwt-token
-    source .jwt
     ```
-    This will export an environment variable `SUPABASE_USER_JWT` and create a file called `.jwt` to save it.
+    This will copy the JWT token to your clipboard.
 
 
 5. Make calls to the api swagger endpoint at `http://localhost:8080/docs` using your JWT token as the `HTTPBearer` token. 
@@ -51,21 +50,22 @@ The integration tests serve to identify any mismatches between components:
 - DB CRUD operations
 - Schema mismatches
 
+### Prerequisites
+
 Integration tests require a Supabase instance and environment variables configured (see [Local Development](#local-development)).
 
-Also requires a JWT environment variable that is only used for tests:
+### Authentication
+Tests require a JWT token environment variable `SUPABASE_USER_JWT`:
 
 ``` bash
-export SUPABASE_USER_JWT="<your JWT>"
+make supabase-jwt-token
+source .jwt
 ```
-
-
-From this directory run:
-
-``` bash
+### Running the tests
+```
 make test-integration
 ```
 
 ## Notes
 
-* All API calls to `assistants` or `files` endpoints must be authenticated via a Supabase JWT token in the message's `Authorization` header.
+* All API calls must be authenticated via a Supabase JWT token in the message's `Authorization` header, including swagger docs.
