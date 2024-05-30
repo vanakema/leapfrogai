@@ -28,7 +28,7 @@ async def create_thread(request: CreateThreadRequest, session: Session) -> Threa
     new_messages: list[Message] = []
     try:
         crud_thread = CRUDThread(db=session)
-    
+
         thread = Thread(
             id="",  # Leave blank to have Postgres generate a UUID
             created_at=0,  # Leave blank to have Postgres generate a timestamp
@@ -117,7 +117,7 @@ async def delete_thread(thread_id: str, session: Session) -> ThreadDeleted:
     """Delete a thread."""
     try:
         crud_thread = CRUDThread(db=session)
-    
+
         thread_deleted = await crud_thread.delete(id_=thread_id)
         return ThreadDeleted(
             id=thread_id,
@@ -138,7 +138,7 @@ async def create_message(
     """Create a message."""
     try:
         crud_message = CRUDMessage(db=session)
-    
+
         message = Message(
             id="",  # Leave blank to have Postgres generate a UUID
             attachments=request.attachments,
