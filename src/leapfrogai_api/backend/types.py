@@ -347,8 +347,9 @@ class ListVectorStoresResponse(BaseModel):
     object: str = Literal["list"]
     data: list[VectorStore] = []
 
+
 ################
-# THREADS
+# THREADS, RUNS, MESSAGES
 ################
 
 
@@ -362,9 +363,10 @@ class CreateThreadRequest(BaseModel):
 
 class ModifyThreadRequest(BaseModel):
     """Request object for modifying a thread."""
-    
+
     tool_resources: ToolResources | None = ToolResources()
     metadata: dict | None = {}
+
 
 ################
 # LEAPFROGAI RAG

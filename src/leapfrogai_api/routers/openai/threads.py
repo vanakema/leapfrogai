@@ -1,4 +1,5 @@
 """OpenAI Compliant Threads API Router."""
+
 import traceback
 
 from fastapi import HTTPException, APIRouter, status
@@ -17,10 +18,7 @@ security = HTTPBearer()
 
 
 @router.post("")
-async def create_thread(
-        request: CreateThreadRequest,
-        session: Session
-) -> Thread:
+async def create_thread(request: CreateThreadRequest, session: Session) -> Thread:
     """Create a thread."""
     crud_thread = CRUDThread(db=session)
 
@@ -49,7 +47,9 @@ async def retrieve_thread(thread_id: str, session: Session) -> Thread:
 
 
 @router.post("/{thread_id}")
-async def modify_thread(thread_id: str, request: ModifyThreadRequest, session: Session) -> Thread:
+async def modify_thread(
+    thread_id: str, request: ModifyThreadRequest, session: Session
+) -> Thread:
     """Modify a thread."""
     thread = CRUDThread(db=session)
 
@@ -65,7 +65,9 @@ async def modify_thread(thread_id: str, request: ModifyThreadRequest, session: S
             created_at=old_thread.created_at,
             metadata=getattr(request, "metadata", old_thread.metadata),
             object="thread",
-            tool_resources=getattr(request, "tool_resources", old_thread.tool_resources),
+            tool_resources=getattr(
+                request, "tool_resources", old_thread.tool_resources
+            ),
         )
 
         return await thread.update(
