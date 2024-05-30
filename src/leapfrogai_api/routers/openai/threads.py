@@ -82,8 +82,15 @@ async def modify_thread(thread_id: str, request: ModifyThreadRequest, session: S
 @router.delete("/{thread_id}")
 async def delete_thread(thread_id: str, session: Session) -> ThreadDeleted:
     """Delete a thread."""
-    # TODO: Implement this function
-    raise HTTPException(status_code=501, detail="Not implemented")
+
+    crud_thread = CRUDThread(db=session)
+
+    thread_deleted = await crud_thread.delete(id_=thread_id)
+    return ThreadDeleted(
+        id=thread_id,
+        object="thread.deleted",
+        deleted=bool(thread_deleted),
+    )
 
 
 @router.post("/{thread_id}/messages")
