@@ -8,7 +8,7 @@ from openai.types.beta.threads import Message
 from openai.types.beta.threads import Run
 from openai.types.beta.threads.runs import RunStep
 
-from leapfrogai_api.backend.types import CreateThreadRequest
+from leapfrogai_api.backend.types import CreateThreadRequest, ModifyThreadRequest
 from leapfrogai_api.data.crud_thread import CRUDThread
 from leapfrogai_api.routers.supabase_session import Session
 
@@ -44,15 +44,39 @@ async def create_thread(
 @router.get("/{thread_id}")
 async def retrieve_thread(thread_id: str, session: Session) -> Thread:
     """Retrieve a thread."""
-    # TODO: Implement this function
-    raise HTTPException(status_code=501, detail="Not implemented")
+    crud_thread = CRUDThread(db=session)
+    return await crud_thread.get(id_=thread_id)
 
 
 @router.post("/{thread_id}")
-async def modify_thread(thread_id: str, session: Session) -> Thread:
+async def modify_thread(thread_id: str, request: ModifyThreadRequest, session: Session) -> Thread:
     """Modify a thread."""
-    # TODO: Implement this function
-    raise HTTPException(status_code=501, detail="Not implemented")
+    thread = CRUDThread(db=session)
+
+    if not (old_thread := await thread.get(id_=thread_id)):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Thread not found",
+        )
+
+    try:
+        new_thread = Thread(
+            id=thread_id,
+            created_at=old_thread.created_at,
+            metadata=getattr(request, "metadata", old_thread.metadata),
+            object="thread",
+            tool_resources=old_thread.tool_resources,
+        )
+
+        await thread.update(
+            id_=thread_id,
+            object_=new_thread,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unable to parse thread request",
+        ) from exc
 
 
 @router.delete("/{thread_id}")

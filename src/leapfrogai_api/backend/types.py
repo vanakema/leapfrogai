@@ -10,6 +10,7 @@ from openai.types.beta.vector_store import ExpiresAfter
 from openai.types import FileObject
 from openai.types.beta import VectorStore
 from openai.types.beta import Assistant, AssistantTool
+from openai.types.beta.threads import Message
 from openai.types.beta.assistant import ToolResources
 
 
@@ -354,18 +355,16 @@ class ListVectorStoresResponse(BaseModel):
 class CreateThreadRequest(BaseModel):
     """Request object for creating a thread."""
 
+    messages: list[Message] | None
     metadata: dict | None = {}
+    tool_resources: ToolResources | None = ToolResources()
 
 
-class ModifyThreadRequest(CreateThreadRequest):
+class ModifyThreadRequest(BaseModel):
     """Request object for modifying a thread."""
-
-
-class ListThreadsResponse(BaseModel):
-    """Response object for listing files."""
-
-    object: str = Literal["list"]
-    data: list[Thread] = []
+    
+    metadata: dict | None = {}
+    tool_resources: ToolResources | None = ToolResources()
 
 ################
 # LEAPFROGAI RAG
