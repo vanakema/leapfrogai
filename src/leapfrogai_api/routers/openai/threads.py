@@ -26,6 +26,7 @@ security = HTTPBearer()
 async def create_thread(request: CreateThreadRequest, session: Session) -> Thread:
     """Create a thread."""
     new_messages: list[Message] = []
+    new_thread: Thread | None = None
     try:
         crud_thread = CRUDThread(db=session)
 
@@ -37,7 +38,7 @@ async def create_thread(request: CreateThreadRequest, session: Session) -> Threa
             tool_resources=request.tool_resources,
         )
 
-        new_thread = await crud_thread.create(object_=thread)
+        new_thread: Thread = await crud_thread.create(object_=thread)
 
         if new_thread and request.messages:
             """Once the thread has been created, add all of the request's messages to the DB"""
@@ -57,11 +58,12 @@ async def create_thread(request: CreateThreadRequest, session: Session) -> Threa
 
         return new_thread
     except Exception as exc:
-        for message in new_messages:
-            """Clean up any messages added prior to the error"""
-            await delete_message(
-                thread_id=new_thread.id, message_id=message.id, session=session
-            )
+        if new_thread:
+            for message in new_messages:
+                """Clean up any messages added prior to the error"""
+                await delete_message(
+                    thread_id=new_thread.id, message_id=message.id, session=session
+                )
 
         traceback.print_exc()
         raise HTTPException(
