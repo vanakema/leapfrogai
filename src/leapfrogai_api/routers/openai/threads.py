@@ -35,9 +35,34 @@ async def create_thread(request: CreateThreadRequest, session: Session) -> Threa
         object="thread",
         tool_resources=request.tool_resources,
     )
+
+    new_messages: list[Message] = []
+
     try:
-        return await crud_thread.create(object_=thread)
+        new_thread = await crud_thread.create(object_=thread)
+
+        if request.messages:
+            """Once the thread has been created, add any messages contained in the request to the DB"""
+            for message in request.messages:
+                new_messages.append(
+                    await create_message(
+                        new_thread.id,
+                        CreateMessageRequest(
+                            role=message.role,
+                            content=message.content,
+                            attachments=message.attachments,
+                            metadata=message.metadata,
+                        ),
+                        session,
+                    )
+                )
+
+        return new_thread
     except Exception as exc:
+        for message in new_messages:
+            """Clean up any messages added prior to the error"""
+            await delete_message(new_thread.id, message.id, session)
+
         traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
@@ -188,6 +213,24 @@ async def modify_message(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Unable to parse message request",
         ) from exc
+
+
+@router.get("/{thread_id}/messages/{message_id}")
+async def delete_message(
+    thread_id: str, message_id: str, session: Session
+) -> list[Message]:
+    """List all the messages in a thread."""
+
+    crud_message = CRUDMessage(db=session)
+
+    message_deleted = await crud_message.delete(id_=message_id)
+    # TODO: Update OpenAI version to get access to this object
+    # return MessageDeleted(
+    #     id=message_id,
+    #     object="message.deleted",
+    #     deleted=bool(message_deleted),
+    # )
+    raise HTTPException(status_code=501, detail="Not implemented")
 
 
 @router.post("/{thread_id}/runs")
