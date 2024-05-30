@@ -75,7 +75,11 @@ class CRUDMessage(CRUDBase[AuthMessage]):
     async def delete(self, id_: str, thread_id: str) -> bool:
         """Delete a message by its ID and thread ID."""
         data, _count = (
-            await self.db.table(self.table_name).delete().eq("id", id_).eq("thread_id", thread_id).execute()
+            await self.db.table(self.table_name)
+            .delete()
+            .eq("id", id_)
+            .eq("thread_id", thread_id)
+            .execute()
         )
 
         _, response = data

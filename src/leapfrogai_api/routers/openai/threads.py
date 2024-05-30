@@ -60,7 +60,9 @@ async def create_thread(request: CreateThreadRequest, session: Session) -> Threa
     except Exception as exc:
         for message in new_messages:
             """Clean up any messages added prior to the error"""
-            await delete_message(thread_id=new_thread.id, message_id=message.id, session=session)
+            await delete_message(
+                thread_id=new_thread.id, message_id=message.id, session=session
+            )
 
         traceback.print_exc()
         raise HTTPException(
