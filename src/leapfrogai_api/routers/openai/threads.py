@@ -29,7 +29,7 @@ async def create_thread(
         created_at=0,  # Leave blank to have Postgres generate a timestamp
         metadata=request.metadata,
         object="thread",
-        tool_resources=None,
+        tool_resources=request.tool_resources,
     )
     try:
         return await crud_thread.create(object_=thread)
@@ -37,7 +37,7 @@ async def create_thread(
         traceback.print_exc()
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Unable to create vector store",
+            detail="Unable to create thread",
         ) from exc
 
 
@@ -65,10 +65,10 @@ async def modify_thread(thread_id: str, request: ModifyThreadRequest, session: S
             created_at=old_thread.created_at,
             metadata=getattr(request, "metadata", old_thread.metadata),
             object="thread",
-            tool_resources=old_thread.tool_resources,
+            tool_resources=getattr(request, "tool_resources", old_thread.tool_resources),
         )
 
-        await thread.update(
+        return await thread.update(
             id_=thread_id,
             object_=new_thread,
         )
