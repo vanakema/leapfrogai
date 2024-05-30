@@ -144,6 +144,7 @@ async def create_message(
         message = Message(
             id="",  # Leave blank to have Postgres generate a UUID
             attachments=request.attachments,
+            content=request.content,
             created_at=0,  # Leave blank to have Postgres generate a timestamp
             metadata=request.metadata,
             object="thread.message",
@@ -207,6 +208,7 @@ async def modify_message(
         new_message = Message(
             id=message_id,
             created_at=old_message.created_at,
+            content=getattr(request, "content", old_message.content),
             metadata=getattr(request, "metadata", old_message.metadata),
             object="thread.message",
             attachments=old_message.attachments,
