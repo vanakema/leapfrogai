@@ -5,8 +5,7 @@ import traceback
 from fastapi import HTTPException, APIRouter, status
 from fastapi.security import HTTPBearer
 from openai.types.beta import Thread, ThreadDeleted
-from openai.types.beta.threads import Message
-from openai.types.beta.threads import Run
+from openai.types.beta.threads import Message, MessageDeleted, Run
 from openai.types.beta.threads.runs import RunStep
 
 from leapfrogai_api.backend.types import (
@@ -42,7 +41,7 @@ async def create_thread(request: CreateThreadRequest, session: Session) -> Threa
         new_thread = await crud_thread.create(object_=thread)
 
         if request.messages:
-            """Once the thread has been created, add any messages contained in the request to the DB"""
+            """Once the thread has been created, add all of the request's messages to the DB"""
             for message in request.messages:
                 new_messages.append(
                     await create_message(
@@ -61,7 +60,7 @@ async def create_thread(request: CreateThreadRequest, session: Session) -> Threa
     except Exception as exc:
         for message in new_messages:
             """Clean up any messages added prior to the error"""
-            await delete_message(new_thread.id, message.id, session)
+            await delete_message(thread_id=new_thread.id, message_id=message.id, session=session)
 
         traceback.print_exc()
         raise HTTPException(
@@ -218,19 +217,16 @@ async def modify_message(
 @router.get("/{thread_id}/messages/{message_id}")
 async def delete_message(
     thread_id: str, message_id: str, session: Session
-) -> list[Message]:
-    """List all the messages in a thread."""
+) -> MessageDeleted:
+    """Delete message from a thread."""
 
     crud_message = CRUDMessage(db=session)
-
-    message_deleted = await crud_message.delete(id_=message_id)
-    # TODO: Update OpenAI version to get access to this object
-    # return MessageDeleted(
-    #     id=message_id,
-    #     object="message.deleted",
-    #     deleted=bool(message_deleted),
-    # )
-    raise HTTPException(status_code=501, detail="Not implemented")
+    message_deleted = await crud_message.delete(id_=message_id, thread_id=thread_id)
+    return MessageDeleted(
+        id=message_id,
+        deleted=bool(message_deleted),
+        object="thread.message.deleted",
+    )
 
 
 @router.post("/{thread_id}/runs")

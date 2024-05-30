@@ -43,7 +43,7 @@ class CRUDMessage(CRUDBase[AuthMessage]):
         return None
 
     async def list(self, thread_id: str) -> list[AuthMessage] | None:
-        """List all messages."""
+        """List all messages by thread ID."""
         data, _count = (
             await self.db.table(self.table_name)
             .select("*")
@@ -72,6 +72,12 @@ class CRUDMessage(CRUDBase[AuthMessage]):
             return self.model(**response[0])
         return None
 
-    async def delete(self, id_: str) -> bool:
-        """Delete a message by its ID."""
-        return await super().delete(id_=id_)
+    async def delete(self, id_: str, thread_id: str) -> bool:
+        """Delete a message by its ID and thread ID."""
+        data, _count = (
+            await self.db.table(self.table_name).delete().eq("id", id_).eq("thread_id", thread_id).execute()
+        )
+
+        _, response = data
+
+        return bool(response)
