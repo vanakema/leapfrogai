@@ -23,7 +23,8 @@ supabase-user:
 	-d '{ "email": "admin@localhost", "password": "$$SUPABASE_PASS", "confirmPassword": "$$SUPABASE_PASS"}'); \
 	echo "Signup response received..."; \
 	JWT=$$(echo $$TOKEN_RESPONSE | grep -oP '(?<="access_token":")[^"]*'); \
-	echo -n "$$JWT" | xclip -selection clipboard
+	echo -n "$$JWT" | xclip -selection clipboard; \
+	echo "export SUPABASE_USER_JWT=$$JWT" > .jwt
 	@echo "DONE - JWT token copied to clipboard"
 	
 # Gets a new JWT token for local admin user
@@ -36,7 +37,8 @@ supabase-jwt-token:
 	-d '{ "email": "admin@localhost", "password": "$$SUPABASE_PASS"}'); \
 	echo "Extracting token..."; \
 	JWT=$$(echo $$TOKEN_RESPONSE | grep -oP '(?<="access_token":")[^"]*'); \
-	echo -n "$$JWT" | xclip -selection clipboard
+	echo -n "$$JWT" | xclip -selection clipboard; \
+	echo "export SUPABASE_USER_JWT=$$JWT" > .jwt
 	@echo "DONE - JWT token copied to clipboard"
 
 
