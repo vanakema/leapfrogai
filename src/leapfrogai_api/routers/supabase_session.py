@@ -40,13 +40,22 @@ async def init_supabase_client(
         )
     except errors.AuthApiError as e:
         logging.error(f"\t{e}")
-        raise HTTPException(detail="Token has expired or is not valid. Generate a new token", status_code=status.HTTP_401_UNAUTHORIZED)
+        raise HTTPException(
+            detail="Token has expired or is not valid. Generate a new token",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
     except binascii.Error as e:
         logging.exception(f"\t{e}")
-        raise HTTPException(detail="Failed to validate Authentication Token", status_code=status.HTTP_401_UNAUTHORIZED)
+        raise HTTPException(
+            detail="Failed to validate Authentication Token",
+            status_code=status.HTTP_401_UNAUTHORIZED,
+        )
     except Exception as e:
         logging.exception(f"\t{e}")
-        raise HTTPException(detail="Failed to create Supabase session", status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
+        raise HTTPException(
+            detail="Failed to create Supabase session",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+        )
 
     await validate_user_authorization(
         session=client, authorization=auth_creds.credentials
