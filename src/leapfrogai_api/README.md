@@ -29,9 +29,10 @@ A mostly OpenAI compliant API surface.
 
 3. Create a user in Supabase if you don't already have one to enable making authenticated calls from swagger, curl, etc...
     * Docker/Python
-      ```bash
+    ```bash
       make supabase-user
-      ```
+   ```
+      
     * K8s
      ```bash
      curl -X POST 'http://localhost:54321/auth/v1/signup' \-H "apikey: <anon-key>" \-H "Content-Type: application/json" \-d '{ "email": "<email>", "password": "<password>", "confirmPassword": "<password>"}'
