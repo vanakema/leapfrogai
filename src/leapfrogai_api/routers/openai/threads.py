@@ -25,22 +25,21 @@ security = HTTPBearer()
 @router.post("")
 async def create_thread(request: CreateThreadRequest, session: Session) -> Thread:
     """Create a thread."""
-    crud_thread = CRUDThread(db=session)
-
-    thread = Thread(
-        id="",  # Leave blank to have Postgres generate a UUID
-        created_at=0,  # Leave blank to have Postgres generate a timestamp
-        metadata=request.metadata,
-        object="thread",
-        tool_resources=request.tool_resources,
-    )
-
     new_messages: list[Message] = []
-
     try:
+        crud_thread = CRUDThread(db=session)
+    
+        thread = Thread(
+            id="",  # Leave blank to have Postgres generate a UUID
+            created_at=0,  # Leave blank to have Postgres generate a timestamp
+            metadata=request.metadata,
+            object="thread",
+            tool_resources=request.tool_resources,
+        )
+
         new_thread = await crud_thread.create(object_=thread)
 
-        if request.messages:
+        if new_thread and request.messages:
             """Once the thread has been created, add all of the request's messages to the DB"""
             for message in request.messages:
                 new_messages.append(
@@ -116,15 +115,20 @@ async def modify_thread(
 @router.delete("/{thread_id}")
 async def delete_thread(thread_id: str, session: Session) -> ThreadDeleted:
     """Delete a thread."""
-
-    crud_thread = CRUDThread(db=session)
-
-    thread_deleted = await crud_thread.delete(id_=thread_id)
-    return ThreadDeleted(
-        id=thread_id,
-        object="thread.deleted",
-        deleted=bool(thread_deleted),
-    )
+    try:
+        crud_thread = CRUDThread(db=session)
+    
+        thread_deleted = await crud_thread.delete(id_=thread_id)
+        return ThreadDeleted(
+            id=thread_id,
+            object="thread.deleted",
+            deleted=bool(thread_deleted),
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unable to delete thread",
+        ) from exc
 
 
 @router.post("/{thread_id}/messages")
@@ -132,19 +136,19 @@ async def create_message(
     thread_id: str, request: CreateMessageRequest, session: Session
 ) -> Message:
     """Create a message."""
-    crud_message = CRUDMessage(db=session)
-
-    message = Message(
-        id="",  # Leave blank to have Postgres generate a UUID
-        attachments=request.attachments,
-        created_at=0,  # Leave blank to have Postgres generate a timestamp
-        metadata=request.metadata,
-        object="thread.message",
-        role=request.role,
-        status="in_progress",
-        thread_id=thread_id,
-    )
     try:
+        crud_message = CRUDMessage(db=session)
+    
+        message = Message(
+            id="",  # Leave blank to have Postgres generate a UUID
+            attachments=request.attachments,
+            created_at=0,  # Leave blank to have Postgres generate a timestamp
+            metadata=request.metadata,
+            object="thread.message",
+            role=request.role,
+            status="in_progress",
+            thread_id=thread_id,
+        )
         return await crud_message.create(object_=message)
     except Exception as exc:
         traceback.print_exc()
@@ -157,7 +161,6 @@ async def create_message(
 @router.get("/{thread_id}/messages")
 async def list_messages(thread_id: str, session: Session) -> list[Message]:
     """List all the messages in a thread."""
-
     try:
         crud_message = CRUDMessage(db=session)
         messages = await crud_message.list(thread_id=thread_id)
@@ -175,9 +178,14 @@ async def retrieve_message(
     thread_id: str, message_id: str, session: Session
 ) -> Message:
     """Retrieve a message."""
-
-    crud_message = CRUDMessage(db=session)
-    return await crud_message.get(id_=message_id, thread_id=thread_id)
+    try:
+        crud_message = CRUDMessage(db=session)
+        return await crud_message.get(id_=message_id, thread_id=thread_id)
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to retrieve message",
+        ) from exc
 
 
 @router.post("/{thread_id}/messages/{message_id}")
