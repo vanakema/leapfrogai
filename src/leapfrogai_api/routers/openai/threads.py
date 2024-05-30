@@ -13,6 +13,7 @@ from leapfrogai_api.backend.types import (
     CreateThreadRequest,
     ModifyThreadRequest,
     CreateMessageRequest,
+    ModifyMessageRequest,
 )
 from leapfrogai_api.data.crud_message import CRUDMessage
 from leapfrogai_api.data.crud_thread import CRUDThread
@@ -148,15 +149,45 @@ async def retrieve_message(
     thread_id: str, message_id: str, session: Session
 ) -> Message:
     """Retrieve a message."""
-    # TODO: Implement this function
-    raise HTTPException(status_code=501, detail="Not implemented")
+
+    crud_message = CRUDMessage(db=session)
+    return await crud_message.get(id_=message_id, thread_id=thread_id)
 
 
 @router.post("/{thread_id}/messages/{message_id}")
-async def modify_message(thread_id: str, message_id: str, session: Session) -> Message:
+async def modify_message(
+    thread_id: str, message_id: str, request: ModifyMessageRequest, session: Session
+) -> Message:
     """Modify a message."""
-    # TODO: Implement this function
-    raise HTTPException(status_code=501, detail="Not implemented")
+    message = CRUDMessage(db=session)
+
+    if not (old_message := await message.get(id_=message_id)):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Message not found",
+        )
+
+    try:
+        new_message = Message(
+            id=message_id,
+            created_at=old_message.created_at,
+            metadata=getattr(request, "metadata", old_message.metadata),
+            object="thread.message",
+            attachments=old_message.attachments,
+            role=old_message.role,
+            status=old_message.status,
+            thread_id=thread_id,
+        )
+
+        return await message.update(
+            id_=message_id,
+            object_=new_message,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unable to parse message request",
+        ) from exc
 
 
 @router.post("/{thread_id}/runs")

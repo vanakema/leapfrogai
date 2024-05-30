@@ -25,10 +25,22 @@ class CRUDMessage(CRUDBase[AuthMessage]):
             object_=AuthMessage(user_id=user_id, **object_.model_dump())
         )
 
-    async def get(self, id_: str) -> AuthMessage | None:
+    async def get(self, id_: str, thread_id: str) -> AuthMessage | None:
         """Get a vector store by its ID."""
 
-        return await super().get(id_=id_)
+        data, _count = (
+            await self.db.table(self.table_name)
+            .select("*")
+            .eq("id", id_)
+            .eq("thread_id", thread_id)
+            .execute()
+        )
+
+        _, response = data
+
+        if response:
+            return self.model(**response[0])
+        return None
 
     async def list(self, thread_id: str) -> list[AuthMessage] | None:
         """List all messages."""
