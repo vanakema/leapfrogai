@@ -3,14 +3,15 @@
 from __future__ import annotations
 
 import datetime
-from typing import Literal
+from typing import Literal, Optional, List
 from pydantic import BaseModel, Field
 from fastapi import UploadFile, Form, File
 from openai.types.beta.vector_store import ExpiresAfter
 from openai.types import FileObject
 from openai.types.beta import VectorStore
 from openai.types.beta import Assistant, AssistantTool
-from openai.types.beta.threads import Message
+from openai.types.beta.threads import Message, MessageContent
+from openai.types.beta.threads.message import Attachment
 from openai.types.beta.assistant import ToolResources
 
 
@@ -366,6 +367,21 @@ class ModifyThreadRequest(BaseModel):
 
     tool_resources: ToolResources | None = ToolResources()
     metadata: dict | None = {}
+
+
+class CreateMessageRequest(BaseModel):
+    """Request object for creating a message."""
+
+    role: Literal["user", "assistant"]
+    content: MessageContent
+    attachments: Optional[List[Attachment]]
+    metadata: Optional[dict] = {}
+
+
+class ModifyMessageRequest(BaseModel):
+    """Request object for modifying a message."""
+
+    metadata: Optional[dict] = {}
 
 
 ################
