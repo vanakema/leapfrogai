@@ -357,25 +357,25 @@ class ListVectorStoresResponse(BaseModel):
 class CreateThreadRequest(BaseModel):
     """Request object for creating a thread."""
 
-    messages: list[Message] | None
-    tool_resources: ToolResources | None = ToolResources()
-    metadata: dict | None = {}
+    messages: Optional[list[Message]] = Field(default=None)
+    tool_resources: Optional[ToolResources] = Field(default=None)
+    metadata: Optional[dict] = Field(default=None)
 
 
 class ModifyThreadRequest(BaseModel):
     """Request object for modifying a thread."""
 
-    tool_resources: ToolResources | None = ToolResources()
-    metadata: dict | None = {}
+    tool_resources: Optional[ToolResources] = Field(default=None)
+    metadata: Optional[dict] = Field(default=None)
 
 
 class CreateMessageRequest(BaseModel):
     """Request object for creating a message."""
 
-    role: Literal["user", "assistant"]
-    content: MessageContent
-    attachments: Optional[List[Attachment]]
-    metadata: Optional[dict] = {}
+    role: Literal["user", "assistant"] = Field(default="user")
+    content: MessageContent = Field(default=MessageContent())
+    attachments: Optional[List[Attachment]] = Field(default=None)
+    metadata: Optional[dict] = Field(default=None)
 
 
 class ModifyMessageRequest(BaseModel):
