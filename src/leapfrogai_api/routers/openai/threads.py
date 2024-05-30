@@ -9,7 +9,12 @@ from openai.types.beta.threads import Message
 from openai.types.beta.threads import Run
 from openai.types.beta.threads.runs import RunStep
 
-from leapfrogai_api.backend.types import CreateThreadRequest, ModifyThreadRequest
+from leapfrogai_api.backend.types import (
+    CreateThreadRequest,
+    ModifyThreadRequest,
+    CreateMessageRequest,
+)
+from leapfrogai_api.data.crud_message import CRUDMessage
 from leapfrogai_api.data.crud_thread import CRUDThread
 from leapfrogai_api.routers.supabase_session import Session
 
@@ -96,10 +101,30 @@ async def delete_thread(thread_id: str, session: Session) -> ThreadDeleted:
 
 
 @router.post("/{thread_id}/messages")
-async def create_message(thread_id: str, session: Session) -> Message:
+async def create_message(
+    thread_id: str, request: CreateMessageRequest, session: Session
+) -> Message:
     """Create a message."""
-    # TODO: Implement this function
-    raise HTTPException(status_code=501, detail="Not implemented")
+    crud_message = CRUDMessage(db=session)
+
+    message = Message(
+        id="",  # Leave blank to have Postgres generate a UUID
+        attachments=request.attachments,
+        created_at=0,  # Leave blank to have Postgres generate a timestamp
+        metadata=request.metadata,
+        object="thread.message",
+        role=request.role,
+        status="in_progress",
+        thread_id=thread_id,
+    )
+    try:
+        return await crud_message.create(object_=message)
+    except Exception as exc:
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to create message",
+        ) from exc
 
 
 @router.get("/{thread_id}/messages")
