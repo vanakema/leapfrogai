@@ -7,6 +7,8 @@ from supabase_py_async import AsyncClient, create_client, ClientOptions
 from httpx import HTTPStatusError
 from gotrue import errors, types
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+import logging
+from base64 import binascii
 
 security = HTTPBearer()
 
@@ -43,6 +45,10 @@ async def init_supabase_client(
             )
         else:
             raise err
+    except binascii.Error as e:
+        raise HTTPException(detail="Failed to validate Authentication Token", status_code=status.HTTP_401_UNAUTHORIZED)
+    except Exception as e:
+        raise HTTPException(detail="Failed to create Supabase session", status_code=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
     await validate_user_authorization(
         session=client, authorization=auth_creds.credentials
