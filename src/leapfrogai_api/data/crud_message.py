@@ -30,10 +30,20 @@ class CRUDMessage(CRUDBase[AuthMessage]):
 
         return await super().get(id_=id_)
 
-    async def list(self) -> list[AuthMessage] | None:
+    async def list(self, thread_id: str) -> list[AuthMessage] | None:
         """List all messages."""
+        data, _count = (
+            await self.db.table(self.table_name)
+            .select("*")
+            .eq("thread_id", thread_id)
+            .execute()
+        )
 
-        return await super().list()
+        _, response = data
+
+        if response:
+            return [self.model(**item) for item in response]
+        return None
 
     async def update(self, id_: str, object_: Message) -> AuthMessage | None:
         """Update a message by its ID."""
