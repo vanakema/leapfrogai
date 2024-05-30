@@ -346,6 +346,26 @@ class ListVectorStoresResponse(BaseModel):
     object: str = Literal["list"]
     data: list[VectorStore] = []
 
+################
+# THREADS
+################
+
+
+class CreateThreadRequest(BaseModel):
+    """Request object for creating a thread."""
+
+    metadata: dict | None = {}
+
+
+class ModifyThreadRequest(CreateThreadRequest):
+    """Request object for modifying a thread."""
+
+
+class ListThreadsResponse(BaseModel):
+    """Response object for listing files."""
+
+    object: str = Literal["list"]
+    data: list[Thread] = []
 
 ################
 # LEAPFROGAI RAG
