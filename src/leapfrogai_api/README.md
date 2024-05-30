@@ -2,45 +2,59 @@
 
 A mostly OpenAI compliant API surface.
 
-## Requirements
+### Requirements
 
 - Supabase
 - Libreoffice ([Unstructured dependency via LangChain](https://python.langchain.com/docs/integrations/providers/unstructured/) for docx parsing)
 
-## Local Development
+## Local Development Setup
 
-1. Create a local Supabase instance (requires [Supabase CLI](https://supabase.com/docs/guides/cli/getting-started)):
+1. Install dependencies
+    ```bash
+    make install
+    ```
 
-    ``` bash
+2. Create a local Supabase instance (requires [Supabase CLI](https://supabase.com/docs/guides/cli/getting-started)):
+    ```bash
+    brew install supabase/tap/supabases
+
     supabase start # from /leapfrogai
+
+    supabase stop --project-id leapfrogai_api # stop api containers
 
     supabase db reset # clears all data and reinitializes migrations
 
     supabase status # to check status and see your keys
     ```
 
-2. Create a user in Supabase if you don't already have one to enable making authenticated calls from swagger, curl, etc...
-   ```bash
-   curl -X POST 'http://localhost:54321/auth/v1/signup' \-H "apikey: <anon-key>" \-H "Content-Type: application/json" \-d '{ "email": "<email>", "password": "<password>", "confirmPassword": "<password>"}'
-   ```
+3. Create a user in Supabase if you don't already have one to enable making authenticated calls from swagger, curl, etc...
+    * Docker/Python
+      ```bash
+      make supabase-user
+      ```
+    * K8s
+     ```bash
+     curl -X POST 'http://localhost:54321/auth/v1/signup' \-H "apikey: <anon-key>" \-H "Content-Type: application/json" \-d '{ "email": "<email>", "password": "<password>", "confirmPassword": "<password>"}'
+     ```
 
    * Replace `<anon-key>` with your anon-key which can be found in the environment variable `SUPABASE_ANON_KEY`
    * Replace `<email>`, and `<password>` with your design Supabase account credentials
+    
 
-3. Get and save a JWT `access_token` for that user with a curl command:
+### Session Authentication
 
-    ``` bash
-    curl -X POST 'http://localhost:54321/auth/v1/token?grant_type=password' \-H "apikey: <anon-key>" \-H "Content-Type: application/json" \-d '{ "email": "<email>", "password": "<password>"}'
-    ```
+4. Create a JWT token
+    * Docker
+      ```bash
+      make supabase-jwt-token
+      source .jwt
+      ```
+      This will export an environment variable `SUPABASE_USER_JWT` and create a file called `.jwt` to save it.
+    * K8s
+      ``` bash
+      curl -X POST 'http://localhost:54321/auth/v1/token?grant_type=password' \-H "apikey: <anon-key>" \-H "Content-Type: application/json" \-d '{ "email": "<email>", "password": "<password>"}'
+      ```
 
-    * Replace `<anon-key>`, `<email>`, and `<password>` with the values from Supabase.
-    * The `access_token` expires in 1 hour
-
-4. Setup environment variables:
-    ``` bash
-    export SUPABASE_URL="http://localhost:54321" # or whatever you configured it as in your Supabase config.toml
-    export SUPABASE_ANON_KEY="<YOUR_KEY>" # supabase status will show you the keys
-    ```
 
 5. Make calls to the api swagger endpoint at `http://localhost:8080/docs` using your JWT token as the `HTTPBearer` token.
    * Hit `Authorize` on the swagger page to enter your JWT token
