@@ -1,12 +1,11 @@
 SHELL := /bin/bash
 
-SUPABASE_URL = $(shell supabase status | grep -oP '(?<=API URL: ).*')
-SUPABASE_ANON_KEY = $(shell supabase status | grep -oP '(?<=anon key: ).*')
+export SUPABASE_URL = $(shell supabase status | grep -oP '(?<=API URL: ).*')
+export SUPABASE_ANON_KEY = $(shell supabase status | grep -oP '(?<=anon key: ).*')
 
 install:
 	python -m pip install ../../src/leapfrogai_sdk
 	python -m pip install -e .
-
 
 dev:
 	python -m uvicorn main:app --port 3000 --reload --log-level info
