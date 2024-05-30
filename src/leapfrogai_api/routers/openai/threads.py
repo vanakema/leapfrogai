@@ -1,12 +1,15 @@
 """OpenAI Compliant Threads API Router."""
+import traceback
 
-from fastapi import HTTPException, APIRouter
+from fastapi import HTTPException, APIRouter, status
 from fastapi.security import HTTPBearer
 from openai.types.beta import Thread, ThreadDeleted
 from openai.types.beta.threads import Message
 from openai.types.beta.threads import Run
 from openai.types.beta.threads.runs import RunStep
 
+from leapfrogai_api.backend.types import CreateThreadRequest
+from leapfrogai_api.data.crud_thread import CRUDThread
 from leapfrogai_api.routers.supabase_session import Session
 
 router = APIRouter(prefix="/openai/v1/threads", tags=["openai/threads"])
@@ -14,10 +17,28 @@ security = HTTPBearer()
 
 
 @router.post("")
-async def create_thread(session: Session) -> Thread:
+async def create_thread(
+        request: CreateThreadRequest,
+        session: Session
+) -> Thread:
     """Create a thread."""
-    # TODO: Implement this function
-    raise HTTPException(status_code=501, detail="Not implemented")
+    crud_thread = CRUDThread(db=session)
+
+    thread = Thread(
+        id="",  # Leave blank to have Postgres generate a UUID
+        created_at=0,  # Leave blank to have Postgres generate a timestamp
+        metadata=request.metadata,
+        object="thread",
+        tool_resources=None,
+    )
+    try:
+        return await crud_thread.create(object_=thread)
+    except Exception as exc:
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to create vector store",
+        ) from exc
 
 
 @router.get("/{thread_id}")
