@@ -130,8 +130,17 @@ async def create_message(
 @router.get("/{thread_id}/messages")
 async def list_messages(thread_id: str, session: Session) -> list[Message]:
     """List all the messages in a thread."""
-    # TODO: Implement this function
-    raise HTTPException(status_code=501, detail="Not implemented")
+
+    try:
+        crud_message = CRUDMessage(db=session)
+        messages = await crud_message.list(thread_id=thread_id)
+
+        return messages
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Failed to list messages",
+        ) from exc
 
 
 @router.get("/{thread_id}/messages/{message_id}")
