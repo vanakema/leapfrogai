@@ -93,7 +93,7 @@ alter table message_objects add constraint fk_message_objects_assistant_objects
     REFERENCES assistant_objects (id);
 alter table message_objects add constraint fk_message_objects_run_objects
     foreign key (run_id)
-    REFERENCES run_objects (run_id);
+    REFERENCES run_objects (id);
 
 -- Foreign key constraints for run_objects
 alter table run_objects add constraint fk_run_objects_thread_objects
@@ -112,7 +112,7 @@ alter table run_step_objects add constraint fk_run_step_objects_assistant_object
     REFERENCES assistant_objects (id);
 alter table run_step_objects add constraint fk_run_step_objects_run_objects
     foreign key (run_id)
-    REFERENCES run_objects (run_id);
+    REFERENCES run_objects (id);
 
 -- RLS policies
 alter table thread_objects enable row level security;
@@ -165,7 +165,7 @@ CREATE INDEX run_objects_created_at ON run_objects (created_at);
 CREATE INDEX run_objects_status ON run_objects (status);
 CREATE INDEX run_objects_expires_at ON run_objects (expires_at);
 
- -- Indexes for common filtering and sorting for run_step
+ -- Indexes for common filtering and sorting for run_step_objects
 CREATE INDEX run_step_objects_status ON run_step_objects (status);
 
 -- Composite indexes for run_objects
@@ -177,9 +177,9 @@ CREATE INDEX run_objects_assistant_id_thread_id ON run_objects (assistant_id, th
 -- Composite indexes for message_objects
 CREATE INDEX message_objects_thread_id_created_at ON message_objects (thread_id, created_at);
 CREATE INDEX message_objects_user_id_created_at ON message_objects (user_id, created_at);
-CREATE INDEX message_objects_created_run_id ON message_objects (created_run_id);
+CREATE INDEX message_objects_run_id ON message_objects (run_id);
 
--- Composite indexes for run_step
+-- Composite indexes for run_step_objects
 CREATE INDEX run_step_objects_run_id_created_at ON run_step_objects (run_id, created_at);
 
 -- Indexes for foreign keys for run_objects
@@ -187,14 +187,14 @@ CREATE INDEX run_objects_user_id ON run_objects (user_id);
 CREATE INDEX run_objects_assistant_id ON run_objects (assistant_id);
 CREATE INDEX run_objects_thread_id ON run_objects (thread_id);
 
--- Indexes for foreign keys for run_step
-CREATE INDEX run_step_run_id ON run_step (run_id);
-CREATE INDEX run_step_thread_id ON run_step (thread_id);
+-- Indexes for foreign keys for run_step_objects
+CREATE INDEX run_step_run_id ON run_step_objects (run_id);
+CREATE INDEX run_step_thread_id ON run_step_objects (thread_id);
 
 -- Indexes for foreign keys for message_objects
 CREATE INDEX message_objects_user_id ON message_objects (user_id);
 CREATE INDEX message_objects_thread_id ON message_objects (thread_id);
-CREATE INDEX message_objects_created_run_id ON message_objects (run_id);
+CREATE INDEX message_objects_run_id ON message_objects (run_id);
 
 -- Indexes for foreign keys for thread_objects
 CREATE INDEX thread_objects_user_id ON thread_objects (user_id);
