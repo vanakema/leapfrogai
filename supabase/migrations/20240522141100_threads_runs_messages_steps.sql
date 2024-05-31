@@ -6,7 +6,7 @@ create table
     object text check (object in ('thread')),
     created_at timestamp without time zone DEFAULT NOW(),
     tool_resources jsonb,
-    metadata jsonb,
+    metadata jsonb
   );
 
 -- Create a table to store the OpenAI Message Objects
@@ -59,8 +59,8 @@ create table
     max_prompts_tokens int,
     max_completion_tokens int,
     truncation_strategy jsonb,
-    tool_choice jsonb
-    response_format jsonb,
+    tool_choice jsonb,
+    response_format jsonb
   );
 
 -- Create a table to store the OpenAI Run Step Objects
