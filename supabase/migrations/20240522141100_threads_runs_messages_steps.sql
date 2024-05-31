@@ -45,7 +45,6 @@ create table
     cancelled_at timestamp without time zone,
     failed_at timestamp without time zone,
     completed_at timestamp without time zone,
-    incomplete_details jsonb,
     model text,
     instructions text,
     tools jsonb,
