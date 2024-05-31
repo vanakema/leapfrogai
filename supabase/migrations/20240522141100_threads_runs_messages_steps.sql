@@ -16,14 +16,14 @@ create table
     user_id uuid references auth.users not null,
     object text check (object in ('thread.message')),
     created_at timestamp without time zone DEFAULT NOW(),
-    thread_id uuid references thread_objects(id),
+    thread_id uuid,
     status text,
     completed_at timestamp without time zone,
     incomplete_at timestamp without time zone,
     role text,
     content jsonb,
-    assistant_id uuid references assistant_objects(id),
-    run_id uuid references run_objects(run_id),
+    assistant_id uuid,
+    run_id uuid,
     attachments jsonb,
     metadata jsonb
   );
@@ -35,8 +35,8 @@ create table
     user_id uuid references auth.users not null,
     object text check (object in ('thread.run')),
     created_at timestamp without time zone DEFAULT NOW(),
-    thread_id uuid references thread_objects(id),
-    assistant_id uuid references assistant_objects(id),
+    thread_id uuid,
+    assistant_id uuid,
     status text check (status in ('queued', 'in_progress', 'requires_action', 'cancelling', 'cancelled', 'failed', 'completed', 'incomplete', 'expired')),
     required_action jsonb,
     last_error jsonb,
@@ -67,11 +67,12 @@ create table
 create table
   run_step_objects (
     id uuid primary key DEFAULT uuid_generate_v4(),
+    user_id uuid references auth.users not null,
     object text check (object in ('thread.run.step')),
     created_at timestamp without time zone DEFAULT NOW(),
-    assistant_id uuid references assistant_objects(id),
-    thread_id uuid references thread_objects(id),
-    run_id uuid references run_objects(run_id),
+    assistant_id uuid,
+    thread_id uuid,
+    run_id uuid,
     step_type text,
     status text,
     step_details jsonb,
@@ -84,7 +85,37 @@ create table
     token_usage jsonb
   );
 
- -- RLS policies
+-- Foreign key constraints for message_objects
+alter table message_objects add constraint fk_message_objects_thread_objects
+    foreign key (thread_id)
+    REFERENCES thread_objects (id);
+alter table message_objects add constraint fk_message_objects_assistant_objects
+    foreign key (assistant_id)
+    REFERENCES assistant_objects (id);
+alter table message_objects add constraint fk_message_objects_run_objects
+    foreign key (run_id)
+    REFERENCES run_objects (run_id);
+
+-- Foreign key constraints for run_objects
+alter table run_objects add constraint fk_run_objects_thread_objects
+    foreign key (thread_id)
+    REFERENCES thread_objects (id);
+alter table run_objects add constraint fk_run_objects_assistant_objects
+    foreign key (assistant_id)
+    REFERENCES assistant_objects (id);
+
+-- Foreign key constraints for run_step_objects
+alter table run_step_objects add constraint fk_run_step_objects_thread_objects
+    foreign key (thread_id)
+    REFERENCES thread_objects (id);
+alter table run_step_objects add constraint fk_run_step_objects_assistant_objects
+    foreign key (assistant_id)
+    REFERENCES assistant_objects (id);
+alter table run_step_objects add constraint fk_run_step_objects_run_objects
+    foreign key (run_id)
+    REFERENCES run_objects (run_id);
+
+-- RLS policies
 alter table thread_objects enable row level security;
 alter table message_objects enable row level security;
 alter table run_objects enable row level security;
