@@ -73,7 +73,7 @@ async def create_thread(request: CreateThreadRequest, session: Session) -> Threa
 
 
 @router.get("/{thread_id}")
-async def retrieve_thread(thread_id: str, session: Session) -> Thread:
+async def retrieve_thread(thread_id: str, session: Session) -> Thread | None:
     """Retrieve a thread."""
     crud_thread = CRUDThread(db=session)
     return await crud_thread.get(id_=thread_id)
