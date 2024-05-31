@@ -10,7 +10,7 @@ from openai.types.beta.vector_store import ExpiresAfter
 from openai.types import FileObject
 from openai.types.beta import VectorStore
 from openai.types.beta import Assistant, AssistantTool
-from openai.types.beta.threads import Message, MessageContent, TextContentBlock
+from openai.types.beta.threads import Message, MessageContent, TextContentBlock, Text
 from openai.types.beta.threads.message import Attachment
 from openai.types.beta.assistant import ToolResources
 
@@ -373,7 +373,7 @@ class CreateMessageRequest(BaseModel):
     """Request object for creating a message."""
 
     role: Literal["user", "assistant"] = Field(default="user")
-    content: MessageContent = Field(default=TextContentBlock())
+    content: MessageContent = Field(default=TextContentBlock(text=Text(value="", annotations=[]), type="text"))
     attachments: Optional[List[Attachment]] = Field(default=None)
     metadata: Optional[dict] = Field(default=None)
 
