@@ -84,6 +84,52 @@ create table
     token_usage jsonb
   );
 
+ -- RLS policies
+alter table thread_objects enable row level security;
+alter table message_objects enable row level security;
+alter table run_objects enable row level security;
+alter table run_step_objects enable row level security;
+
+-- Policies for thread_objects
+create policy "Individuals can view their own thread_objects." on thread_objects for
+    select using (auth.uid() = user_id);
+create policy "Individuals can create thread_objects." on thread_objects for
+    insert with check (auth.uid() = user_id);
+create policy "Individuals can update their own thread_objects." on thread_objects for
+    update using (auth.uid() = user_id);
+create policy "Individuals can delete their own thread_objects." on thread_objects for
+    delete using (auth.uid() = user_id);
+
+-- Policies for message_objects
+create policy "Individuals can view their own message_objects." on message_objects for
+    select using (auth.uid() = user_id);
+create policy "Individuals can create message_objects." on message_objects for
+    insert with check (auth.uid() = user_id);
+create policy "Individuals can update their own message_objects." on message_objects for
+    update using (auth.uid() = user_id);
+create policy "Individuals can delete their own message_objects." on message_objects for
+    delete using (auth.uid() = user_id);
+
+-- Policies for run_objects
+create policy "Individuals can view their own run_objects." on run_objects for
+    select using (auth.uid() = user_id);
+create policy "Individuals can create run_objects." on run_objects for
+    insert with check (auth.uid() = user_id);
+create policy "Individuals can update their own run_objects." on run_objects for
+    update using (auth.uid() = user_id);
+create policy "Individuals can delete their own run_objects." on run_objects for
+    delete using (auth.uid() = user_id);
+
+-- Policies for run_step_objects
+create policy "Individuals can view their own run_step_objects." on run_step_objects for
+    select using (auth.uid() = user_id);
+create policy "Individuals can create run_step_objects." on run_step_objects for
+    insert with check (auth.uid() = user_id);
+create policy "Individuals can update their own run_step_objects." on run_step_objects for
+    update using (auth.uid() = user_id);
+create policy "Individuals can delete their own run_step_objects." on run_step_objects for
+    delete using (auth.uid() = user_id);
+
  -- Indexes for common filtering and sorting for run_objects
 CREATE INDEX run_objects_created_at ON run_objects (created_at);
 CREATE INDEX run_objects_status ON run_objects (status);
