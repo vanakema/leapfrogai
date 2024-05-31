@@ -208,7 +208,7 @@ async def modify_message(
         new_message = Message(
             id=message_id,
             created_at=old_message.created_at,
-            content=getattr(request, "content", old_message.content),
+            content=old_message.content,
             metadata=getattr(request, "metadata", old_message.metadata),
             object="thread.message",
             attachments=old_message.attachments,
