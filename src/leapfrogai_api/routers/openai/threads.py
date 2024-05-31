@@ -73,10 +73,18 @@ async def create_thread(request: CreateThreadRequest, session: Session) -> Threa
 
 
 @router.get("/{thread_id}")
-async def retrieve_thread(thread_id: str, session: Session) -> Thread | None:
+async def retrieve_thread(thread_id: str, session: Session) -> Thread:
     """Retrieve a thread."""
     crud_thread = CRUDThread(db=session)
-    return await crud_thread.get(id_=thread_id)
+    thread = await crud_thread.get(id_=thread_id)
+
+    if not thread:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Thread not found",
+        )
+    
+    return thread
 
 
 @router.post("/{thread_id}")
@@ -183,7 +191,15 @@ async def retrieve_message(
     """Retrieve a message."""
     try:
         crud_message = CRUDMessage(db=session)
-        return await crud_message.get(id_=message_id, thread_id=thread_id)
+        message = await crud_message.get(id_=message_id, thread_id=thread_id)
+
+        if not message:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="Message not found",
+            )
+
+        return message
     except Exception as exc:
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
