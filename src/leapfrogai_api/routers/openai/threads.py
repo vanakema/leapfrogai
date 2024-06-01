@@ -83,7 +83,7 @@ async def retrieve_thread(thread_id: str, session: Session) -> Thread:
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Thread not found",
         )
-    
+
     return thread
 
 
