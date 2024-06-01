@@ -179,24 +179,10 @@ async def list_messages(thread_id: str, session: Session) -> list[Message]:
 @router.get("/{thread_id}/messages/{message_id}")
 async def retrieve_message(
     thread_id: str, message_id: str, session: Session
-) -> Message:
+) -> Message | None:
     """Retrieve a message."""
-    try:
-        crud_message = CRUDMessage(db=session)
-        message = await crud_message.get(id_=message_id, thread_id=thread_id)
-
-        if not message:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="Message not found",
-            )
-
-        return message
-    except Exception as exc:
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Failed to retrieve message",
-        ) from exc
+    crud_message = CRUDMessage(db=session)
+    return await crud_message.get(id_=message_id, thread_id=thread_id)
 
 
 @router.post("/{thread_id}/messages/{message_id}")
