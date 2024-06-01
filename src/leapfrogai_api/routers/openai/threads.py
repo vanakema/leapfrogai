@@ -73,18 +73,10 @@ async def create_thread(request: CreateThreadRequest, session: Session) -> Threa
 
 
 @router.get("/{thread_id}")
-async def retrieve_thread(thread_id: str, session: Session) -> Thread:
+async def retrieve_thread(thread_id: str, session: Session) -> Thread | None:
     """Retrieve a thread."""
     crud_thread = CRUDThread(db=session)
-    thread = await crud_thread.get(id_=thread_id)
-
-    if not thread:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND,
-            detail="Thread not found",
-        )
-
-    return thread
+    return await crud_thread.get(id_=thread_id)
 
 
 @router.post("/{thread_id}")
