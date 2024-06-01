@@ -18,6 +18,7 @@ create table
     created_at bigint default extract(epoch FROM NOW()) NOT NULL,
     thread_id uuid,
     status text,
+    incomplete_details jsonb,
     completed_at bigint,
     incomplete_at bigint,
     role text,
