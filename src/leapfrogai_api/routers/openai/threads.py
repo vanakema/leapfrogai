@@ -214,7 +214,7 @@ async def modify_message(
     """Modify a message."""
     message = CRUDMessage(db=session)
 
-    if not (old_message := await message.get(id_=message_id)):
+    if not (old_message := await message.get(id_=message_id, thread_id=thread_id)):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Message not found",
