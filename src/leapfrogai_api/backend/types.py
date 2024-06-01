@@ -375,7 +375,7 @@ class CreateMessageRequest(BaseModel):
     role: Literal["user", "assistant"] = Field(default="user")
     content: list[MessageContent] = Field(
         default=[TextContentBlock(text=Text(value="", annotations=[]), type="text")],
-        examples=[[TextContentBlock(text=Text(value="", annotations=[]), type="text")]]
+        examples=[[TextContentBlock(text=Text(value="", annotations=[]), type="text")]],
     )
     attachments: Optional[List[Attachment]] = Field(default=None, examples=[None])
     metadata: Optional[dict] = Field(default=None)
