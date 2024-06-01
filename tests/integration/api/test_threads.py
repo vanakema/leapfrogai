@@ -106,6 +106,17 @@ def test_get_message(create_message):
     ), f"Get should return Message {message_id}."
 
 
+def test_list_message(create_message):
+    """Test listing messages. Requires a running Supabase instance."""
+    thread_id = create_message["thread_id"]
+    list_response = threads_client.get(f"/openai/v1/threads/{thread_id}/messages")
+    assert list_response.status_code == status.HTTP_200_OK
+    for message_object in list_response.json():
+        assert Message.model_validate(
+            message_object
+        ), "Should return a list of Message."
+
+
 def test_modify_thread(create_thread):
     """Test modifying a thread. Requires a running Supabase instance."""
     thread_id = create_thread.json()["id"]
