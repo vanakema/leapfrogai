@@ -184,18 +184,6 @@ def test_get_modified_message(create_message):
         get_modified_response.json()["metadata"]["test"] == "modified"
     ), "Should be modified."
 
-
-def test_delete_thread(create_thread):
-    """Test deleting a thread. Requires a running Supabase instance."""
-    thread_id = create_thread.json()["id"]
-    delete_response = threads_client.delete(f"/openai/v1/threads/{thread_id}")
-    assert delete_response.status_code == status.HTTP_200_OK
-    assert ThreadDeleted.model_validate(
-        delete_response.json()
-    ), "Should return a ThreadDeleted object."
-    assert delete_response.json()["deleted"] is True, "Should be able to delete."
-
-
 def test_delete_message(create_message):
     """Test deleting a message. Requires a running Supabase instance."""
     message_id = create_message["message"].json()["id"]
@@ -207,6 +195,16 @@ def test_delete_message(create_message):
     assert MessageDeleted.model_validate(
         delete_response.json()
     ), "Should return a MessageDeleted object."
+    assert delete_response.json()["deleted"] is True, "Should be able to delete."
+
+def test_delete_thread(create_thread):
+    """Test deleting a thread. Requires a running Supabase instance."""
+    thread_id = create_thread.json()["id"]
+    delete_response = threads_client.delete(f"/openai/v1/threads/{thread_id}")
+    assert delete_response.status_code == status.HTTP_200_OK
+    assert ThreadDeleted.model_validate(
+        delete_response.json()
+    ), "Should return a ThreadDeleted object."
     assert delete_response.json()["deleted"] is True, "Should be able to delete."
 
 
