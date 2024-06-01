@@ -244,7 +244,7 @@ async def modify_message(
         ) from exc
 
 
-@router.get("/{thread_id}/messages/{message_id}")
+@router.delete("/{thread_id}/messages/{message_id}")
 async def delete_message(
     thread_id: str, message_id: str, session: Session
 ) -> MessageDeleted:
