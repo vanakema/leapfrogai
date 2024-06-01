@@ -88,7 +88,8 @@ create table
 -- Foreign key constraints for message_objects
 alter table message_objects add constraint fk_message_objects_thread_objects
     foreign key (thread_id)
-    REFERENCES thread_objects (id);
+    REFERENCES thread_objects (id)
+    ON DELETE CASCADE;
 alter table message_objects add constraint fk_message_objects_assistant_objects
     foreign key (assistant_id)
     REFERENCES assistant_objects (id);
