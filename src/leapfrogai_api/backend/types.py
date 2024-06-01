@@ -385,7 +385,6 @@ class ModifyMessageRequest(BaseModel):
     """Request object for modifying a message."""
 
     metadata: Optional[dict] = {}
-    
 
 
 ################
