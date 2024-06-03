@@ -2,12 +2,11 @@ import json
 import os
 import shutil
 import time
-from typing import Annotated, Optional
+from typing import Optional
 
 import pytest
-from fastapi import Depends
 from fastapi.applications import BaseHTTPMiddleware
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.security import HTTPBearer
 from fastapi.testclient import TestClient
 from starlette.middleware.base import _CachedRequest
 from supabase_py_async.lib.client_options import ClientOptions
