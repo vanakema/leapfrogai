@@ -45,14 +45,12 @@ class AsyncClient:
         self.options = options
 
 
-async def mock_init_supabase_client(
-    auth_creds: Annotated[HTTPAuthorizationCredentials, Depends(security)],
-) -> AsyncClient:
+async def mock_init_supabase_client() -> AsyncClient:
     return AsyncClient("", "", "", ClientOptions())
 
 
 async def pack_dummy_bearer_token(request: _CachedRequest, call_next):
-    request.headers.__dict__["_list"].append(
+    request.headers.getlist().append(
         (
             "authorization".encode(),
             "Bearer dummy".encode(),
