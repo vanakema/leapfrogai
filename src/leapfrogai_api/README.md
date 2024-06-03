@@ -5,7 +5,6 @@ A mostly OpenAI compliant API surface.
 ### Requirements
 
 - Supabase
-- Libreoffice ([Unstructured dependency via LangChain](https://python.langchain.com/docs/integrations/providers/unstructured/) for docx parsing)
 
 ## Local Development Setup
 
@@ -41,7 +40,7 @@ A mostly OpenAI compliant API surface.
     This will copy the JWT token to your clipboard.
 
 
-5. Make calls to the api swagger endpoint at `http://localhost:8080/docs` using your JWT token as the `HTTPBearer` token. 
+5. Make calls to the api swagger endpoint at `http://localhost:8080/docs` using your JWT token as the `HTTPBearer` token.
    * Hit `Authorize` on the swagger page to enter your JWT token
 
 ## Integration Tests
