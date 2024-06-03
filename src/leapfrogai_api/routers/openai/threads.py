@@ -12,7 +12,9 @@ from leapfrogai_api.backend.types import (
     CreateThreadRequest,
     ModifyThreadRequest,
     CreateMessageRequest,
-    ModifyMessageRequest, RunCreateParams, ThreadRunCreateParams,
+    ModifyMessageRequest,
+    RunCreateParams,
+    ThreadRunCreateParams,
 )
 from leapfrogai_api.data.crud_message import CRUDMessage
 from leapfrogai_api.data.crud_run import CRUDRun
@@ -239,14 +241,12 @@ async def delete_message(
 
 
 @router.post("/{thread_id}/runs")
-async def create_run(
-    thread_id: str, request: Request, session: Session
-) -> Run:
+async def create_run(thread_id: str, request: Request, session: Session) -> Run:
     """Create a run."""
 
     try:
         request_params: RunCreateParams = await request.json()
-        
+
         crud_run = CRUDRun(db=session)
         run = Run(
             id="",  # Leave blank to have Postgres generate a UUID
@@ -271,7 +271,7 @@ async def create_thread_and_run(
 
     try:
         request_params: ThreadRunCreateParams = await request.json()
-        
+
         new_thread: Thread = await create_thread(
             CreateThreadRequest(
                 messages=request_params.get("thread").get("messages"),
