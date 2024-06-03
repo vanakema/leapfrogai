@@ -20,14 +20,14 @@ class CRUDVectorStore(CRUDBase[AuthVectorStore]):
     def __init__(self, db: AsyncClient):
         super().__init__(db=db, model=AuthVectorStore, table_name="vector_store")
 
-    async def create(self, object_: VectorStore) -> AuthVectorStore | None:
+    async def create(self, object_: VectorStore) -> VectorStore | None:
         """Create new vector store."""
         user_id: str = (await self.db.auth.get_user()).user.id
         return await super().create(
             object_=AuthVectorStore(user_id=user_id, **object_.model_dump())
         )
 
-    async def get(self, id_: str) -> AuthVectorStore | None:
+    async def get(self, id_: str) -> VectorStore | None:
         """Get a vector store by its ID."""
 
         vector_store: AuthVectorStore | None = await super().get(id_=id_)
@@ -37,7 +37,7 @@ class CRUDVectorStore(CRUDBase[AuthVectorStore]):
 
         return vector_store
 
-    async def list(self) -> list[AuthVectorStore] | None:
+    async def list(self) -> list[VectorStore] | None:
         """List all vector stores."""
 
         vector_stores: list[AuthVectorStore] | None = await super().list()
@@ -60,7 +60,7 @@ class CRUDVectorStore(CRUDBase[AuthVectorStore]):
 
         return non_expired_vector_stores
 
-    async def update(self, id_: str, object_: VectorStore) -> AuthVectorStore | None:
+    async def update(self, id_: str, object_: VectorStore) -> VectorStore | None:
         """Update a vector store by its ID."""
 
         dict_ = object_.model_dump()
