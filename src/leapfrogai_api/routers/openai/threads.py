@@ -268,14 +268,17 @@ async def create_thread_and_run(
     assistant_id: str, request: ThreadCreateAndRunParamsBase, session: Session
 ) -> Run:
     """Create a thread and run."""
-    
+
     try:
-        new_thread: Thread = await create_thread(CreateThreadRequest(
-            messages=request.get("thread").get("messages"),
-            metadata=request.get("thread").get("metadata"),
-            tool_resources=request.get("thread").get("tool_resources")
-        ), session)
-        
+        new_thread: Thread = await create_thread(
+            CreateThreadRequest(
+                messages=request.get("thread").get("messages"),
+                metadata=request.get("thread").get("metadata"),
+                tool_resources=request.get("thread").get("tool_resources"),
+            ),
+            session,
+        )
+
         crud_run = CRUDRun(db=session)
         run = Run(
             id="",  # Leave blank to have Postgres generate a UUID
