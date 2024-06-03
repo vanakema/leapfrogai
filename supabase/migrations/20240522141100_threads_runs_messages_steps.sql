@@ -156,22 +156,22 @@ create policy "Individuals can update their own run_step_objects." on run_step_o
 create policy "Individuals can delete their own run_step_objects." on run_step_objects for
     delete using (auth.uid() = user_id);
 
+-- Indexes for foreign keys for message_objects
+CREATE INDEX message_objects_user_id ON message_objects (user_id);
+CREATE INDEX message_objects_thread_id ON message_objects (thread_id);
+CREATE INDEX message_objects_created_at ON thread_objects (created_at);
+
 -- Indexes for common filtering and sorting for thread_objects
 CREATE INDEX thread_objects_id ON thread_objects (id);
 CREATE INDEX thread_objects_user_id ON thread_objects (user_id);
 CREATE INDEX thread_objects_created_at ON thread_objects (created_at);
-
--- Indexes for common filtering and sorting for run_objects
-CREATE INDEX run_objects_id ON run_objects (id);
-CREATE INDEX run_objects_user_id ON run_objects (user_id);
-CREATE INDEX run_objects_created_at ON run_objects (created_at);
 
 -- Indexes for common filtering and sorting for run_step_objects
 CREATE INDEX run_step_id ON run_step_objects (id);
 CREATE INDEX run_step_user_id ON run_step_objects (user_id);
 CREATE INDEX run_step_created_at ON run_step_objects (created_at);
 
--- Indexes for foreign keys for message_objects
-CREATE INDEX message_objects_user_id ON message_objects (user_id);
-CREATE INDEX message_objects_thread_id ON message_objects (thread_id);
-CREATE INDEX message_objects_created_at ON thread_objects (created_at);
+-- Indexes for common filtering and sorting for run_objects
+CREATE INDEX run_objects_id ON run_objects (id);
+CREATE INDEX run_objects_user_id ON run_objects (user_id);
+CREATE INDEX run_objects_created_at ON run_objects (created_at);
