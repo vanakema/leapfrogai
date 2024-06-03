@@ -5,7 +5,7 @@ from __future__ import annotations
 import datetime
 from typing import Literal, Optional, List
 from enum import Enum
-from pydantic import BaseModel, Field, create_model
+from pydantic import BaseModel, Field, RootModel
 from fastapi import UploadFile, Form, File
 from openai.types.beta.vector_store import ExpiresAfter
 from openai.types import FileObject
@@ -377,7 +377,8 @@ class RunCreateParams(RunCreateParamsBase):
     stream: Optional[bool]
 
 
-CreateRunRequest = create_model("DynamicCreateRunRequest", **RunCreateParams.__dict__)
+class CreateRunRequest(RootModel):
+    root: RunCreateParams
 
 
 class CreateThreadRequest(BaseModel):
