@@ -1,3 +1,13 @@
+-- Add user_id column to assistant_objects and file_objects tables
+alter table assistant_objects
+    add column user_id uuid references auth.users not null;
+alter table file_objects
+        add column user_id uuid references auth.users not null;
+-- Set buckets to private
+update storage.buckets
+    set public = false
+    where id = 'file_bucket';
+
 -- RLS policies
 alter table assistant_objects enable row level security;
 alter table file_objects enable row level security;
@@ -38,6 +48,7 @@ on storage.objects for
 create policy "Individuals can update their own files in file_bucket."
 on storage.objects for
     update using (auth.uid() = owner) with check (bucket_id = 'file_bucket');
+<<<<<<< 421-vector-store-endpoints
 
 -- Policies for vector_store
 create policy "Individuals can view their own vector_store." on vector_store for
@@ -68,3 +79,5 @@ create policy "Individuals can update their own vector_content." on vector_conte
     update using (auth.uid() = user_id);
 create policy "Individuals can delete their own vector_content." on vector_content for
     delete using (auth.uid() = user_id);
+=======
+>>>>>>> 493-add-authentication
