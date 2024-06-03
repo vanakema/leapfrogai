@@ -3,6 +3,7 @@
 from __future__ import annotations
 
 import datetime
+from enum import Enum
 from typing import Literal
 from pydantic import BaseModel, Field
 from fastapi import UploadFile, Form, File
@@ -282,6 +283,23 @@ class ListAssistantsResponse(BaseModel):
 ################
 # VECTOR STORES
 ################
+
+
+class VectorStoreFileStatus(Enum):
+    """Enum for the status of a vector store file."""
+
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    FAILED = "failed"
+
+
+class VectorStoreStatus(Enum):
+    """Enum for the status of a vector store."""
+
+    EXPIRED = "expired"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
 
 
 class CreateVectorStoreRequest(BaseModel):
