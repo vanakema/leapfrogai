@@ -2,8 +2,9 @@
 
 import os
 
-# This import is required for "magic" to work, see https://github.com/ahupp/python-magic/issues/233 may not be needed after https://github.com/ahupp/python-magic/pull/294 is merged
-import pylibmagic  # noqa: F401
+# This import is required for "magic" to work, see https://github.com/ahupp/python-magic/issues/233
+# may not be needed after https://github.com/ahupp/python-magic/pull/294 is merged
+import pylibmagic  # noqa: F401 # pylint: disable=unused-import
 import magic
 from langchain_community.document_loaders import (
     CSVLoader,
@@ -26,6 +27,7 @@ HANDLERS = {
     "text/csv": CSVLoader,
     "text/markdown": UnstructuredMarkdownLoader,
     "application/msword": Docx2txtLoader,
+    "application/vnd.openxmlformats-officedocument.wordprocessingml.document": Docx2txtLoader,
 }
 
 
