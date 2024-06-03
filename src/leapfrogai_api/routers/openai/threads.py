@@ -2,7 +2,7 @@
 
 import traceback
 
-from fastapi import HTTPException, APIRouter, status
+from fastapi import HTTPException, APIRouter, status, Body
 from fastapi.security import HTTPBearer
 from openai.types.beta import Thread, ThreadDeleted
 from openai.types.beta.thread_create_and_run_params import ThreadCreateAndRunParamsBase
@@ -14,7 +14,7 @@ from leapfrogai_api.backend.types import (
     ModifyThreadRequest,
     CreateMessageRequest,
     ModifyMessageRequest,
-    CreateRunRequest,
+    RunCreateParams,
 )
 from leapfrogai_api.data.crud_message import CRUDMessage
 from leapfrogai_api.data.crud_run import CRUDRun
@@ -242,7 +242,7 @@ async def delete_message(
 
 @router.post("/{thread_id}/runs")
 async def create_run(
-    thread_id: str, request: CreateRunRequest, session: Session
+    thread_id: str, session: Session, request: RunCreateParams = Body(...)
 ) -> Run:
     """Create a run."""
 
@@ -265,7 +265,7 @@ async def create_run(
 
 @router.post("/runs")
 async def create_thread_and_run(
-    assistant_id: str, request: ThreadCreateAndRunParamsBase, session: Session
+    assistant_id: str, session: Session, request: ThreadCreateAndRunParamsBase = Body(...)
 ) -> Run:
     """Create a thread and run."""
 
