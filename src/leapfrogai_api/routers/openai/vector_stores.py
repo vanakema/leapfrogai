@@ -3,7 +3,6 @@
 import logging
 import time
 import traceback
-from enum import Enum
 from fastapi import APIRouter, HTTPException, status
 from openai.types.beta import VectorStore, VectorStoreDeleted
 from openai.types.beta.vector_store import FileCounts
@@ -18,21 +17,9 @@ from leapfrogai_api.data.async_supabase_vector_store import AsyncSupabaseVectorS
 from leapfrogai_api.data.crud_vector_store import CRUDVectorStore
 from leapfrogai_api.data.crud_vector_store_file import CRUDVectorStoreFile
 from leapfrogai_api.routers.supabase_session import Session
+from leapfrogai_api.backend.types import VectorStoreFileStatus, VectorStoreStatus
 
 router = APIRouter(prefix="/openai/v1/vector_stores", tags=["openai/vector_stores"])
-
-
-class VectorStoreFileStatus(Enum):
-    IN_PROGRESS = "in_progress"
-    COMPLETED = "completed"
-    CANCELLED = "cancelled"
-    FAILED = "failed"
-
-
-class VectorStoreStatus(Enum):
-    EXPIRED = "expired"
-    IN_PROGRESS = "in_progress"
-    COMPLETED = "completed"
 
 
 @router.post("")
