@@ -2,22 +2,22 @@
 
 import logging
 import time
+import traceback
+
 from fastapi import APIRouter, HTTPException, status
 from openai.types.beta import VectorStore, VectorStoreDeleted
 from openai.types.beta.vector_store import FileCounts
 from openai.types.beta.vector_stores import VectorStoreFile, VectorStoreFileDeleted
-
-from leapfrogai_api.backend.rag.index import IndexingService, FileAlreadyIndexedError
+from leapfrogai_api.backend.rag.index import FileAlreadyIndexedError, IndexingService
 from leapfrogai_api.backend.types import (
     CreateVectorStoreRequest,
     ListVectorStoresResponse,
     ModifyVectorStoreRequest,
 )
-from leapfrogai_api.data.crud_vector_store_file import CRUDVectorStoreFile
-from leapfrogai_api.data.crud_vector_store import CRUDVectorStore
 from leapfrogai_api.data.async_supabase_vector_store import AsyncSupabaseVectorStore
+from leapfrogai_api.data.crud_vector_store import CRUDVectorStore
+from leapfrogai_api.data.crud_vector_store_file import CRUDVectorStoreFile
 from leapfrogai_api.routers.supabase_session import Session
-import traceback
 
 router = APIRouter(prefix="/openai/v1/vector_stores", tags=["openai/vector_stores"])
 
