@@ -12,7 +12,7 @@ from leapfrogai_api.backend.types import (
     CreateThreadRequest,
     ModifyThreadRequest,
     CreateMessageRequest,
-    ModifyMessageRequest,
+    ModifyMessageRequest, RunCreateParams, ThreadRunCreateParams,
 )
 from leapfrogai_api.data.crud_message import CRUDMessage
 from leapfrogai_api.data.crud_run import CRUDRun
@@ -245,12 +245,14 @@ async def create_run(
     """Create a run."""
 
     try:
+        request_params: RunCreateParams = await request.json()
+        
         crud_run = CRUDRun(db=session)
         run = Run(
             id="",  # Leave blank to have Postgres generate a UUID
             created_at=0,  # Leave blank to have Postgres generate a timestamp
             thread_id=thread_id,
-            **request.json().__dict__,
+            **request_params.__dict__,
         )
         return await crud_run.create(object_=run)
     except Exception as exc:
@@ -268,11 +270,13 @@ async def create_thread_and_run(
     """Create a thread and run."""
 
     try:
+        request_params: ThreadRunCreateParams = await request.json()
+        
         new_thread: Thread = await create_thread(
             CreateThreadRequest(
-                messages=request.get("thread").get("messages"),
-                metadata=request.get("thread").get("metadata"),
-                tool_resources=request.get("thread").get("tool_resources"),
+                messages=request_params.get("thread").get("messages"),
+                metadata=request_params.get("thread").get("metadata"),
+                tool_resources=request_params.get("thread").get("tool_resources"),
             ),
             session,
         )
@@ -283,7 +287,7 @@ async def create_thread_and_run(
             created_at=0,  # Leave blank to have Postgres generate a timestamp
             assistant_id=assistant_id,
             thread_id=new_thread.id,
-            **request.json().__dict__,
+            **request_params.__dict__,
         )
         return await crud_run.create(object_=run)
     except Exception as exc:
