@@ -1,17 +1,18 @@
 """Indexing service for RAG files."""
 
 import tempfile
-from fastapi import UploadFile
-from openai.types.beta.vector_stores import VectorStoreFile
-from supabase_py_async import AsyncClient
 
+from fastapi import UploadFile
 from langchain_core.embeddings import Embeddings
+from openai.types.beta.vector_stores import VectorStoreFile
+from openai.types.beta.vector_stores.vector_store_file import LastError
+from supabase_py_async import AsyncClient
+from leapfrogai_api.backend.rag.document_loader import load_file, split
 from leapfrogai_api.backend.rag.leapfrogai_embeddings import LeapfrogAIEmbeddings
+from leapfrogai_api.data.async_supabase_vector_store import AsyncSupabaseVectorStore
 from leapfrogai_api.data.crud_file_bucket import CRUDFileBucket
 from leapfrogai_api.data.crud_file_object import CRUDFileObject
 from leapfrogai_api.data.crud_vector_store_file import CRUDVectorStoreFile
-from leapfrogai_api.backend.rag.document_loader import load_file, split
-from leapfrogai_api.data.async_supabase_vector_store import AsyncSupabaseVectorStore
 
 # Allows for overwriting type of embeddings that will be instantiated
 embeddings_type: type[Embeddings] | type[LeapfrogAIEmbeddings] | None = (
@@ -53,6 +54,19 @@ class IndexingService:
             temp_file.seek(0)
             documents = await load_file(temp_file.name)
             chunks = await split(documents)
+
+            if len(chunks) == 0:
+                vector_store_file = VectorStoreFile(
+                    id=file_id,
+                    created_at=0,
+                    last_error=LastError(
+                        message="No text found in file", code="parsing_error"
+                    ),
+                    object="vector_store.file",
+                    status="failed",
+                    vector_store_id=vector_store_id,
+                )
+                return await crud_vector_store_file.create(object_=vector_store_file)
 
             vector_store_file = VectorStoreFile(
                 id=file_id,
