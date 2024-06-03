@@ -2,19 +2,15 @@ import json
 import os
 import shutil
 import time
-from typing import Annotated, Optional
+from typing import Optional
 
 import pytest
-from fastapi import Depends
-from fastapi.applications import BaseHTTPMiddleware
-from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from fastapi.security import HTTPBearer
 from fastapi.testclient import TestClient
-from starlette.middleware.base import _CachedRequest
 from supabase_py_async.lib.client_options import ClientOptions
 
 import leapfrogai_api.backend.types as lfai_types
 from leapfrogai_api.main import app
-from leapfrogai_api.routers.supabase_session import init_supabase_client
 
 security = HTTPBearer()
 
@@ -46,32 +42,11 @@ class AsyncClient:
         self.options = options
 
 
-async def mock_init_supabase_client(
-    auth_creds: Annotated[HTTPAuthorizationCredentials, Depends(security)],
-) -> AsyncClient:
+async def mock_init_supabase_client() -> AsyncClient:
     return AsyncClient("", "", "", ClientOptions())
 
 
-async def pack_dummy_bearer_token(request: _CachedRequest, call_next):
-    request.headers.__dict__["_list"].append(
-        (
-            "authorization".encode(),
-            "Bearer dummy".encode(),
-        )
-    )
-    return await call_next(request)
-
-
-@pytest.fixture
-def dummy_auth_middleware():
-    app.dependency_overrides[init_supabase_client] = mock_init_supabase_client
-    app.user_middleware.clear()
-    app.middleware_stack = None
-    app.add_middleware(BaseHTTPMiddleware, dispatch=pack_dummy_bearer_token)
-    app.middleware_stack = app.build_middleware_stack()
-
-
-def test_config_load(dummy_auth_middleware):
+def test_config_load():
     """Test that the config is loaded correctly."""
     with TestClient(app) as client:
         response = client.get("/models")
@@ -83,7 +58,7 @@ def test_config_load(dummy_auth_middleware):
         }
 
 
-def test_config_delete(tmp_path, dummy_auth_middleware):
+def test_config_delete(tmp_path):
     """Test that the config is deleted correctly."""
     # move repeater-test-config.yaml to temp dir so that we can remove it at a later step
     tmp_config_filepath = shutil.copyfile(
@@ -127,7 +102,12 @@ def test_routes():
         "/openai/v1/assistants": ["POST"],
     }
 
-    assistants_routes = [
+    openai_routes = [
+        ("/openai/v1/files", "upload_file", ["POST"]),
+        ("/openai/v1/files", "list_files", ["GET"]),
+        ("/openai/v1/files/{file_id}", "retrieve_file", ["GET"]),
+        ("/openai/v1/files/{file_id}", "delete_file", ["DELETE"]),
+        ("/openai/v1/files/{file_id}/content", "retrieve_file_content", ["GET"]),
         ("/openai/v1/assistants", "create_assistant", ["POST"]),
         ("/openai/v1/assistants", "list_assistants", ["GET"]),
         ("/openai/v1/assistants/{assistant_id}", "retrieve_assistant", ["GET"]),
@@ -141,7 +121,7 @@ def test_routes():
             assert route.methods == set(expected_routes[route.path])
             del expected_routes[route.path]
 
-    for route, name, methods in assistants_routes:
+    for route, name, methods in openai_routes:
         found = False
         for actual_route in actual_routes:
             if (
@@ -169,7 +149,7 @@ def test_healthz():
     os.environ.get("LFAI_RUN_REPEATER_TESTS") != "true",
     reason="LFAI_RUN_REPEATER_TESTS envvar was not set to true",
 )
-def test_embedding(dummy_auth_middleware):
+def test_embedding():
     """Test the embedding endpoint."""
     expected_embedding = [0.0 for _ in range(10)]
 
@@ -199,7 +179,7 @@ def test_embedding(dummy_auth_middleware):
     os.environ.get("LFAI_RUN_REPEATER_TESTS") != "true",
     reason="LFAI_RUN_REPEATER_TESTS envvar was not set to true",
 )
-def test_chat_completion(dummy_auth_middleware):
+def test_chat_completion():
     """Test the chat completion endpoint."""
     with TestClient(app) as client:
         input_content = "this is the chat completion input."
@@ -245,7 +225,7 @@ def test_chat_completion(dummy_auth_middleware):
     os.environ.get("LFAI_RUN_REPEATER_TESTS") != "true",
     reason="LFAI_RUN_REPEATER_TESTS envvar was not set to true",
 )
-def test_stream_chat_completion(dummy_auth_middleware):
+def test_stream_chat_completion():
     """Test the stream chat completion endpoint."""
     with TestClient(app) as client:
         input_content = "this is the stream chat completion input."
