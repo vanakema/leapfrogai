@@ -377,7 +377,7 @@ class RunCreateParams(RunCreateParamsBase):
     stream: Optional[bool]
 
 
-CreateRunRequest: BaseModel = create_model("DynamicCreateRunRequest", **RunCreateParams.__dict__)
+CreateRunRequest: type[BaseModel] = create_model("DynamicCreateRunRequest", **RunCreateParams.__dict__)
 
 
 class CreateThreadRequest(BaseModel):
