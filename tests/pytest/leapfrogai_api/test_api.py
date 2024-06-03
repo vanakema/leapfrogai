@@ -50,7 +50,7 @@ async def mock_init_supabase_client() -> AsyncClient:
 
 
 async def pack_dummy_bearer_token(request: _CachedRequest, call_next):
-    request.headers.getlist().append(
+    request.headers._list.append(
         (
             "authorization".encode(),
             "Bearer dummy".encode(),
