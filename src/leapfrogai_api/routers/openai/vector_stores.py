@@ -3,7 +3,7 @@
 import logging
 import time
 import traceback
-
+from enum import Enum
 from fastapi import APIRouter, HTTPException, status
 from openai.types.beta import VectorStore, VectorStoreDeleted
 from openai.types.beta.vector_store import FileCounts
@@ -20,6 +20,19 @@ from leapfrogai_api.data.crud_vector_store_file import CRUDVectorStoreFile
 from leapfrogai_api.routers.supabase_session import Session
 
 router = APIRouter(prefix="/openai/v1/vector_stores", tags=["openai/vector_stores"])
+
+
+class VectorStoreFileStatus(Enum):
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
+    CANCELLED = "cancelled"
+    FAILED = "failed"
+
+
+class VectorStoreStatus(Enum):
+    EXPIRED = "expired"
+    IN_PROGRESS = "in_progress"
+    COMPLETED = "completed"
 
 
 @router.post("")
@@ -45,7 +58,7 @@ async def create_vector_store(
         metadata=request.metadata,
         name=request.name,
         object="vector_store",
-        status="in_progress",
+        status=VectorStoreStatus.IN_PROGRESS.value,
         expires_after=expires_after,
         expires_at=expires_at,
     )
@@ -58,17 +71,17 @@ async def create_vector_store(
                     vector_store_id=new_vector_store.id, file_id=file_id
                 )
 
-                if response.status == "completed":
+                if response.status == VectorStoreFileStatus.COMPLETED.value:
                     new_vector_store.file_counts.completed += 1
-                elif response.status == "failed":
+                elif response.status == VectorStoreFileStatus.FAILED.value:
                     new_vector_store.file_counts.failed += 1
-                elif response.status == "in_progress":
+                elif response.status == VectorStoreFileStatus.IN_PROGRESS.value:
                     new_vector_store.file_counts.in_progress += 1
-                elif response.status == "cancelled":
+                elif response.status == VectorStoreFileStatus.CANCELLED.value:
                     new_vector_store.file_counts.cancelled += 1
                 new_vector_store.file_counts.total += 1
 
-        new_vector_store.status = "completed"
+        new_vector_store.status = VectorStoreStatus.COMPLETED.value
 
         return await crud_vector_store.update(
             id_=new_vector_store.id,
@@ -158,25 +171,24 @@ async def modify_vector_store(
                         vector_store_id=vector_store_id, file_id=file_id
                     )
                 except FileAlreadyIndexedError:
-                    """Skip this file if it has already been indexed"""
                     logging.info(
-                        f"File {file_id} already exists and cannot be re-indexed"
+                        "File %s already exists and cannot be re-indexed", file_id
                     )
                     continue
                 except Exception as exc:
                     raise exc
 
-                if response.status == "completed":
+                if response.status == VectorStoreFileStatus.COMPLETED.value:
                     new_vector_store.file_counts.completed += 1
-                elif response.status == "failed":
+                elif response.status == VectorStoreFileStatus.FAILED.value:
                     new_vector_store.file_counts.failed += 1
-                elif response.status == "in_progress":
+                elif response.status == VectorStoreFileStatus.IN_PROGRESS.value:
                     new_vector_store.file_counts.in_progress += 1
-                elif response.status == "cancelled":
+                elif response.status == VectorStoreFileStatus.CANCELLED.value:
                     new_vector_store.file_counts.cancelled += 1
                 new_vector_store.file_counts.total += 1
 
-        new_vector_store.status = "completed"
+        new_vector_store.status = VectorStoreStatus.COMPLETED.value
 
         last_active_at = int(time.time())
         new_vector_store.last_active_at = last_active_at  # Update after indexing files
@@ -210,7 +222,7 @@ async def delete_vector_store(
     return VectorStoreDeleted(
         id=vector_store_id,
         object="vector_store.deleted",
-        deleted=bool(vector_store_deleted),
+        deleted=vector_store_deleted,
     )
 
 
