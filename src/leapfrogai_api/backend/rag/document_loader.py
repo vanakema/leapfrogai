@@ -29,7 +29,7 @@ HANDLERS = {
 }
 
 
-async def supported_mime_type(mime_type: str) -> bool:
+def supported_mime_type(mime_type: str) -> bool:
     """Validate the mime type of a file."""
     return mime_type in HANDLERS
 
