@@ -6,7 +6,7 @@ from openai.types import FileDeleted, FileObject
 from leapfrogai_api.backend.types import ListFilesResponse, UploadFileRequest
 from leapfrogai_api.data.crud_file_object import CRUDFileObject
 from leapfrogai_api.data.crud_file_bucket import CRUDFileBucket
-from leapfrogai_api.backend.rag.document_loader import supported_mime_type
+from leapfrogai_api.backend.rag.document_loader import is_supported_mime_type
 from leapfrogai_api.routers.supabase_session import Session
 
 router = APIRouter(prefix="/openai/v1/files", tags=["openai/files"])
@@ -20,7 +20,7 @@ async def upload_file(
 ) -> FileObject:
     """Upload a file."""
 
-    if not supported_mime_type(request.file.content_type):
+    if not is_supported_mime_type(request.file.content_type):
         raise HTTPException(
             status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             detail=f"Unsupported file type {request.file.content_type}!",
