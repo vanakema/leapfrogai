@@ -38,7 +38,7 @@ create table
     created_at bigint default extract(epoch FROM NOW()) NOT NULL,
     thread_id uuid,
     assistant_id uuid,
-    status text check (status in ('queued', 'in_progress', 'requires_action', 'cancelling', 'cancelled', 'failed', 'completed', 'incomplete', 'expired')),
+    status text,
     required_action jsonb,
     last_error jsonb,
     expires_at bigint,
