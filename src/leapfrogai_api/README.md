@@ -20,7 +20,7 @@ A mostly OpenAI compliant API surface.
 
     supabase start # from /leapfrogai
 
-    supabase stop --project-id leapfrogai_api # stop api containers
+    supabase stop --project-id leapfrogai # stop api containers
 
     supabase db reset # clears all data and reinitializes migrations
 
