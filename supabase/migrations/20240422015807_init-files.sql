@@ -15,4 +15,4 @@ create table
 insert into storage.buckets
   (id, name, public)
 values
-  ('file_bucket', 'files', false);
+  ('file_bucket', 'files', true);
