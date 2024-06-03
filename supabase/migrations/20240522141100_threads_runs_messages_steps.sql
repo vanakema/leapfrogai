@@ -175,6 +175,3 @@ CREATE INDEX run_step_created_at ON run_step_objects (created_at);
 CREATE INDEX message_objects_user_id ON message_objects (user_id);
 CREATE INDEX message_objects_thread_id ON message_objects (thread_id);
 CREATE INDEX message_objects_created_at ON thread_objects (created_at);
-
--- Indexes for foreign keys for thread_objects
-CREATE INDEX thread_objects_user_id ON thread_objects (user_id);
