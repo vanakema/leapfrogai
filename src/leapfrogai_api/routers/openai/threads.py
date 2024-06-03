@@ -1,6 +1,7 @@
 """OpenAI Compliant Threads API Router."""
 
 import traceback
+from typing import Annotated
 
 from fastapi import HTTPException, APIRouter, status, Body
 from fastapi.security import HTTPBearer
@@ -242,7 +243,7 @@ async def delete_message(
 
 @router.post("/{thread_id}/runs")
 async def create_run(
-    thread_id: str, session: Session, request: RunCreateParams = Body(...)
+    thread_id: str, request: Annotated[RunCreateParams, Body()], session: Session
 ) -> Run:
     """Create a run."""
 
@@ -265,7 +266,7 @@ async def create_run(
 
 @router.post("/runs")
 async def create_thread_and_run(
-    assistant_id: str, session: Session, request: ThreadCreateAndRunParamsBase = Body(...)
+    assistant_id: str, request: Annotated[ThreadCreateAndRunParamsBase, Body()], session: Session
 ) -> Run:
     """Create a thread and run."""
 
