@@ -1,7 +1,5 @@
 """Load a file and split it into chunks."""
 
-import os
-
 # This import is required for "magic" to work, see https://github.com/ahupp/python-magic/issues/233
 # may not be needed after https://github.com/ahupp/python-magic/pull/294 is merged
 import pylibmagic  # noqa: F401 # pylint: disable=unused-import
@@ -16,9 +14,6 @@ from langchain_community.document_loaders import (
 )
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
-import leapfrogai_sdk as lfai
-from leapfrogai_api.utils import get_model_config
-from leapfrogai_api.backend.grpc_client import create_embeddings
 
 HANDLERS = {
     "application/pdf": PyPDFLoader,
@@ -74,25 +69,3 @@ async def split(docs: list[Document]) -> list[Document]:
     )
 
     return await text_splitter.atransform_documents(docs)
-
-
-async def embed_chunks(chunks: list[Document]) -> list[list[float]]:
-    """Embed chunks into a document."""
-
-    model = get_model_config().get_model_backend(os.getenv("DEFAULT_EMBEDDINGS_MODEL"))
-
-    if not model:
-        raise ValueError("Embeddings model not found.")
-
-    chunk_texts = [chunk.page_content for chunk in chunks]
-
-    if not chunk_texts:
-        raise ValueError("No chunks found.")
-
-    request = lfai.EmbeddingRequest(inputs=chunk_texts)
-
-    response = await create_embeddings(model=model, request=request)
-
-    list_of_embeddings = [embedding.embedding for embedding in response.data]
-
-    return list_of_embeddings
