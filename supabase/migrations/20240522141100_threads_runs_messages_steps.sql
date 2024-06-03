@@ -162,35 +162,14 @@ CREATE INDEX thread_objects_created_at ON thread_objects (user_id);
 CREATE INDEX thread_objects_created_at ON thread_objects (created_at);
 
 -- Indexes for common filtering and sorting for run_objects
+CREATE INDEX run_objects_created_at ON run_objects (id);
+CREATE INDEX run_objects_created_at ON run_objects (user_id);
 CREATE INDEX run_objects_created_at ON run_objects (created_at);
-CREATE INDEX run_objects_status ON run_objects (status);
-CREATE INDEX run_objects_expires_at ON run_objects (expires_at);
 
- -- Indexes for common filtering and sorting for run_step_objects
-CREATE INDEX run_step_objects_status ON run_step_objects (status);
-
--- Composite indexes for run_objects
-CREATE INDEX run_objects_user_id_created_at ON run_objects (user_id, created_at);
-CREATE INDEX run_objects_thread_id_created_at ON run_objects (thread_id, created_at);
-CREATE INDEX run_objects_status_created_at ON run_objects (status, created_at);
-CREATE INDEX run_objects_assistant_id_thread_id ON run_objects (assistant_id, thread_id);
-
--- Composite indexes for message_objects
-CREATE INDEX message_objects_thread_id_created_at ON message_objects (thread_id, created_at);
-CREATE INDEX message_objects_user_id_created_at ON message_objects (user_id, created_at);
-CREATE INDEX message_objects_run_id ON message_objects (run_id);
-
--- Composite indexes for run_step_objects
-CREATE INDEX run_step_objects_run_id_created_at ON run_step_objects (run_id, created_at);
-
--- Indexes for foreign keys for run_objects
-CREATE INDEX run_objects_user_id ON run_objects (user_id);
-CREATE INDEX run_objects_assistant_id ON run_objects (assistant_id);
-CREATE INDEX run_objects_thread_id ON run_objects (thread_id);
-
--- Indexes for foreign keys for run_step_objects
-CREATE INDEX run_step_run_id ON run_step_objects (run_id);
-CREATE INDEX run_step_thread_id ON run_step_objects (thread_id);
+-- Indexes for common filtering and sorting for run_step_objects
+CREATE INDEX run_step_objects_status ON run_step_objects (id);
+CREATE INDEX run_step_objects_status ON run_step_objects (user_id);
+CREATE INDEX run_step_objects_status ON run_step_objects (created_at);
 
 -- Indexes for foreign keys for message_objects
 CREATE INDEX message_objects_user_id ON message_objects (user_id);
