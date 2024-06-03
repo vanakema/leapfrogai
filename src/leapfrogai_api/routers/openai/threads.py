@@ -5,7 +5,8 @@ import traceback
 from fastapi import HTTPException, APIRouter, status
 from fastapi.security import HTTPBearer
 from openai.types.beta import Thread, ThreadDeleted
-from openai.types.beta.threads import Message, MessageDeleted, Run, RunCreateParams
+from openai.types.beta.thread_create_and_run_params import ThreadCreateAndRunParamsBase
+from openai.types.beta.threads import Message, MessageDeleted, Run
 from openai.types.beta.threads.runs import RunStep
 
 from leapfrogai_api.backend.types import (
@@ -264,11 +265,32 @@ async def create_run(
 
 @router.post("/runs")
 async def create_thread_and_run(
-    assistant_id: str, request: RunCreateParams, session: Session
+    assistant_id: str, request: ThreadCreateAndRunParamsBase, session: Session
 ) -> Run:
     """Create a thread and run."""
-    # TODO: Implement this function
-    raise HTTPException(status_code=501, detail="Not implemented")
+    
+    try:
+        new_thread: Thread = await create_thread(CreateThreadRequest(
+            messages=request.get("thread").get("messages"),
+            metadata=request.get("thread").get("metadata"),
+            tool_resources=request.get("thread").get("tool_resources")
+        ), session)
+        
+        crud_run = CRUDRun(db=session)
+        run = Run(
+            id="",  # Leave blank to have Postgres generate a UUID
+            created_at=0,  # Leave blank to have Postgres generate a timestamp
+            assistant_id=assistant_id,
+            thread_id=new_thread.id,
+            **request.__dict__,
+        )
+        return await crud_run.create(object_=run)
+    except Exception as exc:
+        traceback.print_exc()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail="Unable to create run",
+        ) from exc
 
 
 @router.get("/{thread_id}/runs")
