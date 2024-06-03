@@ -24,7 +24,7 @@ create table
     role text,
     content jsonb,
     assistant_id uuid,
-    run_id uuid,
+    run_id uuid, -- No foreign key constraint, can be null and doesn't have to refer to a thread that exists
     attachments jsonb,
     metadata jsonb
   );
@@ -93,9 +93,6 @@ alter table message_objects add constraint fk_message_objects_thread_objects
 alter table message_objects add constraint fk_message_objects_assistant_objects
     foreign key (assistant_id)
     REFERENCES assistant_objects (id);
-alter table message_objects add constraint fk_message_objects_run_objects
-    foreign key (run_id)
-    REFERENCES run_objects (id);
 
 -- Foreign key constraints for run_objects
 alter table run_objects add constraint fk_run_objects_thread_objects
