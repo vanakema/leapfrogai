@@ -5,7 +5,7 @@ from __future__ import annotations
 import datetime
 from typing import Literal, Optional, List
 from enum import Enum
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, Field, create_model
 from fastapi import UploadFile, Form, File
 from openai.types.beta.vector_store import ExpiresAfter
 from openai.types import FileObject
@@ -202,13 +202,13 @@ class CreateTranscriptionRequest(BaseModel):
 
     @classmethod
     def as_form(
-        cls,
-        file: UploadFile = File(...),
-        model: str = Form(...),
-        language: str | None = Form(""),
-        prompt: str | None = Form(""),
-        response_format: str | None = Form(""),
-        temperature: float | None = Form(1.0),
+            cls,
+            file: UploadFile = File(...),
+            model: str = Form(...),
+            language: str | None = Form(""),
+            prompt: str | None = Form(""),
+            response_format: str | None = Form(""),
+            temperature: float | None = Form(1.0),
     ) -> CreateTranscriptionRequest:
         return cls(
             file=file,
@@ -237,9 +237,9 @@ class UploadFileRequest(BaseModel):
 
     @classmethod
     def as_form(
-        cls,
-        file: UploadFile = File(...),
-        purpose: str | None = Form("assistants"),
+            cls,
+            file: UploadFile = File(...),
+            purpose: str | None = Form("assistants"),
     ) -> UploadFileRequest:
         """Create an instance of the class from form data."""
         return cls(file=file, purpose=purpose)
@@ -373,8 +373,13 @@ class ListVectorStoresResponse(BaseModel):
 ################
 
 
-class CreateRunRequest(RunCreateParamsBase):
+class RunCreateParams(RunCreateParamsBase):
     stream: Optional[bool]
+
+
+CreateRunRequest = create_model(
+    'DynamicCreateRunRequest', **RunCreateParams.__dict__
+)
 
 
 class CreateThreadRequest(BaseModel):
