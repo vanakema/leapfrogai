@@ -25,7 +25,7 @@ class CRUDVectorStoreFile(CRUDBase[AuthVectorStoreFile]):
             object_=AuthVectorStoreFile(user_id=user_id, **object_.model_dump())
         )
 
-    async def get(  # pylint: disable=arguments-differ
+    async def get(  # pylint: disable=arguments-differ # The base class doesn't permit two id arguments
         self, vector_store_id: str, file_id: str
     ) -> AuthVectorStoreFile | None:
         """Get a vector store file by its ID."""
@@ -43,7 +43,7 @@ class CRUDVectorStoreFile(CRUDBase[AuthVectorStoreFile]):
             return self.model(**response[0])
         return None
 
-    async def list(  # pylint: disable=arguments-differ
+    async def list(  # pylint: disable=arguments-differ # The base class doesn't permit two id arguments
         self, vector_store_id: str
     ) -> list[AuthVectorStoreFile] | None:
         """List all vector store files."""
@@ -83,7 +83,7 @@ class CRUDVectorStoreFile(CRUDBase[AuthVectorStoreFile]):
             return self.model(**response[0])
         return None
 
-    async def delete(self, vector_store_id: str, file_id: str) -> bool:  # pylint: disable=arguments-differ
+    async def delete(self, vector_store_id: str, file_id: str) -> bool:  # pylint: disable=arguments-differ # The base class doesn't permit two id arguments
         """Delete a vector store file by its ID."""
 
         data, _count = (

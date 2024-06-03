@@ -13,6 +13,7 @@ from leapfrogai_api.data.async_supabase_vector_store import AsyncSupabaseVectorS
 from leapfrogai_api.data.crud_file_bucket import CRUDFileBucket
 from leapfrogai_api.data.crud_file_object import CRUDFileObject
 from leapfrogai_api.data.crud_vector_store_file import CRUDVectorStoreFile
+from leapfrogai_api.backend.types import VectorStoreFileStatus
 
 # Allows for overwriting type of embeddings that will be instantiated
 embeddings_type: type[Embeddings] | type[LeapfrogAIEmbeddings] | None = (
@@ -63,7 +64,7 @@ class IndexingService:
                         message="No text found in file", code="parsing_error"
                     ),
                     object="vector_store.file",
-                    status="failed",
+                    status=VectorStoreFileStatus.FAILED.value,
                     vector_store_id=vector_store_id,
                 )
                 return await crud_vector_store_file.create(object_=vector_store_file)
@@ -73,7 +74,7 @@ class IndexingService:
                 created_at=0,
                 last_error=None,
                 object="vector_store.file",
-                status="in_progress",
+                status=VectorStoreFileStatus.IN_PROGRESS.value,
                 vector_store_id=vector_store_id,
             )
 
@@ -93,15 +94,15 @@ class IndexingService:
                 )
 
                 if len(ids) == 0:
-                    vector_store_file.status = "failed"
+                    vector_store_file.status = VectorStoreFileStatus.FAILED.value
                 else:
-                    vector_store_file.status = "completed"
+                    vector_store_file.status = VectorStoreFileStatus.COMPLETED.value
 
                 await crud_vector_store_file.update(
                     id_=vector_store_file.id, object_=vector_store_file
                 )
             except Exception as e:
-                vector_store_file.status = "failed"
+                vector_store_file.status = VectorStoreFileStatus.FAILED.value
                 await crud_vector_store_file.update(
                     id_=vector_store_file.id, object_=vector_store_file
                 )
