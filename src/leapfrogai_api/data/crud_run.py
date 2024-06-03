@@ -18,24 +18,24 @@ class CRUDRun(CRUDBase[AuthRun]):
     def __init__(self, db: AsyncClient):
         super().__init__(db=db, model=AuthRun, table_name="run_objects")
 
-    async def create(self, object_: Run) -> AuthRun | None:
+    async def create(self, object_: Run) -> Run | None:
         """Create new run."""
         user_id: str = (await self.db.auth.get_user()).user.id
         return await super().create(
             object_=AuthRun(user_id=user_id, **object_.model_dump())
         )
 
-    async def get(self, id_: str) -> AuthRun | None:
+    async def get(self, id_: str) -> Run | None:
         """Get a vector store by its ID."""
 
         return await super().get(id_=id_)
 
-    async def list(self) -> list[AuthRun] | None:
+    async def list(self) -> list[Run] | None:
         """List all runs."""
 
         return await super().list()
 
-    async def update(self, id_: str, object_: Run) -> AuthRun | None:
+    async def update(self, id_: str, object_: Run) -> Run | None:
         """Update a run by its ID."""
 
         dict_ = object_.model_dump()
