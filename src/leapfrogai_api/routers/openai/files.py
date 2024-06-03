@@ -22,7 +22,7 @@ async def upload_file(
 
     if not supported_mime_type(request.file.content_type):
         raise HTTPException(
-            status_code=405,
+            status_code=status.HTTP_415_UNSUPPORTED_MEDIA_TYPE,
             detail=f"Unsupported file type {request.file.content_type}!",
         )
 
