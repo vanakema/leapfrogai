@@ -133,10 +133,11 @@ def test_invalid_file_type():
     dir_path = os.path.dirname(os.path.realpath(__file__))
     relative_file_path = os.path.join(dir_path, file_path)
 
-    with pytest.raises(HTTPException):
+    with pytest.raises(HTTPException) as exception:
         with open(relative_file_path, "rb") as testfile:
             _ = client.post(
                 "/openai/v1/files",
                 files={"file": ("0min12sec.wav", testfile, "audio/wav")},
                 data={"purpose": "assistants"},
             )
+            assert exception.status_code == status.HTTP_415_UNSUPPORTED_MEDIA_TYPE
