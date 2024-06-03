@@ -20,7 +20,7 @@ async def upload_file(
 ) -> FileObject:
     """Upload a file."""
 
-    if not await supported_mime_type(request.file.content_type):
+    if not supported_mime_type(request.file.content_type):
         raise HTTPException(
             status_code=405,
             detail=f"Unsupported file type {request.file.content_type}!",
