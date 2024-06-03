@@ -2,15 +2,18 @@ import json
 import os
 import shutil
 import time
-from typing import Optional
+from typing import Annotated, Optional
 
 import pytest
-from fastapi.security import HTTPBearer
+from fastapi import Depends
+from fastapi.applications import BaseHTTPMiddleware
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from fastapi.testclient import TestClient
+from starlette.middleware.base import _CachedRequest
 from supabase_py_async.lib.client_options import ClientOptions
-
 import leapfrogai_api.backend.types as lfai_types
 from leapfrogai_api.main import app
+from leapfrogai_api.routers.supabase_session import init_supabase_client
 
 security = HTTPBearer()
 
@@ -42,8 +45,29 @@ class AsyncClient:
         self.options = options
 
 
-async def mock_init_supabase_client() -> AsyncClient:
+async def mock_init_supabase_client(
+    auth_creds: Annotated[HTTPAuthorizationCredentials, Depends(security)],
+) -> AsyncClient:
     return AsyncClient("", "", "", ClientOptions())
+
+
+async def pack_dummy_bearer_token(request: _CachedRequest, call_next):
+    request.headers.__dict__["_list"].append(
+        (
+            "authorization".encode(),
+            "Bearer dummy".encode(),
+        )
+    )
+    return await call_next(request)
+
+
+@pytest.fixture
+def dummy_auth_middleware():
+    app.dependency_overrides[init_supabase_client] = mock_init_supabase_client
+    app.user_middleware.clear()
+    app.middleware_stack = None
+    app.add_middleware(BaseHTTPMiddleware, dispatch=pack_dummy_bearer_token)
+    app.middleware_stack = app.build_middleware_stack()
 
 
 def test_config_load():
@@ -149,7 +173,7 @@ def test_healthz():
     os.environ.get("LFAI_RUN_REPEATER_TESTS") != "true",
     reason="LFAI_RUN_REPEATER_TESTS envvar was not set to true",
 )
-def test_embedding():
+def test_embedding(dummy_auth_middleware):
     """Test the embedding endpoint."""
     expected_embedding = [0.0 for _ in range(10)]
 
@@ -179,7 +203,7 @@ def test_embedding():
     os.environ.get("LFAI_RUN_REPEATER_TESTS") != "true",
     reason="LFAI_RUN_REPEATER_TESTS envvar was not set to true",
 )
-def test_chat_completion():
+def test_chat_completion(dummy_auth_middleware):
     """Test the chat completion endpoint."""
     with TestClient(app) as client:
         input_content = "this is the chat completion input."
@@ -225,7 +249,7 @@ def test_chat_completion():
     os.environ.get("LFAI_RUN_REPEATER_TESTS") != "true",
     reason="LFAI_RUN_REPEATER_TESTS envvar was not set to true",
 )
-def test_stream_chat_completion():
+def test_stream_chat_completion(dummy_auth_middleware):
     """Test the stream chat completion endpoint."""
     with TestClient(app) as client:
         input_content = "this is the stream chat completion input."
