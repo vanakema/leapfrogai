@@ -23,7 +23,7 @@ create table
     incomplete_at bigint,
     role text,
     content jsonb,
-    assistant_id uuid,
+    assistant_id uuid, -- No foreign key constraint, can be null and doesn't have to refer to an assistant that exists
     run_id uuid, -- No foreign key constraint, can be null and doesn't have to refer to a thread that exists
     attachments jsonb,
     metadata jsonb
@@ -90,9 +90,6 @@ alter table message_objects add constraint fk_message_objects_thread_objects
     foreign key (thread_id)
     REFERENCES thread_objects (id)
     ON DELETE CASCADE;
-alter table message_objects add constraint fk_message_objects_assistant_objects
-    foreign key (assistant_id)
-    REFERENCES assistant_objects (id);
 
 -- Foreign key constraints for run_objects
 alter table run_objects add constraint fk_run_objects_thread_objects
