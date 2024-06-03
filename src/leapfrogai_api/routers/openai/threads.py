@@ -1,12 +1,10 @@
 """OpenAI Compliant Threads API Router."""
 
 import traceback
-from typing import Annotated
 
-from fastapi import HTTPException, APIRouter, status, Body
+from fastapi import HTTPException, APIRouter, status, Request
 from fastapi.security import HTTPBearer
 from openai.types.beta import Thread, ThreadDeleted
-from openai.types.beta.thread_create_and_run_params import ThreadCreateAndRunParamsBase
 from openai.types.beta.threads import Message, MessageDeleted, Run
 from openai.types.beta.threads.runs import RunStep
 
@@ -15,7 +13,6 @@ from leapfrogai_api.backend.types import (
     ModifyThreadRequest,
     CreateMessageRequest,
     ModifyMessageRequest,
-    RunCreateParams,
 )
 from leapfrogai_api.data.crud_message import CRUDMessage
 from leapfrogai_api.data.crud_run import CRUDRun
@@ -243,7 +240,7 @@ async def delete_message(
 
 @router.post("/{thread_id}/runs")
 async def create_run(
-    thread_id: str, request: Annotated[RunCreateParams, Body()], session: Session
+    thread_id: str, request: Request, session: Session
 ) -> Run:
     """Create a run."""
 
@@ -253,7 +250,7 @@ async def create_run(
             id="",  # Leave blank to have Postgres generate a UUID
             created_at=0,  # Leave blank to have Postgres generate a timestamp
             thread_id=thread_id,
-            **request.__dict__,
+            **request.json().__dict__,
         )
         return await crud_run.create(object_=run)
     except Exception as exc:
@@ -266,7 +263,7 @@ async def create_run(
 
 @router.post("/runs")
 async def create_thread_and_run(
-    assistant_id: str, request: Annotated[ThreadCreateAndRunParamsBase, Body()], session: Session
+    assistant_id: str, request: Request, session: Session
 ) -> Run:
     """Create a thread and run."""
 
@@ -286,7 +283,7 @@ async def create_thread_and_run(
             created_at=0,  # Leave blank to have Postgres generate a timestamp
             assistant_id=assistant_id,
             thread_id=new_thread.id,
-            **request.__dict__,
+            **request.json().__dict__,
         )
         return await crud_run.create(object_=run)
     except Exception as exc:
