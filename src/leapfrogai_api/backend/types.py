@@ -3,16 +3,20 @@
 from __future__ import annotations
 
 import datetime
-from typing import Literal, Optional, List
+from typing import Literal, Optional, List, Union, Iterable
 from enum import Enum
 from pydantic import BaseModel, Field
 from fastapi import UploadFile, Form, File
 from openai.types.beta.vector_store import ExpiresAfter
 from openai.types import FileObject
+from openai.types.beta.assistant_tool_param import AssistantToolParam
+from openai.types.beta.assistant_tool_choice_option_param import AssistantToolChoiceOptionParam
+from openai.types.beta.assistant_response_format_option_param import AssistantResponseFormatOptionParam
+from openai.types.beta.threads.run_create_params import AdditionalMessage
+from openai.types.beta.threads.run_create_params import TruncationStrategy
 from openai.types.beta import VectorStore
 from openai.types.beta import Assistant, AssistantTool
-from openai.types.beta.threads.run_create_params import RunCreateParamsBase
-from openai.types.beta.thread_create_and_run_params import ThreadCreateAndRunParamsBase
+from openai.types.beta.thread_create_and_run_params import Thread
 from openai.types.beta.threads import Message, MessageContent, TextContentBlock, Text
 from openai.types.beta.threads.message import Attachment
 from openai.types.beta.assistant import ToolResources
@@ -203,13 +207,13 @@ class CreateTranscriptionRequest(BaseModel):
 
     @classmethod
     def as_form(
-        cls,
-        file: UploadFile = File(...),
-        model: str = Form(...),
-        language: str | None = Form(""),
-        prompt: str | None = Form(""),
-        response_format: str | None = Form(""),
-        temperature: float | None = Form(1.0),
+            cls,
+            file: UploadFile = File(...),
+            model: str = Form(...),
+            language: str | None = Form(""),
+            prompt: str | None = Form(""),
+            response_format: str | None = Form(""),
+            temperature: float | None = Form(1.0),
     ) -> CreateTranscriptionRequest:
         return cls(
             file=file,
@@ -238,9 +242,9 @@ class UploadFileRequest(BaseModel):
 
     @classmethod
     def as_form(
-        cls,
-        file: UploadFile = File(...),
-        purpose: str | None = Form("assistants"),
+            cls,
+            file: UploadFile = File(...),
+            purpose: str | None = Form("assistants"),
     ) -> UploadFileRequest:
         """Create an instance of the class from form data."""
         return cls(file=file, purpose=purpose)
@@ -374,20 +378,28 @@ class ListVectorStoresResponse(BaseModel):
 ################
 
 
-class RunCreateParams(RunCreateParamsBase):
+class RunCreateParamsRequest(BaseModel):
+    assistant_id: str = Field(default="", examples=["123ab"])
+    additional_instructions: Optional[str]
+    additional_messages: Optional[Iterable[AdditionalMessage]]
+    instructions: str = Field(default="", examples=[""])
+    max_completion_tokens: Optional[int]
+    max_prompt_tokens: Optional[int]
+    metadata: Optional[object]
+    model: Union[str, None] = Field(default="", examples=[""])
+    response_format: Optional[AssistantResponseFormatOptionParam]
+    temperature: Optional[float]
+    tool_choice: Optional[AssistantToolChoiceOptionParam]
+    tools: Iterable[AssistantToolParam] = Field(default=[], examples=[[]])
+    top_p: Optional[float]
+    truncation_strategy: Optional[TruncationStrategy]
     stream: Optional[bool]
 
-    def __init__(self, params: dict):
-        for key, value in params.items():
-            setattr(self, key, value)
 
-
-class ThreadRunCreateParams(ThreadCreateAndRunParamsBase):
-    stream: Optional[bool]
-
-    def __init__(self, params: dict):
-        for key, value in params.items():
-            setattr(self, key, value)
+class ThreadRunCreateParams(RunCreateParamsRequest):
+    thread: Optional[Thread] = Field(default=None, examples=[None])
+    tool_resources: Optional[ToolResources] = Field(default=None, examples=[None])
+    top_p: Optional[float] = Field(default=1.0, examples=[1.0])
 
 
 class CreateThreadRequest(BaseModel):

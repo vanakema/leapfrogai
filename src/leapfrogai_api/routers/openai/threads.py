@@ -2,7 +2,7 @@
 
 import traceback
 
-from fastapi import HTTPException, APIRouter, status, Body
+from fastapi import HTTPException, APIRouter, status
 from fastapi.security import HTTPBearer
 from openai.types.beta import Thread, ThreadDeleted
 from openai.types.beta.threads import Message, MessageDeleted, Run
@@ -12,9 +12,7 @@ from leapfrogai_api.backend.types import (
     CreateThreadRequest,
     ModifyThreadRequest,
     CreateMessageRequest,
-    ModifyMessageRequest,
-    RunCreateParams,
-    ThreadRunCreateParams,
+    ModifyMessageRequest, RunCreateParamsRequest, ThreadRunCreateParams,
 )
 from leapfrogai_api.data.crud_message import CRUDMessage
 from leapfrogai_api.data.crud_run import CRUDRun
@@ -242,20 +240,12 @@ async def delete_message(
 
 @router.post("/{thread_id}/runs")
 async def create_run(
-    thread_id: str, session: Session, request: dict = Body(...)
+    thread_id: str, session: Session, request: RunCreateParamsRequest
 ) -> Run:
     """Create a run."""
 
     try:
-        request_params: RunCreateParams = RunCreateParams(request)
-
-        print(**request_params)
-
         crud_run = CRUDRun(db=session)
-
-        request.setdefault("instructions", "")
-        request.setdefault("model", "")
-        request.setdefault("tools", [])
 
         run = Run(
             id="",  # Leave blank to have Postgres generate a UUID
@@ -263,7 +253,7 @@ async def create_run(
             thread_id=thread_id,
             object="thread.run",
             status="in_progress",
-            **request,
+            **request.__dict__,
         )
         return await crud_run.create(object_=run)
     except Exception as exc:
@@ -275,28 +265,18 @@ async def create_run(
 
 
 @router.post("/runs")
-async def create_thread_and_run(session: Session, request: dict = Body(...)) -> Run:
+async def create_thread_and_run(session: Session, request: ThreadRunCreateParams) -> Run:
     """Create a thread and run."""
 
     try:
-        request_params: ThreadRunCreateParams = ThreadRunCreateParams(request)
-
-        print(**request_params)
-
         new_thread: Thread = await create_thread(
             CreateThreadRequest(
-                messages=request.get("thread").get("messages"),
-                metadata=request.get("thread").get("metadata"),
-                tool_resources=request.get("thread").get("tool_resources"),
+                **request.thread.__dict__
             ),
             session,
         )
 
         crud_run = CRUDRun(db=session)
-
-        request.setdefault("instructions", "")
-        request.setdefault("model", "")
-        request.setdefault("tools", [])
 
         run = Run(
             id="",  # Leave blank to have Postgres generate a UUID
@@ -304,7 +284,7 @@ async def create_thread_and_run(session: Session, request: dict = Body(...)) -> 
             thread_id=new_thread.id,
             object="thread.run",
             status="in_progress",
-            **request,
+            **request.__dict__,
         )
         return await crud_run.create(object_=run)
     except Exception as exc:
