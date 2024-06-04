@@ -403,7 +403,7 @@ class RunCreateParamsRequest(BaseModel):
 class ThreadRunCreateParams(RunCreateParamsRequest):
     thread: Optional[Thread] = Field(default=None, examples=[None])
     tool_resources: Optional[ToolResources] = Field(default=None, examples=[None])
-    top_p: Optional[float] = Field(default=1.0, examples=[1.0])
+    top_p: Optional[float] = Field(default=None, examples=[None])
 
 
 class CreateThreadRequest(BaseModel):
