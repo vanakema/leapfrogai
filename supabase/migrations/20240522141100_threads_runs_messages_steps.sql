@@ -56,7 +56,7 @@ create table
     token_usage jsonb,
     temperature float,
     top_p int,
-    max_prompts_tokens int,
+    max_prompt_tokens int,
     max_completion_tokens int,
     truncation_strategy jsonb,
     tool_choice jsonb,

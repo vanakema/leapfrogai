@@ -249,7 +249,7 @@ async def create_run(
 
         request.setdefault("instructions", "")
         request.setdefault("model", "")
-        request.setdefault("tool", [])
+        request.setdefault("tools", [])
 
         run = Run(
             id="",  # Leave blank to have Postgres generate a UUID
@@ -286,7 +286,7 @@ async def create_thread_and_run(session: Session, request: dict = Body(...)) -> 
 
         request.setdefault("instructions", "")
         request.setdefault("model", "")
-        request.setdefault("tool", [])
+        request.setdefault("tools", [])
 
         run = Run(
             id="",  # Leave blank to have Postgres generate a UUID
