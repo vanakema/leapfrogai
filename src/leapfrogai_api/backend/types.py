@@ -211,13 +211,13 @@ class CreateTranscriptionRequest(BaseModel):
 
     @classmethod
     def as_form(
-            cls,
-            file: UploadFile = File(...),
-            model: str = Form(...),
-            language: str | None = Form(""),
-            prompt: str | None = Form(""),
-            response_format: str | None = Form(""),
-            temperature: float | None = Form(1.0),
+        cls,
+        file: UploadFile = File(...),
+        model: str = Form(...),
+        language: str | None = Form(""),
+        prompt: str | None = Form(""),
+        response_format: str | None = Form(""),
+        temperature: float | None = Form(1.0),
     ) -> CreateTranscriptionRequest:
         return cls(
             file=file,
@@ -246,9 +246,9 @@ class UploadFileRequest(BaseModel):
 
     @classmethod
     def as_form(
-            cls,
-            file: UploadFile = File(...),
-            purpose: str | None = Form("assistants"),
+        cls,
+        file: UploadFile = File(...),
+        purpose: str | None = Form("assistants"),
     ) -> UploadFileRequest:
         """Create an instance of the class from form data."""
         return cls(file=file, purpose=purpose)
@@ -381,6 +381,7 @@ class ListVectorStoresResponse(BaseModel):
 # THREADS, RUNS, MESSAGES
 ################
 
+
 class RunCreateParams(BaseModel):
     assistant_id: str = Field(default="", examples=["123ab"])
     instructions: str = Field(default="", examples=[""])
@@ -388,13 +389,9 @@ class RunCreateParams(BaseModel):
     max_prompt_tokens: Optional[int] = Field(default=None)
     metadata: Optional[object] = Field(default=None)
     model: Union[str, None] = Field(default="", examples=[""])
-    response_format: Optional[AssistantResponseFormatOptionParam] = Field(
-        default=None
-    )
+    response_format: Optional[AssistantResponseFormatOptionParam] = Field(default=None)
     temperature: Optional[float] = Field(default=None)
-    tool_choice: Optional[AssistantToolChoiceOptionParam] = Field(
-        default=None
-    )
+    tool_choice: Optional[AssistantToolChoiceOptionParam] = Field(default=None)
     tools: list[AssistantToolParam] = Field(default=[], examples=[[]])
     top_p: Optional[float] = Field(default=None)
     truncation_strategy: Optional[TruncationStrategy] = Field(default=None)

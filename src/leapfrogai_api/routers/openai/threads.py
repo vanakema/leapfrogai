@@ -14,7 +14,8 @@ from leapfrogai_api.backend.types import (
     CreateMessageRequest,
     ModifyMessageRequest,
     RunCreateParamsRequest,
-    ThreadRunCreateParamsRequest, RunCreateParams,
+    ThreadRunCreateParamsRequest,
+    RunCreateParams,
 )
 from leapfrogai_api.data.crud_message import CRUDMessage
 from leapfrogai_api.data.crud_run import CRUDRun
@@ -281,7 +282,7 @@ async def create_thread_and_run(
         )
 
         crud_run = CRUDRun(db=session)
-        
+
         create_params: RunCreateParams = RunCreateParams(**request.thread.__dict__)
 
         run = Run(
@@ -292,7 +293,7 @@ async def create_thread_and_run(
             status="in_progress",
             **create_params.__dict__,
         )
-        
+
         return await crud_run.create(object_=run)
     except Exception as exc:
         traceback.print_exc()
