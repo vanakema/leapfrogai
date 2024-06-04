@@ -254,7 +254,7 @@ async def create_run(
             model=request.get("model"),
             object="thread.run",
             status="in_progress",
-            tools=request.get("tools") | [],
+            tools=request.get("tools") or [],
             **request,
         )
         return await crud_run.create(object_=run)
@@ -289,7 +289,7 @@ async def create_thread_and_run(session: Session, request: dict = Body(...)) -> 
             model=request.get("model"),
             object="thread.run",
             status="in_progress",
-            tools=request.get("tools") | [],
+            tools=request.get("tools") or [],
             **request,
         )
         return await crud_run.create(object_=run)
