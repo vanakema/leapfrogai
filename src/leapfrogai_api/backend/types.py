@@ -10,8 +10,12 @@ from fastapi import UploadFile, Form, File
 from openai.types.beta.vector_store import ExpiresAfter
 from openai.types import FileObject
 from openai.types.beta.assistant_tool_param import AssistantToolParam
-from openai.types.beta.assistant_tool_choice_option_param import AssistantToolChoiceOptionParam
-from openai.types.beta.assistant_response_format_option_param import AssistantResponseFormatOptionParam
+from openai.types.beta.assistant_tool_choice_option_param import (
+    AssistantToolChoiceOptionParam,
+)
+from openai.types.beta.assistant_response_format_option_param import (
+    AssistantResponseFormatOptionParam,
+)
 from openai.types.beta.threads.run_create_params import AdditionalMessage
 from openai.types.beta.threads.run_create_params import TruncationStrategy
 from openai.types.beta import VectorStore
@@ -207,13 +211,13 @@ class CreateTranscriptionRequest(BaseModel):
 
     @classmethod
     def as_form(
-            cls,
-            file: UploadFile = File(...),
-            model: str = Form(...),
-            language: str | None = Form(""),
-            prompt: str | None = Form(""),
-            response_format: str | None = Form(""),
-            temperature: float | None = Form(1.0),
+        cls,
+        file: UploadFile = File(...),
+        model: str = Form(...),
+        language: str | None = Form(""),
+        prompt: str | None = Form(""),
+        response_format: str | None = Form(""),
+        temperature: float | None = Form(1.0),
     ) -> CreateTranscriptionRequest:
         return cls(
             file=file,
@@ -242,9 +246,9 @@ class UploadFileRequest(BaseModel):
 
     @classmethod
     def as_form(
-            cls,
-            file: UploadFile = File(...),
-            purpose: str | None = Form("assistants"),
+        cls,
+        file: UploadFile = File(...),
+        purpose: str | None = Form("assistants"),
     ) -> UploadFileRequest:
         """Create an instance of the class from form data."""
         return cls(file=file, purpose=purpose)

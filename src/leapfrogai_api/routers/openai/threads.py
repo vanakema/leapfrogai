@@ -12,7 +12,9 @@ from leapfrogai_api.backend.types import (
     CreateThreadRequest,
     ModifyThreadRequest,
     CreateMessageRequest,
-    ModifyMessageRequest, RunCreateParamsRequest, ThreadRunCreateParams,
+    ModifyMessageRequest,
+    RunCreateParamsRequest,
+    ThreadRunCreateParams,
 )
 from leapfrogai_api.data.crud_message import CRUDMessage
 from leapfrogai_api.data.crud_run import CRUDRun
@@ -265,14 +267,14 @@ async def create_run(
 
 
 @router.post("/runs")
-async def create_thread_and_run(session: Session, request: ThreadRunCreateParams) -> Run:
+async def create_thread_and_run(
+    session: Session, request: ThreadRunCreateParams
+) -> Run:
     """Create a thread and run."""
 
     try:
         new_thread: Thread = await create_thread(
-            CreateThreadRequest(
-                **request.thread.__dict__
-            ),
+            CreateThreadRequest(**request.thread.__dict__),
             session,
         )
 
