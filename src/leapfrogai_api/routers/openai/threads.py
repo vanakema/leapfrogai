@@ -267,9 +267,7 @@ async def create_run(
 
 
 @router.post("/runs")
-async def create_thread_and_run(
-    session: Session, request: dict = Body(...)
-) -> Run:
+async def create_thread_and_run(session: Session, request: dict = Body(...)) -> Run:
     """Create a thread and run."""
 
     try:
