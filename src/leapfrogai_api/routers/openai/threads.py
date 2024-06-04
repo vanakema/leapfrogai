@@ -249,7 +249,7 @@ async def create_run(
     try:
         request_params: RunCreateParams = RunCreateParams(request)
 
-        print(**request_params.__dict__)
+        print(**request_params)
 
         crud_run = CRUDRun(db=session)
 
@@ -281,7 +281,7 @@ async def create_thread_and_run(session: Session, request: dict = Body(...)) -> 
     try:
         request_params: ThreadRunCreateParams = ThreadRunCreateParams(request)
 
-        print(**request_params.__dict__)
+        print(**request_params)
 
         new_thread: Thread = await create_thread(
             CreateThreadRequest(
