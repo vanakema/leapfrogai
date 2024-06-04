@@ -27,10 +27,10 @@ class CRUDVectorStore(CRUDBase[AuthVectorStore]):
             object_=AuthVectorStore(user_id=user_id, **object_.model_dump())
         )
 
-    async def get(self, id_: str) -> VectorStore | None:
-        """Get a vector store by its ID."""
+    async def get(self, filters: dict) -> VectorStore | None:
+        """Get vector store by filters."""
 
-        vector_store: AuthVectorStore | None = await super().get(id_=id_)
+        vector_store: AuthVectorStore | None = await super().get(filters=filters)
 
         if await self.delete_when_expired(vector_store):
             return None

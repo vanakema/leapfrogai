@@ -25,23 +25,9 @@ class CRUDVectorStoreFile(CRUDBase[AuthVectorStoreFile]):
             object_=AuthVectorStoreFile(user_id=user_id, **object_.model_dump())
         )
 
-    async def get(  # pylint: disable=arguments-differ # The base class doesn't permit two id arguments
-        self, vector_store_id: str, file_id: str
-    ) -> AuthVectorStoreFile | None:
-        """Get a vector store file by its ID."""
-        data, _count = (
-            await self.db.table(self.table_name)
-            .select("*")
-            .eq("vector_store_id", vector_store_id)
-            .eq("id", file_id)
-            .execute()
-        )
-
-        _, response = data
-
-        if response:
-            return self.model(**response[0])
-        return None
+    async def get(self, filters: dict) -> AuthVectorStoreFile | None:
+        """Get vector store file by filters."""
+        return await super().get(filters=filters)
 
     async def list(  # pylint: disable=arguments-differ # The base class doesn't permit two id arguments
         self, vector_store_id: str

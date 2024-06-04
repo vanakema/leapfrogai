@@ -32,11 +32,25 @@ class CRUDBase(Generic[ModelType]):
             return self.model(**response[0])
         return None
 
-    async def get(self, id_: str) -> ModelType | None:
-        """Get row by ID."""
-        data, _count = (
-            await self.db.table(self.table_name).select("*").eq("id", id_).execute()
-        )
+    # async def get(self, id_: str) -> ModelType | None:
+    #     """Get row by ID."""
+    #     data, _count = (
+    #         await self.db.table(self.table_name).select("*").eq("id", id_).execute()
+    #     )
+
+    #     _, response = data
+
+    #     if response:
+    #         return self.model(**response[0])
+    #     return None
+
+    async def get(self, filters: dict) -> ModelType | None:
+        """Get row by filters."""
+        query = self.db.table(self.table_name).select("*")
+        for key, value in filters.items():
+            query = query.eq(key, value)
+
+        data, _count = await query.execute()
 
         _, response = data
 

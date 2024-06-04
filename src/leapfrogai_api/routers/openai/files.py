@@ -80,7 +80,7 @@ async def retrieve_file(
 ) -> FileObject | None:
     """Retrieve a file."""
     crud_file_object = CRUDFileObject(session)
-    return await crud_file_object.get(id_=file_id)
+    return await crud_file_object.get(filters={"id": file_id})
 
 
 @router.delete("/{file_id}")

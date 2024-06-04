@@ -105,7 +105,7 @@ async def retrieve_vector_store(
     """Retrieve a vector store."""
 
     crud_vector_store = CRUDVectorStore(db=session)
-    return await crud_vector_store.get(id_=vector_store_id)
+    return await crud_vector_store.get(filters={"id": vector_store_id})
 
 
 @router.post("/{vector_store_id}")
@@ -117,7 +117,9 @@ async def modify_vector_store(
     """Modify a vector store."""
     crud_vector_store = CRUDVectorStore(db=session)
 
-    if not (old_vector_store := await crud_vector_store.get(id_=vector_store_id)):
+    if not (
+        old_vector_store := await crud_vector_store.get(filters={"id": vector_store_id})
+    ):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Vector store not found",
@@ -265,8 +267,7 @@ async def retrieve_vector_store_file(
 
     crud_vector_store_file = CRUDVectorStoreFile(db=session)
     return await crud_vector_store_file.get(
-        vector_store_id=vector_store_id,
-        file_id=file_id,
+        filters={"vector_store_id": vector_store_id, "id": file_id}
     )
 
 
