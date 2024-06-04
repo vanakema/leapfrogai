@@ -250,6 +250,11 @@ async def create_run(
             id="",  # Leave blank to have Postgres generate a UUID
             created_at=0,  # Leave blank to have Postgres generate a timestamp
             thread_id=thread_id,
+            instructions=request.get("instructions"),
+            model=request.get("model"),
+            object="thread.run",
+            status="in_progress",
+            tools=request.get("tools") | [],
             **request,
         )
         return await crud_run.create(object_=run)
@@ -282,6 +287,11 @@ async def create_thread_and_run(
             id="",  # Leave blank to have Postgres generate a UUID
             created_at=0,  # Leave blank to have Postgres generate a timestamp
             thread_id=new_thread.id,
+            instructions=request.get("instructions"),
+            model=request.get("model"),
+            object="thread.run",
+            status="in_progress",
+            tools=request.get("tools") | [],
             **request,
         )
         return await crud_run.create(object_=run)
