@@ -203,13 +203,13 @@ class CreateTranscriptionRequest(BaseModel):
 
     @classmethod
     def as_form(
-        cls,
-        file: UploadFile = File(...),
-        model: str = Form(...),
-        language: str | None = Form(""),
-        prompt: str | None = Form(""),
-        response_format: str | None = Form(""),
-        temperature: float | None = Form(1.0),
+            cls,
+            file: UploadFile = File(...),
+            model: str = Form(...),
+            language: str | None = Form(""),
+            prompt: str | None = Form(""),
+            response_format: str | None = Form(""),
+            temperature: float | None = Form(1.0),
     ) -> CreateTranscriptionRequest:
         return cls(
             file=file,
@@ -238,9 +238,9 @@ class UploadFileRequest(BaseModel):
 
     @classmethod
     def as_form(
-        cls,
-        file: UploadFile = File(...),
-        purpose: str | None = Form("assistants"),
+            cls,
+            file: UploadFile = File(...),
+            purpose: str | None = Form("assistants"),
     ) -> UploadFileRequest:
         """Create an instance of the class from form data."""
         return cls(file=file, purpose=purpose)
@@ -377,9 +377,17 @@ class ListVectorStoresResponse(BaseModel):
 class RunCreateParams(RunCreateParamsBase):
     stream: Optional[bool]
 
+    def __init__(self, params: dict):
+        for key, value in params.items():
+            setattr(self, key, value)
+
 
 class ThreadRunCreateParams(ThreadCreateAndRunParamsBase):
     stream: Optional[bool]
+    
+    def __init__(self, params: dict):
+        for key, value in params.items():
+            setattr(self, key, value)
 
 
 class CreateThreadRequest(BaseModel):
