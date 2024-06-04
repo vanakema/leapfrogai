@@ -2,7 +2,7 @@
 
 import traceback
 
-from fastapi import HTTPException, APIRouter, status, Request
+from fastapi import HTTPException, APIRouter, status, Body
 from fastapi.security import HTTPBearer
 from openai.types.beta import Thread, ThreadDeleted
 from openai.types.beta.threads import Message, MessageDeleted, Run
@@ -241,11 +241,11 @@ async def delete_message(
 
 
 @router.post("/{thread_id}/runs")
-async def create_run(thread_id: str, request: Request, session: Session) -> Run:
+async def create_run(thread_id: str, session: Session, request: dict = Body(...)) -> Run:
     """Create a run."""
 
     try:
-        request_params: RunCreateParams = await request.json()
+        request_params: RunCreateParams = RunCreateParams(**request)
 
         crud_run = CRUDRun(db=session)
         run = Run(
@@ -265,12 +265,12 @@ async def create_run(thread_id: str, request: Request, session: Session) -> Run:
 
 @router.post("/runs")
 async def create_thread_and_run(
-    assistant_id: str, request: Request, session: Session
+    assistant_id: str, session: Session, request: dict = Body(...)
 ) -> Run:
     """Create a thread and run."""
 
     try:
-        request_params: ThreadRunCreateParams = await request.json()
+        request_params: ThreadRunCreateParams = ThreadRunCreateParams(**request)
 
         new_thread: Thread = await create_thread(
             CreateThreadRequest(
