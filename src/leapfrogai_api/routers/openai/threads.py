@@ -241,7 +241,9 @@ async def delete_message(
 
 
 @router.post("/{thread_id}/runs")
-async def create_run(thread_id: str, session: Session, request: dict = Body(...)) -> Run:
+async def create_run(
+    thread_id: str, session: Session, request: dict = Body(...)
+) -> Run:
     """Create a run."""
 
     try:
