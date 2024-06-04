@@ -402,9 +402,7 @@ class RunCreateParamsRequest(BaseModel):
     )
     tools: list[AssistantToolParam] = Field(default=[], examples=[[]])
     top_p: Optional[float] = Field(default=None, examples=[])
-    truncation_strategy: Optional[TruncationStrategy] = Field(
-        default=None, examples=[]
-    )
+    truncation_strategy: Optional[TruncationStrategy] = Field(default=None, examples=[])
     stream: Optional[bool] = Field(default=None, examples=[])
 
 
