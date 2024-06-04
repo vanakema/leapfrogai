@@ -13,8 +13,6 @@ from leapfrogai_api.backend.types import (
     ModifyThreadRequest,
     CreateMessageRequest,
     ModifyMessageRequest,
-    RunCreateParams,
-    ThreadRunCreateParams,
 )
 from leapfrogai_api.data.crud_message import CRUDMessage
 from leapfrogai_api.data.crud_run import CRUDRun
@@ -247,14 +245,12 @@ async def create_run(
     """Create a run."""
 
     try:
-        request_params: RunCreateParams = RunCreateParams(**request)
-
         crud_run = CRUDRun(db=session)
         run = Run(
             id="",  # Leave blank to have Postgres generate a UUID
             created_at=0,  # Leave blank to have Postgres generate a timestamp
             thread_id=thread_id,
-            **request_params.__dict__,
+            **request,
         )
         return await crud_run.create(object_=run)
     except Exception as exc:
@@ -267,18 +263,16 @@ async def create_run(
 
 @router.post("/runs")
 async def create_thread_and_run(
-    assistant_id: str, session: Session, request: dict = Body(...)
+    session: Session, request: dict = Body(...)
 ) -> Run:
     """Create a thread and run."""
 
     try:
-        request_params: ThreadRunCreateParams = ThreadRunCreateParams(**request)
-
         new_thread: Thread = await create_thread(
             CreateThreadRequest(
-                messages=request_params.get("thread").get("messages"),
-                metadata=request_params.get("thread").get("metadata"),
-                tool_resources=request_params.get("thread").get("tool_resources"),
+                messages=request.get("thread").get("messages"),
+                metadata=request.get("thread").get("metadata"),
+                tool_resources=request.get("thread").get("tool_resources"),
             ),
             session,
         )
@@ -287,9 +281,8 @@ async def create_thread_and_run(
         run = Run(
             id="",  # Leave blank to have Postgres generate a UUID
             created_at=0,  # Leave blank to have Postgres generate a timestamp
-            assistant_id=assistant_id,
             thread_id=new_thread.id,
-            **request_params.__dict__,
+            **request,
         )
         return await crud_run.create(object_=run)
     except Exception as exc:
