@@ -14,7 +14,7 @@ from leapfrogai_api.backend.types import (
     CreateMessageRequest,
     ModifyMessageRequest,
     RunCreateParamsRequest,
-    ThreadRunCreateParams,
+    ThreadRunCreateParamsRequest, RunCreateParams,
 )
 from leapfrogai_api.data.crud_message import CRUDMessage
 from leapfrogai_api.data.crud_run import CRUDRun
@@ -249,13 +249,15 @@ async def create_run(
     try:
         crud_run = CRUDRun(db=session)
 
+        create_params: RunCreateParams = RunCreateParams(**request.thread.__dict__)
+
         run = Run(
             id="",  # Leave blank to have Postgres generate a UUID
             created_at=0,  # Leave blank to have Postgres generate a timestamp
             thread_id=thread_id,
             object="thread.run",
             status="in_progress",
-            **request.__dict__,
+            **create_params.__dict__,
         )
         return await crud_run.create(object_=run)
     except Exception as exc:
@@ -268,7 +270,7 @@ async def create_run(
 
 @router.post("/runs")
 async def create_thread_and_run(
-    session: Session, request: ThreadRunCreateParams
+    session: Session, request: ThreadRunCreateParamsRequest
 ) -> Run:
     """Create a thread and run."""
 
@@ -279,6 +281,8 @@ async def create_thread_and_run(
         )
 
         crud_run = CRUDRun(db=session)
+        
+        create_params: RunCreateParams = RunCreateParams(**request.thread.__dict__)
 
         run = Run(
             id="",  # Leave blank to have Postgres generate a UUID
@@ -286,8 +290,9 @@ async def create_thread_and_run(
             thread_id=new_thread.id,
             object="thread.run",
             status="in_progress",
-            **request.__dict__,
+            **create_params.__dict__,
         )
+        
         return await crud_run.create(object_=run)
     except Exception as exc:
         traceback.print_exc()

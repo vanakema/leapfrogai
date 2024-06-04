@@ -211,13 +211,13 @@ class CreateTranscriptionRequest(BaseModel):
 
     @classmethod
     def as_form(
-        cls,
-        file: UploadFile = File(...),
-        model: str = Form(...),
-        language: str | None = Form(""),
-        prompt: str | None = Form(""),
-        response_format: str | None = Form(""),
-        temperature: float | None = Form(1.0),
+            cls,
+            file: UploadFile = File(...),
+            model: str = Form(...),
+            language: str | None = Form(""),
+            prompt: str | None = Form(""),
+            response_format: str | None = Form(""),
+            temperature: float | None = Form(1.0),
     ) -> CreateTranscriptionRequest:
         return cls(
             file=file,
@@ -246,9 +246,9 @@ class UploadFileRequest(BaseModel):
 
     @classmethod
     def as_form(
-        cls,
-        file: UploadFile = File(...),
-        purpose: str | None = Form("assistants"),
+            cls,
+            file: UploadFile = File(...),
+            purpose: str | None = Form("assistants"),
     ) -> UploadFileRequest:
         """Create an instance of the class from form data."""
         return cls(file=file, purpose=purpose)
@@ -381,35 +381,38 @@ class ListVectorStoresResponse(BaseModel):
 # THREADS, RUNS, MESSAGES
 ################
 
-
-class RunCreateParamsRequest(BaseModel):
+class RunCreateParams(BaseModel):
     assistant_id: str = Field(default="", examples=["123ab"])
-    additional_instructions: Optional[str] = Field(default=None, examples=[])
-    additional_messages: Optional[list[AdditionalMessage]] = Field(
-        default=None, examples=[]
-    )
     instructions: str = Field(default="", examples=[""])
-    max_completion_tokens: Optional[int] = Field(default=None, examples=[])
-    max_prompt_tokens: Optional[int] = Field(default=None, examples=[])
-    metadata: Optional[object] = Field(default=None, examples=[])
+    max_completion_tokens: Optional[int] = Field(default=None)
+    max_prompt_tokens: Optional[int] = Field(default=None)
+    metadata: Optional[object] = Field(default=None)
     model: Union[str, None] = Field(default="", examples=[""])
     response_format: Optional[AssistantResponseFormatOptionParam] = Field(
-        default=None, examples=[]
+        default=None
     )
-    temperature: Optional[float] = Field(default=None, examples=[])
+    temperature: Optional[float] = Field(default=None)
     tool_choice: Optional[AssistantToolChoiceOptionParam] = Field(
-        default=None, examples=[]
+        default=None
     )
     tools: list[AssistantToolParam] = Field(default=[], examples=[[]])
-    top_p: Optional[float] = Field(default=None, examples=[])
-    truncation_strategy: Optional[TruncationStrategy] = Field(default=None, examples=[])
-    stream: Optional[bool] = Field(default=None, examples=[])
+    top_p: Optional[float] = Field(default=None)
+    truncation_strategy: Optional[TruncationStrategy] = Field(default=None)
 
 
-class ThreadRunCreateParams(RunCreateParamsRequest):
-    thread: Optional[Thread] = Field(default=None, examples=[])
-    tool_resources: Optional[ToolResources] = Field(default=None, examples=[])
-    top_p: Optional[float] = Field(default=None, examples=[])
+class RunCreateParamsRequest(RunCreateParams):
+    additional_instructions: Optional[str] = Field(default=None)
+    additional_messages: Optional[list[AdditionalMessage]] = Field(
+        default=None, examples=[None]
+    )
+    stream: Optional[bool] = Field(default=None)
+
+
+class ThreadRunCreateParamsRequest(RunCreateParams):
+    thread: Optional[Thread] = Field(default=None)
+    tool_resources: Optional[ToolResources] = Field(default=None)
+    top_p: Optional[float] = Field(default=None)
+    stream: Optional[bool] = Field(default=None)
 
 
 class CreateThreadRequest(BaseModel):
