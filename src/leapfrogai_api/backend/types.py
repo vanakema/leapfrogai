@@ -384,34 +384,34 @@ class ListVectorStoresResponse(BaseModel):
 
 class RunCreateParamsRequest(BaseModel):
     assistant_id: str = Field(default="", examples=["123ab"])
-    additional_instructions: Optional[str] = Field(default=None, examples=[None])
+    additional_instructions: Optional[str] = Field(default=None, examples=[])
     additional_messages: Optional[list[AdditionalMessage]] = Field(
-        default=None, examples=[None]
+        default=None, examples=[]
     )
     instructions: str = Field(default="", examples=[""])
-    max_completion_tokens: Optional[int] = Field(default=None, examples=[None])
-    max_prompt_tokens: Optional[int] = Field(default=None, examples=[None])
-    metadata: Optional[object] = Field(default=None, examples=[None])
+    max_completion_tokens: Optional[int] = Field(default=None, examples=[])
+    max_prompt_tokens: Optional[int] = Field(default=None, examples=[])
+    metadata: Optional[object] = Field(default=None, examples=[])
     model: Union[str, None] = Field(default="", examples=[""])
     response_format: Optional[AssistantResponseFormatOptionParam] = Field(
-        default=None, examples=[None]
+        default=None, examples=[]
     )
-    temperature: Optional[float] = Field(default=None, examples=[None])
+    temperature: Optional[float] = Field(default=None, examples=[])
     tool_choice: Optional[AssistantToolChoiceOptionParam] = Field(
-        default=None, examples=[None]
+        default=None, examples=[]
     )
     tools: list[AssistantToolParam] = Field(default=[], examples=[[]])
-    top_p: Optional[float] = Field(default=None, examples=[None])
+    top_p: Optional[float] = Field(default=None, examples=[])
     truncation_strategy: Optional[TruncationStrategy] = Field(
-        default=None, examples=[None]
+        default=None, examples=[]
     )
-    stream: Optional[bool] = Field(default=None, examples=[None])
+    stream: Optional[bool] = Field(default=None, examples=[])
 
 
 class ThreadRunCreateParams(RunCreateParamsRequest):
-    thread: Optional[Thread] = Field(default=None, examples=[None])
-    tool_resources: Optional[ToolResources] = Field(default=None, examples=[None])
-    top_p: Optional[float] = Field(default=None, examples=[None])
+    thread: Optional[Thread] = Field(default=None, examples=[])
+    tool_resources: Optional[ToolResources] = Field(default=None, examples=[])
+    top_p: Optional[float] = Field(default=None, examples=[])
 
 
 class CreateThreadRequest(BaseModel):
