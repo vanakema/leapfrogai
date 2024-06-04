@@ -28,14 +28,14 @@ A mostly OpenAI compliant API surface.
 
 3. Create a local api user
     ```bash
-    make supabase-user
+    make new-api-user
     ```
 
 ### Session Authentication
 
 4. Create a JWT token
     ```bash
-    make supabase-jwt-token
+    make jwt
     ```
     This will copy the JWT token to your clipboard.
 
@@ -64,6 +64,7 @@ make supabase-jwt-token
 source .jwt
 ```
 ### Running the tests
+After abtaining the JWT token, run the following:
 ```
 make test-integration
 ```
