@@ -3,7 +3,7 @@
 from __future__ import annotations
 
 import datetime
-from typing import Literal, Optional, List, Union, Iterable
+from typing import Literal, Optional, List, Union
 from enum import Enum
 from pydantic import BaseModel, Field
 from fastapi import UploadFile, Form, File
@@ -384,20 +384,20 @@ class ListVectorStoresResponse(BaseModel):
 
 class RunCreateParamsRequest(BaseModel):
     assistant_id: str = Field(default="", examples=["123ab"])
-    additional_instructions: Optional[str]
-    additional_messages: Optional[Iterable[AdditionalMessage]]
+    additional_instructions: Optional[str] = Field(default=None, examples=[None])
+    additional_messages: Optional[list[AdditionalMessage]] = Field(default=None, examples=[None])
     instructions: str = Field(default="", examples=[""])
-    max_completion_tokens: Optional[int]
-    max_prompt_tokens: Optional[int]
-    metadata: Optional[object]
+    max_completion_tokens: Optional[int] = Field(default=None, examples=[None])
+    max_prompt_tokens: Optional[int] = Field(default=None, examples=[None])
+    metadata: Optional[object] = Field(default=None, examples=[None])
     model: Union[str, None] = Field(default="", examples=[""])
-    response_format: Optional[AssistantResponseFormatOptionParam]
-    temperature: Optional[float]
-    tool_choice: Optional[AssistantToolChoiceOptionParam]
-    tools: Iterable[AssistantToolParam] = Field(default=[], examples=[[]])
-    top_p: Optional[float]
-    truncation_strategy: Optional[TruncationStrategy]
-    stream: Optional[bool]
+    response_format: Optional[AssistantResponseFormatOptionParam] = Field(default=None, examples=[None])
+    temperature: Optional[float] = Field(default=None, examples=[None])
+    tool_choice: Optional[AssistantToolChoiceOptionParam] = Field(default=None, examples=[None])
+    tools: list[AssistantToolParam] = Field(default=[], examples=[[]])
+    top_p: Optional[float] = Field(default=None, examples=[None])
+    truncation_strategy: Optional[TruncationStrategy] = Field(default=None, examples=[None])
+    stream: Optional[bool] = Field(default=None, examples=[None])
 
 
 class ThreadRunCreateParams(RunCreateParamsRequest):
