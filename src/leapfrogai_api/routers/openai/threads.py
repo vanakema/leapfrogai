@@ -250,7 +250,7 @@ async def create_run(
     try:
         crud_run = CRUDRun(db=session)
 
-        create_params: RunCreateParams = RunCreateParams(**request.thread.__dict__)
+        create_params: RunCreateParams = RunCreateParams(**request.__dict__)
 
         run = Run(
             id="",  # Leave blank to have Postgres generate a UUID
@@ -276,14 +276,19 @@ async def create_thread_and_run(
     """Create a thread and run."""
 
     try:
+        if request.thread:
+            thread_request: CreateThreadRequest = CreateThreadRequest(**request.thread.__dict__)
+        else:
+            thread_request: CreateThreadRequest = CreateThreadRequest()
+        
         new_thread: Thread = await create_thread(
-            CreateThreadRequest(**request.thread.__dict__),
+            thread_request,
             session,
         )
 
         crud_run = CRUDRun(db=session)
 
-        create_params: RunCreateParams = RunCreateParams(**request.thread.__dict__)
+        create_params: RunCreateParams = RunCreateParams(**request.__dict__)
 
         run = Run(
             id="",  # Leave blank to have Postgres generate a UUID
