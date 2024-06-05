@@ -3,8 +3,8 @@
 from __future__ import annotations
 
 import datetime
-from typing import Literal, Optional, List, Union
 from enum import Enum
+from typing import Literal, Optional, List, Union
 from pydantic import BaseModel, Field
 from fastapi import UploadFile, Form, File
 from openai.types.beta.vector_store import ExpiresAfter

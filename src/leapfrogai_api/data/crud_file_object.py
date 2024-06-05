@@ -27,9 +27,9 @@ class CRUDFileObject(CRUDBase[AuthFileObject]):
             object_=AuthFileObject(user_id=user_id, **object_.model_dump())
         )
 
-    async def get(self, id_: str) -> AuthFileObject | None:
-        """Get a file object by its ID."""
-        return await super().get(id_=id_)
+    async def get(self, filters: dict) -> AuthFileObject | None:
+        """Get file object by filters."""
+        return await super().get(filters=filters)
 
     async def list(self) -> list[AuthFileObject] | None:
         """List all file objects."""
