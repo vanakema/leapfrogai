@@ -2,10 +2,6 @@
 
 A mostly OpenAI compliant API surface.
 
-### Requirements
-
-- Supabase
-
 ## Local Development Setup
 
 1. Install dependencies
