@@ -217,7 +217,7 @@ async def delete_assistant(
 ) -> AssistantDeleted:
     """Delete an assistant."""
     crud_assistant = CRUDAssistant(session)
-    assistant_deleted = await crud_assistant.delete(id_=assistant_id)
+    assistant_deleted = await crud_assistant.delete(filters={"id": assistant_id})
     return AssistantDeleted(
         id=assistant_id,
         deleted=bool(assistant_deleted),
