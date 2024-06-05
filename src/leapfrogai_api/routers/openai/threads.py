@@ -1,13 +1,15 @@
 """OpenAI Compliant Threads API Router."""
-
+import logging
 import traceback
-from typing import Iterable
+from typing import Iterable, Union
 
 from fastapi import HTTPException, APIRouter, status
 from fastapi.security import HTTPBearer
 from openai.types.beta import Thread, ThreadDeleted
-from openai.types.beta.thread_create_and_run_params import ThreadMessage
-from openai.types.beta.threads import Message, MessageDeleted, Run, MessageContent
+from openai.types.beta.thread_create_and_run_params import ThreadMessage, MessageContentPartParam
+from openai.types.beta.threads import Message, MessageDeleted, Run
+from openai.types.beta.threads.message_content_part_param import TextContentBlockParam
+from openai.types.beta.threads.text_content_block import TextContentBlock, Text
 from openai.types.beta.threads.runs import RunStep
 
 from leapfrogai_api.backend.types import (
@@ -121,21 +123,38 @@ async def create_thread_and_run(
             messages: list[Message] = []
             thread_messages: Iterable[ThreadMessage] = request.thread.get("messages")
             for message in thread_messages:
-                message_content: list[MessageContent] = list(message.get("content"))
-
-                messages.append(
-                    Message(
-                        id="",
-                        created_at=0,
-                        object="thread.message",
-                        status="in_progress",
-                        thread_id="",
-                        content=message_content,
-                        role=message.get("role"),
-                        attachments=message.get("attachments"),
-                        metadata=message.get("metadata"),
+                try:
+                    thread_message_content: Union[str, Iterable[MessageContentPartParam]] = message.get("content")
+                    
+                    if isinstance(thread_message_content, str):
+                        message_content: TextContentBlock = TextContentBlock(text=Text(
+                            annotations=[], 
+                            value=thread_message_content
+                        ), type="text")
+                    elif isinstance(thread_message_content, TextContentBlockParam):
+                        message_content: TextContentBlock = TextContentBlock(text=Text(
+                            annotations=[], 
+                            value=thread_message_content.get("text")
+                        ), type="text")
+                    else:
+                        raise ValueError("Value error text is the only modality supported.")
+    
+                    messages.append(
+                        Message(
+                            id="",
+                            created_at=0,
+                            object="thread.message",
+                            status="in_progress",
+                            thread_id="",
+                            content=message_content,
+                            role=message.get("role"),
+                            attachments=message.get("attachments"),
+                            metadata=message.get("metadata"),
+                        )
                     )
-                )
+                except ValueError as exc:
+                    logging.error(f"\t{exc}")
+                    continue
 
         new_thread: Thread = await create_thread(
             thread_request,
