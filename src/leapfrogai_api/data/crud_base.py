@@ -73,12 +73,18 @@ class CRUDBase(Generic[ModelType]):
             return self.model(**response[0])
         return None
 
-    async def delete(self, id_: str) -> bool:
-        """Delete a row by its ID."""
-        data, _count = (
-            await self.db.table(self.table_name).delete().eq("id", id_).execute()
-        )
+    async def delete(self, filters: dict | None = None) -> bool:
+        """Delete a row by filters."""
+        query = self.db.table(self.table_name).delete()
+
+        if filters:
+            for key, value in filters.items():
+                query = query.eq(key, value)
+
+        data, _count = await query.execute()
 
         _, response = data
 
-        return bool(response)
+        if response:
+            return True
+        return False

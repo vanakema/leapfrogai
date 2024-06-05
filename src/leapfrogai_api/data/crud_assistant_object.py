@@ -46,6 +46,6 @@ class CRUDAssistant(CRUDBase[AuthAssistant]):
             id_=id_, object_=AuthAssistant(user_id=user_id, **object_.model_dump())
         )
 
-    async def delete(self, id_: str) -> bool:
+    async def delete(self, filters: dict | None = None) -> AuthAssistant | None:
         """Delete an assistant by its ID."""
-        return await super().delete(id_=id_)
+        return await super().delete(filters=filters)
