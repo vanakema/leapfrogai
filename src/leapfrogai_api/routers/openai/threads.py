@@ -7,7 +7,7 @@ from fastapi import HTTPException, APIRouter, status
 from fastapi.security import HTTPBearer
 from openai.types.beta import Thread, ThreadDeleted
 from openai.types.beta.thread_create_and_run_params import ThreadMessage
-from openai.types.beta.threads import Message, MessageDeleted, Run
+from openai.types.beta.threads import Message, MessageDeleted, Run, MessageContent
 from openai.types.beta.threads.runs import RunStep
 
 from leapfrogai_api.backend.types import (
@@ -121,6 +121,8 @@ async def create_thread_and_run(
             messages: list[Message] = []
             thread_messages: Iterable[ThreadMessage] = request.thread.get("messages")
             for message in thread_messages:
+                message_content: list[MessageContent] = list(message.get("content"))
+                
                 messages.append(
                     Message(
                         id="",
@@ -128,7 +130,7 @@ async def create_thread_and_run(
                         object="thread.message",
                         status="in_progress",
                         thread_id="",
-                        content=message.get("content"),
+                        content=message_content,
                         role=message.get("role"),
                         attachments=message.get("attachments"),
                         metadata=message.get("metadata"),
