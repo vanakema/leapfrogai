@@ -266,7 +266,7 @@ async def retrieve_vector_store_file(
     """Retrieve a file in a vector store."""
 
     crud_vector_store_file = CRUDVectorStoreFile(db=session)
-    return await crud_vector_store_file.get(filters={"vector_store_i": vector_store_id})
+    return await crud_vector_store_file.get(filters={"vector_store_id": vector_store_id})
 
 
 @router.delete("/{vector_store_id}/files/{file_id}")
