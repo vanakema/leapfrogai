@@ -165,6 +165,7 @@ async def create_thread_and_run(
                 except ValueError as exc:
                     logging.error(f"\t{exc}")
                     continue
+            thread_request.messages = messages
 
         new_thread: Thread = await create_thread(
             thread_request,
