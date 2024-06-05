@@ -167,8 +167,18 @@ async def create_thread_and_run(
 @router.get("/{thread_id}/runs")
 async def list_runs(thread_id: str, session: Session) -> list[Run]:
     """List all the runs in a thread."""
-    # TODO: Implement this function
-    raise HTTPException(status_code=501, detail="Not implemented")
+    try:
+        crud_run = CRUDRun(db=session)
+        runs = await crud_run.list(
+            thread_id=thread_id
+        )
+
+        return runs
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to list runs for thread {thread_id}",
+        ) from exc
 
 
 @router.get("/{thread_id}/runs/{run_id}")
