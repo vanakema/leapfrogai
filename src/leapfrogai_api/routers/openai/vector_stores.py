@@ -15,7 +15,10 @@ from leapfrogai_api.backend.types import (
 )
 from leapfrogai_api.data.async_supabase_vector_store import AsyncSupabaseVectorStore
 from leapfrogai_api.data.crud_vector_store import CRUDVectorStore
-from leapfrogai_api.data.crud_vector_store_file import CRUDVectorStoreFile
+from leapfrogai_api.data.crud_vector_store_file import (
+    CRUDVectorStoreFile,
+    FilterVectorStoreFile,
+)
 from leapfrogai_api.routers.supabase_session import Session
 from leapfrogai_api.backend.types import VectorStoreFileStatus, VectorStoreStatus
 
@@ -248,9 +251,8 @@ async def list_vector_store_files(
     try:
         crud_vector_store_file = CRUDVectorStoreFile(db=session)
         vector_store_files = await crud_vector_store_file.list(
-            vector_store_id=vector_store_id
+            filters=FilterVectorStoreFile(vector_store_id=vector_store_id)
         )
-
         return vector_store_files
     except Exception as exc:
         raise HTTPException(
@@ -269,7 +271,7 @@ async def retrieve_vector_store_file(
 
     crud_vector_store_file = CRUDVectorStoreFile(db=session)
     return await crud_vector_store_file.get(
-        filters={"vector_store_id": vector_store_id}
+        filters=FilterVectorStoreFile(vector_store_id=vector_store_id)
     )
 
 
@@ -289,7 +291,7 @@ async def delete_vector_store_file(
     crud_vector_store_file = CRUDVectorStoreFile(db=session)
 
     vector_store_file_deleted = await crud_vector_store_file.delete(
-        filters={"file_id": file_id, "vector_store_id": vector_store_id}
+        filters=FilterVectorStoreFile(vector_store_id=vector_store_id, id=file_id)
     )
 
     deleted = vectors_deleted and vector_store_file_deleted

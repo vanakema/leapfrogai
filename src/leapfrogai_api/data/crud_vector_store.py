@@ -37,7 +37,7 @@ class CRUDVectorStore(CRUDBase[AuthVectorStore]):
 
         return vector_store
 
-    async def list(self) -> list[VectorStore] | None:
+    async def list(self, filters: dict | None = None) -> list[VectorStore] | None:
         """List all vector stores."""
 
         vector_stores: list[AuthVectorStore] | None = await super().list()

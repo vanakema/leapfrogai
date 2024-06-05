@@ -1,10 +1,8 @@
 """CRUD Operations for FileObject"""
 
 from pydantic import Field
-
 from openai.types import FileObject
 from supabase_py_async import AsyncClient
-
 from leapfrogai_api.data.crud_base import CRUDBase
 
 
@@ -31,9 +29,9 @@ class CRUDFileObject(CRUDBase[AuthFileObject]):
         """Get file object by filters."""
         return await super().get(filters=filters)
 
-    async def list(self) -> list[AuthFileObject] | None:
+    async def list(self, filters: dict | None = None) -> list[AuthFileObject] | None:
         """List all file objects."""
-        return await super().list()
+        return await super().list(filters=filters)
 
     async def update(self, id_: str, object_: FileObject) -> AuthFileObject | None:
         """Update a file object by its ID."""

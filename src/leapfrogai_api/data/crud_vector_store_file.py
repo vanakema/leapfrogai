@@ -14,7 +14,7 @@ class AuthVectorStoreFile(VectorStoreFile):
 
 class FilterVectorStoreFile(BaseModel):
     vector_store_id: str
-    file_id: str
+    file_id: str | None = None
 
 
 class CRUDVectorStoreFile(CRUDBase[AuthVectorStoreFile]):
@@ -36,22 +36,11 @@ class CRUDVectorStoreFile(CRUDBase[AuthVectorStoreFile]):
         """Get vector store file by filters."""
         return await super().get(filters=filters)
 
-    async def list(  # pylint: disable=arguments-differ # The base class doesn't permit two id arguments
-        self, vector_store_id: str
-    ) -> list[AuthVectorStoreFile] | None:
+    async def list(
+        self, filters: FilterVectorStoreFile | None = None
+    ) -> list[VectorStoreFile] | None:
         """List all vector store files."""
-        data, _count = (
-            await self.db.table(self.table_name)
-            .select("*")
-            .eq("vector_store_id", vector_store_id)
-            .execute()
-        )
-
-        _, response = data
-
-        if response:
-            return [self.model(**item) for item in response]
-        return None
+        return await super().list(filters={"vector_store_id": filters.vector_store_id})
 
     async def update(
         self, id_: str, object_: VectorStoreFile
