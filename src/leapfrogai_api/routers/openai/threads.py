@@ -1,4 +1,5 @@
 """OpenAI Compliant Threads API Router."""
+
 import logging
 import traceback
 from typing import Iterable, Union
@@ -6,7 +7,10 @@ from typing import Iterable, Union
 from fastapi import HTTPException, APIRouter, status
 from fastapi.security import HTTPBearer
 from openai.types.beta import Thread, ThreadDeleted
-from openai.types.beta.thread_create_and_run_params import ThreadMessage, MessageContentPartParam
+from openai.types.beta.thread_create_and_run_params import (
+    ThreadMessage,
+    MessageContentPartParam,
+)
 from openai.types.beta.threads import Message, MessageDeleted, Run
 from openai.types.beta.threads.message_content_part_param import TextContentBlockParam
 from openai.types.beta.threads.text_content_block import TextContentBlock, Text
@@ -124,21 +128,27 @@ async def create_thread_and_run(
             thread_messages: Iterable[ThreadMessage] = request.thread.get("messages")
             for message in thread_messages:
                 try:
-                    thread_message_content: Union[str, Iterable[MessageContentPartParam]] = message.get("content")
-                    
+                    thread_message_content: Union[
+                        str, Iterable[MessageContentPartParam]
+                    ] = message.get("content")
+
                     if isinstance(thread_message_content, str):
-                        message_content: TextContentBlock = TextContentBlock(text=Text(
-                            annotations=[], 
-                            value=thread_message_content
-                        ), type="text")
+                        message_content: TextContentBlock = TextContentBlock(
+                            text=Text(annotations=[], value=thread_message_content),
+                            type="text",
+                        )
                     elif isinstance(thread_message_content, TextContentBlockParam):
-                        message_content: TextContentBlock = TextContentBlock(text=Text(
-                            annotations=[], 
-                            value=thread_message_content.get("text")
-                        ), type="text")
+                        message_content: TextContentBlock = TextContentBlock(
+                            text=Text(
+                                annotations=[], value=thread_message_content.get("text")
+                            ),
+                            type="text",
+                        )
                     else:
-                        raise ValueError("Value error text is the only modality supported.")
-    
+                        raise ValueError(
+                            "Value error text is the only modality supported."
+                        )
+
                     messages.append(
                         Message(
                             id="",
