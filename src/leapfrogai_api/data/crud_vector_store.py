@@ -27,10 +27,10 @@ class CRUDVectorStore(CRUDBase[AuthVectorStore]):
             object_=AuthVectorStore(user_id=user_id, **object_.model_dump())
         )
 
-    async def get(self, id_: str) -> VectorStore | None:
-        """Get a vector store by its ID."""
+    async def get(self, filters: dict | None = None) -> VectorStore | None:
+        """Get vector store by filters."""
 
-        vector_store: AuthVectorStore | None = await super().get(id_=id_)
+        vector_store: AuthVectorStore | None = await super().get(filters=filters)
 
         if await self.delete_when_expired(vector_store):
             return None
@@ -76,9 +76,9 @@ class CRUDVectorStore(CRUDBase[AuthVectorStore]):
             return self.model(**response[0])
         return None
 
-    async def delete(self, id_: str) -> bool:
+    async def delete(self, filters: dict | None = None) -> VectorStore | None:
         """Delete a vector store by its ID."""
-        return await super().delete(id_=id_)
+        return await super().delete(filters=filters)
 
     async def delete_when_expired(self, vector_store: AuthVectorStore | None) -> bool:
         """Delete vector stores when they are expired"""
@@ -87,6 +87,6 @@ class CRUDVectorStore(CRUDBase[AuthVectorStore]):
             current_time = int(time.time())
 
             if current_time > vector_store.expires_at:
-                await self.delete(id_=vector_store.id)
+                await self.delete(filters={"id": vector_store.id})
                 return True
         return False

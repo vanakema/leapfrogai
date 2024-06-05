@@ -52,7 +52,7 @@ async def upload_file(
         return file_object
 
     except Exception as exc:
-        crud_file_object.delete(id_=file_object.id)
+        crud_file_object.delete(filters={"id": file_object.id})
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to store file",
@@ -80,7 +80,7 @@ async def retrieve_file(
 ) -> FileObject | None:
     """Retrieve a file."""
     crud_file_object = CRUDFileObject(session)
-    return await crud_file_object.get(id_=file_id)
+    return await crud_file_object.get(filters={"id": file_id})
 
 
 @router.delete("/{file_id}")
@@ -91,7 +91,7 @@ async def delete_file(
     """Delete a file."""
 
     crud_file_object = CRUDFileObject(session)
-    file_deleted: bool = await crud_file_object.delete(id_=file_id)
+    file_deleted: bool = await crud_file_object.delete(filters={"id": file_id})
 
     # We need to check if the RLS allowed the deletion before continuing with the bucket deletion
     if file_deleted:

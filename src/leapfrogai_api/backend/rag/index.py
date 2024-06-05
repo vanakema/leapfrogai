@@ -37,14 +37,14 @@ class IndexingService:
         crud_vector_store_file = CRUDVectorStoreFile(db=self.db)
 
         if await crud_vector_store_file.get(
-            vector_store_id=vector_store_id, file_id=file_id
+            filters={"vector_store_id": vector_store_id, "id": file_id}
         ):
             raise FileAlreadyIndexedError("File already indexed")
 
         crud_file_object = CRUDFileObject(db=self.db)
         crud_file_bucket = CRUDFileBucket(db=self.db, model=UploadFile)
 
-        file_object = await crud_file_object.get(id_=file_id)
+        file_object = await crud_file_object.get(filters={"id": file_id})
 
         if not file_object:
             raise ValueError("File not found")
@@ -109,5 +109,5 @@ class IndexingService:
                 raise e
 
             return await crud_vector_store_file.get(
-                vector_store_id=vector_store_id, file_id=file_id
+                filters={"vector_store_id": vector_store_id, "id": file_id}
             )

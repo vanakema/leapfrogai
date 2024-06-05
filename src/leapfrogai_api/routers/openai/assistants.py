@@ -104,7 +104,7 @@ async def retrieve_assistant(
     """Retrieve an assistant."""
 
     crud_assistant = CRUDAssistant(session)
-    return await crud_assistant.get(id_=assistant_id)
+    return await crud_assistant.get(filters={"id": assistant_id})
 
 
 @router.post("/{assistant_id}")
@@ -164,7 +164,7 @@ async def modify_assistant(
 
     crud_assistant = CRUDAssistant(session)
 
-    if not (old_assistant := await crud_assistant.get(id_=assistant_id)):
+    if not (old_assistant := await crud_assistant.get(filters={"id": assistant_id})):
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST, detail="Assistant not found"
         )
@@ -217,7 +217,7 @@ async def delete_assistant(
 ) -> AssistantDeleted:
     """Delete an assistant."""
     crud_assistant = CRUDAssistant(session)
-    assistant_deleted = await crud_assistant.delete(id_=assistant_id)
+    assistant_deleted = await crud_assistant.delete(filters={"id": assistant_id})
     return AssistantDeleted(
         id=assistant_id,
         deleted=bool(assistant_deleted),

@@ -18,24 +18,24 @@ class CRUDThread(CRUDBase[AuthThread]):
     def __init__(self, db: AsyncClient):
         super().__init__(db=db, model=AuthThread, table_name="thread_objects")
 
-    async def create(self, object_: Thread) -> AuthThread | None:
+    async def create(self, object_: Thread) -> Thread | None:
         """Create new thread."""
         user_id: str = (await self.db.auth.get_user()).user.id
         return await super().create(
             object_=AuthThread(user_id=user_id, **object_.model_dump())
         )
 
-    async def get(self, id_: str) -> AuthThread | None:
+    async def get(self, id_: str) -> Thread | None:
         """Get a vector store by its ID."""
 
         return await super().get(id_=id_)
 
-    async def list(self) -> list[AuthThread] | None:
+    async def list(self) -> list[Thread] | None:
         """List all threads."""
 
         return await super().list()
 
-    async def update(self, id_: str, object_: Thread) -> AuthThread | None:
+    async def update(self, id_: str, object_: Thread) -> Thread | None:
         """Update a thread by its ID."""
 
         dict_ = object_.model_dump()

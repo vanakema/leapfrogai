@@ -2,10 +2,6 @@
 
 A mostly OpenAI compliant API surface.
 
-### Requirements
-
-- Supabase
-
 ## Local Development Setup
 
 1. Install dependencies
@@ -64,7 +60,7 @@ make supabase-jwt-token
 source .jwt
 ```
 ### Running the tests
-After abtaining the JWT token, run the following:
+After obtaining the JWT token, run the following:
 ```
 make test-integration
 ```
