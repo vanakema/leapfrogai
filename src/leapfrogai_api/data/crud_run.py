@@ -28,7 +28,7 @@ class CRUDRun(CRUDBase[AuthRun]):
     async def get(self, id_: str) -> Run | None:
         """Get a vector store by its ID."""
 
-        return await super().get(id_=id_)
+        return await super().get(filters={"id": id_})
 
     async def list(self, thread_id: str) -> list[Run] | None:
         """List all runs."""

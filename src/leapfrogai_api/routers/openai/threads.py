@@ -214,8 +214,8 @@ async def list_runs(thread_id: str, session: Session) -> list[Run]:
 @router.get("/{thread_id}/runs/{run_id}")
 async def retrieve_run(thread_id: str, run_id: str, session: Session) -> Run:
     """Retrieve a run."""
-    # TODO: Implement this function
-    raise HTTPException(status_code=501, detail="Not implemented")
+    crud_run = CRUDRun(db=session)
+    return await crud_run.get(id_=thread_id)
 
 
 @router.post("/{thread_id}/runs/{run_id}")
