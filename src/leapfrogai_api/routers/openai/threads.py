@@ -112,9 +112,7 @@ async def create_thread_and_run(
 
     try:
         new_thread: Thread = await create_thread(
-            CreateThreadRequest(
-                **request.thread
-            ),
+            CreateThreadRequest(**request.thread),
             session,
         )
 
