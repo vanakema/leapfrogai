@@ -53,7 +53,7 @@ create table
     stream boolean,
     file_ids uuid[],
     incomplete_details jsonb,
-    token_usage jsonb,
+    usage jsonb,
     temperature float,
     top_p int,
     max_prompt_tokens int,
@@ -82,7 +82,7 @@ create table
     failed_at bigint,
     completed_at bigint,
     metadata jsonb,
-    token_usage jsonb
+    usage jsonb
   );
 
 -- Foreign key constraints for message_objects
