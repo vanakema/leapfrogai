@@ -119,6 +119,8 @@ async def create_thread_and_run(
 ) -> Run:
     """Create a thread and run."""
 
+    logging.info("Received create thread and run request")
+
     try:
         thread_request: CreateThreadRequest = CreateThreadRequest()
 
@@ -186,6 +188,8 @@ async def create_thread_and_run(
             status="in_progress",
             **create_params.__dict__,
         )
+
+        logging.info("Finished create thread and run request")
 
         return await crud_run.create(object_=run)
     except Exception as exc:
