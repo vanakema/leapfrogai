@@ -31,9 +31,9 @@ class CRUDAssistant(CRUDBase[AuthAssistant]):
             object_=AuthAssistant(user_id=user_id, **object_.model_dump())
         )
 
-    async def get(self, id_: str) -> AuthAssistant | None:
-        """Get an assistant by its ID."""
-        return await super().get(id_=id_)
+    async def get(self, filters: dict) -> AuthAssistant | None:
+        """Get assistant by filters."""
+        return await super().get(filters=filters)
 
     async def list(self) -> list[AuthAssistant] | None:
         """List all assistants."""
