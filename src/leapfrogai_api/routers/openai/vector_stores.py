@@ -207,7 +207,9 @@ async def delete_vector_store(
 
     crud_vector_store = CRUDVectorStore(db=session)
 
-    vector_store_deleted = await crud_vector_store.delete(id_=vector_store_id)
+    vector_store_deleted = await crud_vector_store.delete(
+        filters={"id": vector_store_id}
+    )
     return VectorStoreDeleted(
         id=vector_store_id,
         object="vector_store.deleted",
@@ -266,7 +268,9 @@ async def retrieve_vector_store_file(
     """Retrieve a file in a vector store."""
 
     crud_vector_store_file = CRUDVectorStoreFile(db=session)
-    return await crud_vector_store_file.get(filters={"vector_store_i": vector_store_id})
+    return await crud_vector_store_file.get(
+        filters={"vector_store_id": vector_store_id}
+    )
 
 
 @router.delete("/{vector_store_id}/files/{file_id}")
@@ -285,7 +289,7 @@ async def delete_vector_store_file(
     crud_vector_store_file = CRUDVectorStoreFile(db=session)
 
     vector_store_file_deleted = await crud_vector_store_file.delete(
-        vector_store_id=vector_store_id, file_id=file_id
+        filters={"file_id": file_id, "vector_store_id": vector_store_id}
     )
 
     deleted = vectors_deleted and vector_store_file_deleted
