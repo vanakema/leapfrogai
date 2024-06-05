@@ -1,6 +1,6 @@
 """CRUD Operations for VectorStoreFile."""
 
-from pydantic import Field
+from pydantic import BaseModel, Field
 from openai.types.beta.vector_stores import VectorStoreFile
 from supabase_py_async import AsyncClient
 from leapfrogai_api.data.crud_base import CRUDBase
@@ -10,6 +10,11 @@ class AuthVectorStoreFile(VectorStoreFile):
     """A wrapper for the VectorStoreFile that includes a user_id for auth"""
 
     user_id: str = Field(default="")
+
+
+class FilterVectorStoreFile(BaseModel):
+    vector_store_id: str
+    file_id: str
 
 
 class CRUDVectorStoreFile(CRUDBase[AuthVectorStoreFile]):
@@ -25,7 +30,9 @@ class CRUDVectorStoreFile(CRUDBase[AuthVectorStoreFile]):
             object_=AuthVectorStoreFile(user_id=user_id, **object_.model_dump())
         )
 
-    async def get(self, filters: dict) -> AuthVectorStoreFile | None:
+    async def get(
+        self, filters: FilterVectorStoreFile | None = None
+    ) -> AuthVectorStoreFile | None:
         """Get vector store file by filters."""
         return await super().get(filters=filters)
 
