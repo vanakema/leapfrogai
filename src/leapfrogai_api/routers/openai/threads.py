@@ -126,6 +126,7 @@ async def create_thread_and_run(
             """If the thread exists, convert all of its messages into a form that can be used by create_thread."""
             messages: list[Message] = []
             thread_messages: Iterable[ThreadMessage] = request.thread.get("messages")
+            logging.info("Starting to process messages")
             for message in thread_messages:
                 try:
                     thread_message_content: Union[
@@ -165,6 +166,7 @@ async def create_thread_and_run(
                 except ValueError as exc:
                     logging.error(f"\t{exc}")
                     continue
+            logging.info(f"Finished processing {len(messages)}")
             thread_request.messages = messages
 
         new_thread: Thread = await create_thread(
