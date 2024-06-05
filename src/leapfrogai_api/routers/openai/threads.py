@@ -111,15 +111,10 @@ async def create_thread_and_run(
     """Create a thread and run."""
 
     try:
-        if request.thread:
-            thread_request: CreateThreadRequest = CreateThreadRequest(
-                **request.thread.__dict__
-            )
-        else:
-            thread_request: CreateThreadRequest = CreateThreadRequest()
-
         new_thread: Thread = await create_thread(
-            thread_request,
+            CreateThreadRequest(
+                **request.thread
+            ),
             session,
         )
 
