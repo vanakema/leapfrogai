@@ -122,7 +122,7 @@ async def create_thread_and_run(
             thread_messages: Iterable[ThreadMessage] = request.thread.get("messages")
             for message in thread_messages:
                 message_content: list[MessageContent] = list(message.get("content"))
-                
+
                 messages.append(
                     Message(
                         id="",
