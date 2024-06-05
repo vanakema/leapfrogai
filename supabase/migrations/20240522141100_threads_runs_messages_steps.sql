@@ -55,7 +55,7 @@ create table
     incomplete_details jsonb,
     usage jsonb,
     temperature float,
-    top_p int,
+    top_p float,
     max_prompt_tokens int,
     max_completion_tokens int,
     truncation_strategy jsonb,
