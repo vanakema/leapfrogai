@@ -5,7 +5,8 @@ import logging
 from fastapi import HTTPException, APIRouter, status
 from fastapi.security import HTTPBearer
 from openai.types.beta import Assistant, AssistantDeleted
-from openai.types.beta.assistant import ToolResources, ToolResourcesCodeInterpreter
+from openai.types.beta.assistant import ToolResourcesCodeInterpreter
+from openai.types.beta.assistant_create_params import ToolResourcesFileSearch
 from leapfrogai_api.backend.types import (
     CreateAssistantRequest,
     ListAssistantsResponse,
@@ -46,6 +47,13 @@ async def create_assistant(
             status_code=status.HTTP_400_BAD_REQUEST,
             detail="Code interpreter tool is not supported",
         )
+
+    # if the length of both vector_store_ids and vector_stores are greater than 0, raise an error
+    # assert vector_store_ids has length 1
+    # add the id to the assistant
+    # assert vector_stores has length 1
+    # create new vector store using file_ids
+    # add new vector store id to assistant
 
     try:
         assistant = Assistant(
@@ -182,7 +190,7 @@ async def modify_assistant(
             model=getattr(request, "model", old_assistant.model),
             object="assistant",
             tools=getattr(request, "tools", old_assistant.tools),
-            tool_resources=ToolResources.model_validate(
+            tool_resources=ToolResourcesFileSearch.model_validate(
                 getattr(request, "tool_resources", None)
             )
             or old_assistant.tool_resources,

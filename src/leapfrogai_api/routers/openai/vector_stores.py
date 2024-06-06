@@ -2,10 +2,8 @@
 
 import logging
 import time
-import traceback
 from fastapi import APIRouter, HTTPException, status
 from openai.types.beta import VectorStore, VectorStoreDeleted
-from openai.types.beta.vector_store import FileCounts
 from openai.types.beta.vector_stores import VectorStoreFile, VectorStoreFileDeleted
 from leapfrogai_api.backend.rag.index import FileAlreadyIndexedError, IndexingService
 from leapfrogai_api.backend.types import (
@@ -31,58 +29,9 @@ async def create_vector_store(
     session: Session,
 ) -> VectorStore:
     """Create a vector store."""
-    crud_vector_store = CRUDVectorStore(db=session)
 
-    last_active_at = int(time.time())
-
-    expires_after, expires_at = request.get_expiry(last_active_at)
-
-    vector_store = VectorStore(
-        id="",  # Leave blank to have Postgres generate a UUID
-        bytes=0,  # Automatically calculated by DB
-        created_at=0,  # Leave blank to have Postgres generate a timestamp
-        file_counts=FileCounts(
-            cancelled=0, completed=0, failed=0, in_progress=0, total=0
-        ),
-        last_active_at=last_active_at,  # Set to current time
-        metadata=request.metadata,
-        name=request.name,
-        object="vector_store",
-        status=VectorStoreStatus.IN_PROGRESS.value,
-        expires_after=expires_after,
-        expires_at=expires_at,
-    )
-    try:
-        new_vector_store = await crud_vector_store.create(object_=vector_store)
-        if request.file_ids != []:
-            indexing_service = IndexingService(db=session)
-            for file_id in request.file_ids:
-                response = await indexing_service.index_file(
-                    vector_store_id=new_vector_store.id, file_id=file_id
-                )
-
-                if response.status == VectorStoreFileStatus.COMPLETED.value:
-                    new_vector_store.file_counts.completed += 1
-                elif response.status == VectorStoreFileStatus.FAILED.value:
-                    new_vector_store.file_counts.failed += 1
-                elif response.status == VectorStoreFileStatus.IN_PROGRESS.value:
-                    new_vector_store.file_counts.in_progress += 1
-                elif response.status == VectorStoreFileStatus.CANCELLED.value:
-                    new_vector_store.file_counts.cancelled += 1
-                new_vector_store.file_counts.total += 1
-
-        new_vector_store.status = VectorStoreStatus.COMPLETED.value
-
-        return await crud_vector_store.update(
-            id_=new_vector_store.id,
-            object_=new_vector_store,
-        )
-    except Exception as exc:
-        traceback.print_exc()
-        raise HTTPException(
-            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail="Unable to create vector store",
-        ) from exc
+    indexing_service = IndexingService(db=session)
+    return indexing_service.create_vector_store(request)
 
 
 @router.get("")
