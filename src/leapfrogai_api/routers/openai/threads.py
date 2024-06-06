@@ -174,15 +174,15 @@ async def create_thread_and_run(
                     logging.error(f"\t{exc}")
                     continue
 
+        assistant: Assistant | None = await retrieve_assistant(session=session, assistant_id=request.assistant_id)
+
+        model: str | None = request.model if request.model else assistant.model
+        temperature: float | None = request.temperature if request.temperature else assistant.temperature
+        top_p: float | None = request.top_p if request.top_p else assistant.top_p
+
         if request.stream:
             raise NotImplementedError()
         else:
-            assistant: Assistant | None = await retrieve_assistant(session=session, assistant_id=request.assistant_id)
-            
-            model: str | None = request.model if request.model else assistant.model
-            temperature: float | None = request.temperature if request.temperature else assistant.temperature
-            top_p: float | None = request.top_p if request.top_p else assistant.top_p
-            
             # Generate a new message and add it to the thread creation request
             chat_response: ChatCompletionResponse = await chat_complete(
                 req=ChatCompletionRequest(
@@ -220,8 +220,15 @@ async def create_thread_and_run(
         )
 
         crud_run = CRUDRun(db=session)
+        
+        # Create a copy of the request with proper values for model, temperature, and top_p
+        run_request: ThreadRunCreateParamsRequest = request.model_copy(update={
+            "model": model,
+            "temperature": temperature,
+            "top_p": top_p
+        }, deep=True)
 
-        create_params: RunCreateParams = RunCreateParams(**request.__dict__)
+        create_params: RunCreateParams = RunCreateParams(**run_request.__dict__)
 
         run = Run(
             id="",  # Leave blank to have Postgres generate a UUID
