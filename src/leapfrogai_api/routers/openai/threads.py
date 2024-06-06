@@ -338,8 +338,31 @@ def modify_run(
     thread_id: str, run_id: str, request: ModifyRunRequest, session: Session
 ) -> Run:
     """Modify a run."""
-    # TODO: Implement this function
-    raise HTTPException(status_code=501, detail="Not implemented")
+    run = CRUDRun(db=session)
+
+    if not (old_run := await run.get(id_=run_id)):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Thread not found",
+        )
+
+    try:
+        new_run = Run(
+            id=thread_id,
+            created_at=old_run.created_at,
+            metadata=getattr(request, "metadata", old_run.metadata),
+            object="thread.run",
+        )
+
+        return await run.update(
+            id_=run_id,
+            object_=new_run,
+        )
+    except Exception as exc:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Unable to parse run request",
+        ) from exc
 
 
 @router.post("/{thread_id}/runs/{run_id}/submit_tool_outputs")
