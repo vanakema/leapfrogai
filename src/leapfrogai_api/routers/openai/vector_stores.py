@@ -140,7 +140,7 @@ async def modify_vector_store(
             metadata=getattr(request, "metadata", old_vector_store.metadata),
             name=getattr(request, "name", old_vector_store.name),
             object="vector_store",
-            status="in_progress",
+            status=VectorStoreStatus.IN_PROGRESS.value,
             expires_after=old_vector_store.expires_after,
             expires_at=old_vector_store.expires_at,
         )
