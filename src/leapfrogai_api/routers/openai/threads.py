@@ -402,7 +402,7 @@ async def retrieve_run_step(
 async def retrieve_thread(thread_id: str, session: Session) -> Thread | None:
     """Retrieve a thread."""
     crud_thread = CRUDThread(db=session)
-    return await crud_thread.get(id_=thread_id)
+    return await crud_thread.get(filters={"id": thread_id})
 
 
 @router.post("/{thread_id}")
@@ -412,7 +412,7 @@ async def modify_thread(
     """Modify a thread."""
     thread = CRUDThread(db=session)
 
-    if not (old_thread := await thread.get(id_=thread_id)):
+    if not (old_thread := await thread.get(filters={"id": thread_id})):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Thread not found",
@@ -446,7 +446,7 @@ async def delete_thread(thread_id: str, session: Session) -> ThreadDeleted:
     try:
         crud_thread = CRUDThread(db=session)
 
-        thread_deleted = await crud_thread.delete(id_=thread_id)
+        thread_deleted = await crud_thread.delete(filters={"id": thread_id})
         return ThreadDeleted(
             id=thread_id,
             object="thread.deleted",
@@ -492,7 +492,7 @@ async def list_messages(thread_id: str, session: Session) -> list[Message]:
     """List all the messages in a thread."""
     try:
         crud_message = CRUDMessage(db=session)
-        messages = await crud_message.list(thread_id=thread_id)
+        messages = await crud_message.list(filters={"thread_id": thread_id})
 
         return messages
     except Exception as exc:
@@ -508,7 +508,7 @@ async def retrieve_message(
 ) -> Message | None:
     """Retrieve a message."""
     crud_message = CRUDMessage(db=session)
-    return await crud_message.get(id_=message_id, thread_id=thread_id)
+    return await crud_message.get(filters={"id": message_id, "thread_id": thread_id})
 
 
 @router.post("/{thread_id}/messages/{message_id}")
@@ -518,7 +518,11 @@ async def modify_message(
     """Modify a message."""
     message = CRUDMessage(db=session)
 
-    if not (old_message := await message.get(id_=message_id, thread_id=thread_id)):
+    if not (
+        old_message := await message.get(
+            filters={"id": message_id, "thread_id": thread_id}
+        )
+    ):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Message not found",
@@ -555,7 +559,9 @@ async def delete_message(
     """Delete message from a thread."""
 
     crud_message = CRUDMessage(db=session)
-    message_deleted = await crud_message.delete(id_=message_id, thread_id=thread_id)
+    message_deleted = await crud_message.delete(
+        filters={"id": message_id, "thread_id": thread_id}
+    )
     return MessageDeleted(
         id=message_id,
         deleted=bool(message_deleted),

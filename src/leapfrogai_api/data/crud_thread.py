@@ -25,31 +25,20 @@ class CRUDThread(CRUDBase[AuthThread]):
             object_=AuthThread(user_id=user_id, **object_.model_dump())
         )
 
-    async def get(self, id_: str) -> Thread | None:
+    async def get(self, filters: dict | None = None) -> Thread | None:
         """Get a vector store by its ID."""
 
-        return await super().get(id_=id_)
+        return await super().get(filters=filters)
 
-    async def list(self) -> list[Thread] | None:
+    async def list(self, filters: dict | None = None) -> list[Thread] | None:
         """List all threads."""
 
-        return await super().list()
+        return await super().list(filters=filters)
 
     async def update(self, id_: str, object_: Thread) -> Thread | None:
         """Update a thread by its ID."""
+        return await super().update(id_=id_, object_=object_)
 
-        dict_ = object_.model_dump()
-
-        data, _count = (
-            await self.db.table(self.table_name).update(dict_).eq("id", id_).execute()
-        )
-
-        _, response = data
-
-        if response:
-            return self.model(**response[0])
-        return None
-
-    async def delete(self, id_: str) -> bool:
+    async def delete(self, filters: dict | None = None) -> bool:
         """Delete a thread by its ID."""
-        return await super().delete(id_=id_)
+        return await super().delete(filters=filters)
