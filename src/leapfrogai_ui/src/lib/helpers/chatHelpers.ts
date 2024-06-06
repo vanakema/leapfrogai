@@ -10,6 +10,8 @@ import { error } from '@sveltejs/kit';
 import type { LFThread } from '$lib/types/threads';
 import { tick } from 'svelte';
 import type { FileObject } from 'openai/resources/files';
+import chatStore from '$stores/chatStore';
+import { page } from '$app/stores';
 
 export const saveMessage = async (input: NewMessageInput) => {
   const res = await fetch('/api/messages/new', {
@@ -91,47 +93,67 @@ export const getAssistantImage = (assistants: LFAssistant[], assistant_id: strin
 };
 
 type EditMessageArgs = {
+  index: number;
+  setAssistantMessages: (messages: LFMessage[]) => void;
+  setChatMessages: (messages: LFMessage[]) => void;
   storeMessages: LFMessage[];
   message: Partial<OpenAIMessage | AIMessage>;
   streamedMessages: AIMessage[];
   thread_id: string;
-  setStreamedMessages: (messages: AIMessage[]) => void;
-  append: (
+  assistantAppend: (
+    message: AIMessage | CreateMessage,
+    requestOptions?: { data?: Record<string, string> }
+  ) => Promise<void>;
+  chatAppend: (
     message: AIMessage | CreateMessage,
     requestOptions?: { data?: Record<string, string> }
   ) => Promise<void>;
 };
 
 export const handleMessageEdit = async ({
+  index,
+  setAssistantMessages,
+  setChatMessages,
+  assistantAppend,
+  chatAppend,
   storeMessages,
   message,
   streamedMessages,
-  thread_id,
-  setStreamedMessages,
-  append
+  thread_id
 }: EditMessageArgs) => {
 
   threadsStore.setSendingBlocked(true);
 
   if (message.id) {
-    const streamedMessagesIndex = streamedMessages.findIndex((m) => m.id === message.id);
+    const savedMessages = (await getMessages(thread_id)) as LFMessage[];
+    console.log('index', index)
+    console.log('savedMessages', savedMessages)
     // Ensure the message after the user's message exists and is a response from the AI
     const numToSplice =
-      streamedMessages[streamedMessagesIndex + 1] && streamedMessages[streamedMessagesIndex + 1].role !== 'user'
-        ? 2
-        : 1;
+      savedMessages[index + 1] && savedMessages[index + 1].role !== 'user' ? 2 : 1;
 
     // delete old message from DB
     // storeMessages has the messages saved with the API, not the streamed messages
     // The storeMessages have actual ids (not the temp ids associated with streamed messages)
     // so we can use them to delete the messages from the db
 
-    await threadsStore.deleteMessage(thread_id, storeMessages[streamedMessagesIndex].id);
+    await threadsStore.deleteMessage(thread_id, savedMessages[index].id);
     if (numToSplice === 2) {
       // also delete that message's response
-      await threadsStore.deleteMessage(thread_id, storeMessages[streamedMessagesIndex + 1].id);
+      await threadsStore.deleteMessage(thread_id, savedMessages[index + 1].id);
     }
-    setStreamedMessages(streamedMessages.toSpliced(streamedMessagesIndex, numToSplice)); // remove original message and response
+    const updatedMessages = savedMessages.toSpliced(index, numToSplice);
+    console.log('updatedMessages', updatedMessages)
+
+    const updatedAssistantMessages = updatedMessages
+      .filter((m) => isAssistantMessage(m))
+      .map((m) => convertMessageToAiMessage(m));
+    const updatedChatMessages = updatedMessages
+      .filter((m) => !isAssistantMessage(m))
+      .map((m) => convertMessageToAiMessage(m));
+    setAssistantMessages(updatedAssistantMessages);
+    setChatMessages(updatedChatMessages);
+
     await tick();
 
     // send to /api/chat or /api/chat/assistants
@@ -141,17 +163,17 @@ export const handleMessageEdit = async ({
       createdAt: new Date()
     };
 
-    if (isAssistantMessage(message)) {
-      cMessage.assistant_id = message.assistant_id;
-      await append(cMessage, {
+    if (isAssistantMessage(storeMessages[index + 1])) {
+      cMessage.assistant_id = savedMessages[index + 1].assistant_id;
+      await assistantAppend(cMessage, {
         data: {
           message: getMessageText(message),
-          assistantId: message.assistant_id!,
+          assistantId: savedMessages[index + 1].assistant_id!,
           threadId: thread_id
         }
       });
     } else {
-      await append(cMessage);
+      await chatAppend(cMessage);
       // Save with API
       const newMessage = await saveMessage({
         thread_id,
@@ -242,7 +264,7 @@ type HandleChatRegenerateArgs = {
   thread_id: string;
   message: AIMessage | OpenAIMessage;
   messages: AIMessage[] | OpenAIMessage[];
-  setMessages: (messages: AIMessage[] | OpenAIMessage[]) => void;
+  setMessages: (messages: LFMessage[]) => void;
   reload: (
     chatRequestOptions?: ChatRequestOptions | undefined
   ) => Promise<string | null | undefined>;
@@ -336,18 +358,18 @@ export const processAnnotations = (message: OpenAIMessage, files: FileObject[]) 
 
       if (!hasBeenProcessed) {
         // Replace the text with a footnote
-        messageContent.value = messageContent.value.replace(annotation.text, ` [${index}]`);
+        messageContent.value = messageContent.value.replace(annotation.text, ` [${index + 1}]`);
         // Gather citations based on annotation attributes
         if (annotation.type === 'file_citation') {
           const citedFile = files.find((file) => file.id === annotation.file_citation.file_id);
           if (citedFile) {
-            citations.push(`[${index}] ${citedFile.filename}`);
+            citations.push(`[${index + 1}] ${citedFile.filename}`);
           }
         } else if (annotation.type === 'file_path') {
           const citedFile = files.find((file) => file.id === annotation.file_path.file_id);
 
           if (citedFile) {
-            citations.push(`[${index}] Click <here> to download ${citedFile.filename}`);
+            citations.push(`[${index + 1}] Click <here> to download ${citedFile.filename}`);
           }
           // TODO - file download (future story)
         }

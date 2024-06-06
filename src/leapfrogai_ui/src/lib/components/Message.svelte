@@ -6,7 +6,7 @@
   import { LFTextArea } from '$components';
   import frog from '$assets/frog.png';
   import { writable } from 'svelte/store';
-  import { threadsStore, toastStore } from '$stores';
+  import { chatStore, threadsStore, toastStore } from '$stores';
   import { convertTextToMessageContentArr, getMessageText } from '$helpers/threads';
   import type { Message as OpenAIMessage } from 'openai/resources/beta/threads/messages';
   import {
@@ -18,10 +18,14 @@
   } from '$helpers/chatHelpers';
   import type { ChatRequestOptions, CreateMessage } from 'ai';
   import DynamicPictogram from '$components/DynamicPictogram.svelte';
+  import type { LFMessage } from '$lib/types/messages';
 
+  export let index: number;
+  export let setAssistantMessages;
+  export let setChatMessages;
+  export let assistantAppend;
+  export let chatAppend;
   export let message: AIMessage | OpenAIMessage;
-  export let messages: AIMessage[] = [];
-  export let setMessages: (messages: AIMessage[]) => void;
   export let isLastMessage: boolean;
   export let append: (
     message: AIMessage | CreateMessage,
@@ -62,12 +66,15 @@
       $threadsStore.threads.find((t) => t.id === $page.params.thread_id)?.messages || [];
 
     await handleMessageEdit({
+      index,
       storeMessages,
+      setAssistantMessages,
+      setChatMessages,
+      chatAppend,
+      assistantAppend,
       message: { ...message, content: $value },
-      streamedMessages: messages,
-      thread_id: $page.params.thread_id,
-      setStreamedMessages: setMessages,
-      append
+      streamedMessages: $chatStore.allStreamedMessages,
+      thread_id: $page.params.thread_id
     });
   };
 
@@ -176,8 +183,8 @@
               if (isAssistantMessage(message)) {
                 threadsStore.setSelectedAssistantId(message.assistant_id);
                 handleAssistantRegenerate({
-                  messages,
-                  setMessages,
+                  messages: $chatStore.allStreamedMessages,
+                  setMessages: chatStore.setAllStreamedMessages,
                   thread_id: $page.params.thread_id,
                   append
                 });
@@ -188,8 +195,8 @@
                 handleChatRegenerate({
                   storeMessages,
                   message,
-                  messages,
-                  setMessages,
+                  messages: $chatStore.allStreamedMessages,
+                  setMessages: chatStore.setAllStreamedMessages,
                   thread_id: $page.params.thread_id,
                   reload
                 });

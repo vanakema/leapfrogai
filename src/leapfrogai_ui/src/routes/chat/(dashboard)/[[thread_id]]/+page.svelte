@@ -2,14 +2,13 @@
   import { LFTextArea } from '$components';
   import { Button, Dropdown } from 'carbon-components-svelte';
   import { afterUpdate, onMount, tick } from 'svelte';
-  import { threadsStore, toastStore } from '$stores';
+  import { threadsStore, toastStore, chatStore } from '$stores';
   import { ArrowRight, Checkmark, StopFilledAlt, UserProfile } from 'carbon-icons-svelte';
   import { type Message as AIMessage, useAssistant, useChat } from 'ai/svelte';
   import { page } from '$app/stores';
-  import type { Message as OpenAIMessage } from 'openai/resources/beta/threads/messages';
   import { afterNavigate, beforeNavigate, goto } from '$app/navigation';
   import Message from '$components/Message.svelte';
-  import { getMessageText } from '$helpers/threads';
+  import { convertMessageToAiMessage, getMessageText } from '$helpers/threads';
   import { NO_SELECTED_ASSISTANT_ID } from '$constants';
 
   import {
@@ -19,7 +18,6 @@
     processAnnotations,
     resetMessages,
     saveMessage,
-    sortMessages,
     stopThenSave
   } from '$helpers/chatHelpers';
   import {
@@ -77,7 +75,8 @@
     handleCompletedAssistantStream();
   }
 
-  $: sortedMessages = sortMessages([...$chatMessages, ...$assistantMessages]);
+  $: if ($chatMessages || $assistantMessages)
+    chatStore.setAllStreamedMessages([...$chatMessages, ...$assistantMessages]);
 
   /** END REACTIVE STATE **/
 
@@ -90,17 +89,18 @@
     await threadsStore.updateMessages($page.params.thread_id, savedMessages);
 
     // parse annotations and add parsed text to streamed messages array ($assistantMessages)
-    const assistantMessagesCopy = [...$assistantMessages];
-    for (const savedMessage of savedMessages) {
+    const newAssistantMessages: LFMessage[] = [];
+    for (let savedMessage of savedMessages) {
       if (isAssistantMessage(savedMessage)) {
-        const parsedMessage = { ...processAnnotations(savedMessage, data.files) };
-        const index = assistantMessagesCopy.findIndex((m) => m.id === parsedMessage.id);
-        if (index > -1) {
-          assistantMessagesCopy[index].content = getMessageText(parsedMessage);
-        }
+        newAssistantMessages.push(
+          convertMessageToAiMessage({ ...processAnnotations(savedMessage, data.files) })
+        );
       }
     }
-    setAssistantMessages(assistantMessagesCopy);
+    setAssistantMessages(newAssistantMessages);
+    let newChatMessages = savedMessages.filter((m) => !isAssistantMessage(m));
+    newChatMessages = newChatMessages.map((m) => convertMessageToAiMessage(m))
+    setChatMessages(newChatMessages);
 
     threadsStore.setSendingBlocked(false);
   };
@@ -251,7 +251,7 @@
     }
   };
 
-  onMount(async () => {
+  $: onMount(async () => {
     threadsStore.setThreads(data.threads || []);
     await tick();
 
@@ -262,10 +262,6 @@
       files: data.files
     });
   });
-
-  $: console.log('active thread messages', activeThread?.messages)
-  $: console.log('chatMessages', $chatMessages)
-  $: console.log('assistantMessages', $assistantMessages)
 
   afterUpdate(() => {
     // Scroll to bottom
@@ -297,13 +293,15 @@
 
 <div class="chat-inner-content">
   <div class="messages" bind:this={messageThreadDiv} bind:offsetHeight={messageThreadDivHeight}>
-    {#each sortedMessages as message, index (message.id)}
+    {#each $chatStore.allStreamedMessages as message, index (message.id)}
       <Message
         {message}
-        messages={isAssistantMessage(message) ? $assistantMessages : $chatMessages}
-        setMessages={isAssistantMessage(message) ? setAssistantMessages : setChatMessages}
-        isLastMessage={index === sortedMessages.length - 1}
-        append={isAssistantMessage(message) ? assistantAppend : chatAppend}
+        {index}
+        {setAssistantMessages}
+        {setChatMessages}
+        {assistantAppend}
+        {chatAppend}
+        isLastMessage={index === $chatStore.allStreamedMessages.length - 1}
         {reload}
       />
     {/each}
@@ -345,6 +343,10 @@
             <UserProfile />
             {item.text}
           </button>
+        {:else if item.id === NO_SELECTED_ASSISTANT_ID}
+          <div class="noAssistant">
+            {item.text}
+          </div>
         {:else}
           <div class="assistant-dropdown-item">
             {item.text}
@@ -437,8 +439,9 @@
   }
 
   .noAssistant {
+    color: $gray-50;
     :global(.bx--list-box__label) {
-      color: themes.$text-secondary;
+      color: $gray-50;
     }
   }
 </style>
