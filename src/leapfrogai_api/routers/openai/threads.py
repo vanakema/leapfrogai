@@ -168,7 +168,7 @@ async def create_thread_and_run(
                             object="thread.message",
                             status="in_progress",
                             thread_id="",
-                            content=message_content,
+                            content=[message_content],
                             role=message.get("role"),
                             attachments=message.get("attachments"),
                             metadata=message.get("metadata"),
