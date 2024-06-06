@@ -250,7 +250,6 @@ async def create_thread_and_run(
 
     try:
         thread_request: CreateThreadRequest = CreateThreadRequest(messages=[])
-        chat_messages: list[ChatMessage] = []
 
         if request.thread:
             """If the thread exists, convert all of its messages into a form that can be used by create_thread."""
@@ -273,12 +272,6 @@ async def create_thread_and_run(
                             role=message.get("role"),
                             attachments=message.get("attachments"),
                             metadata=message.get("metadata"),
-                        )
-                    )
-
-                    chat_messages.append(
-                        ChatMessage(
-                            role=message.get("role"), content=message_content.text.value
                         )
                     )
                 except ValueError as exc:
