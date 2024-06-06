@@ -25,37 +25,13 @@ class CRUDMessage(CRUDBase[AuthMessage]):
             object_=AuthMessage(user_id=user_id, **object_.model_dump())
         )
 
-    async def get(self, id_: str, thread_id: str) -> AuthMessage | None:
-        """Get a vector store by its ID."""
+    async def get(self, filters: dict | None = None) -> AuthMessage | None:
+        """Get a message by its ID."""
+        return await super().get(filters=filters)
 
-        data, _count = (
-            await self.db.table(self.table_name)
-            .select("*")
-            .eq("id", id_)
-            .eq("thread_id", thread_id)
-            .execute()
-        )
-
-        _, response = data
-
-        if response:
-            return self.model(**response[0])
-        return None
-
-    async def list(self, thread_id: str) -> list[AuthMessage] | None:
+    async def list(self, filters: dict | None = None) -> list[AuthMessage] | None:
         """List all messages by thread ID."""
-        data, _count = (
-            await self.db.table(self.table_name)
-            .select("*")
-            .eq("thread_id", thread_id)
-            .execute()
-        )
-
-        _, response = data
-
-        if response:
-            return [self.model(**item) for item in response]
-        return None
+        return await super().list(filters=filters)
 
     async def update(self, id_: str, object_: Message) -> AuthMessage | None:
         """Update a message by its ID."""
@@ -72,16 +48,6 @@ class CRUDMessage(CRUDBase[AuthMessage]):
             return self.model(**response[0])
         return None
 
-    async def delete(self, id_: str, thread_id: str) -> bool:
+    async def delete(self, filters: dict | None = None) -> bool:
         """Delete a message by its ID and thread ID."""
-        data, _count = (
-            await self.db.table(self.table_name)
-            .delete()
-            .eq("id", id_)
-            .eq("thread_id", thread_id)
-            .execute()
-        )
-
-        _, response = data
-
-        return bool(response)
+        return await super().delete(filters)
