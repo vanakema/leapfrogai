@@ -130,17 +130,22 @@ async def create_thread_and_run(
             thread_messages: Iterable[ThreadMessage] = request.thread.get("messages")
             logging.info("Starting to process messages")
             for message in thread_messages:
+                logging.info("Starting message")
                 try:
                     thread_message_content: Union[
                         str, Iterable[MessageContentPartParam]
                     ] = message.get("content")
 
+                    logging.info("Extracted content")
+
                     if isinstance(thread_message_content, str):
+                        logging.info("Processing string")
                         message_content: TextContentBlock = TextContentBlock(
                             text=Text(annotations=[], value=thread_message_content),
                             type="text",
                         )
                     elif isinstance(thread_message_content, TextContentBlockParam):
+                        logging.info("Processing TextContentBlock")
                         message_content: TextContentBlock = TextContentBlock(
                             text=Text(
                                 annotations=[], value=thread_message_content.get("text")
