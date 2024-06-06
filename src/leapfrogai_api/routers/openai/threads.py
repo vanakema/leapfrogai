@@ -123,7 +123,7 @@ async def create_thread_and_run(
     """Create a thread and run."""
 
     try:
-        thread_request: CreateThreadRequest = CreateThreadRequest()
+        thread_request: CreateThreadRequest = CreateThreadRequest(messages=[])
         chat_messages: list[ChatMessage] = []
 
         if request.thread:
