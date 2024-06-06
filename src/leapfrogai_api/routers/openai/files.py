@@ -4,7 +4,7 @@ from fastapi import APIRouter, Depends, HTTPException, UploadFile, status
 from fastapi.security import HTTPBearer
 from openai.types import FileDeleted, FileObject
 from leapfrogai_api.backend.types import ListFilesResponse, UploadFileRequest
-from leapfrogai_api.data.crud_file_object import CRUDFileObject
+from leapfrogai_api.data.crud_file_object import CRUDFileObject, FilterFileObject
 from leapfrogai_api.data.crud_file_bucket import CRUDFileBucket
 from leapfrogai_api.backend.rag.document_loader import is_supported_mime_type
 from leapfrogai_api.routers.supabase_session import Session
@@ -80,7 +80,7 @@ async def retrieve_file(
 ) -> FileObject | None:
     """Retrieve a file."""
     crud_file_object = CRUDFileObject(session)
-    return await crud_file_object.get(filters={"id": file_id})
+    return await crud_file_object.get(filters=FilterFileObject(id=file_id))
 
 
 @router.delete("/{file_id}")
@@ -91,7 +91,9 @@ async def delete_file(
     """Delete a file."""
 
     crud_file_object = CRUDFileObject(session)
-    file_deleted: bool = await crud_file_object.delete(filters={"id": file_id})
+    file_deleted: bool = await crud_file_object.delete(
+        filters=FilterFileObject(id=file_id)
+    )
 
     # We need to check if the RLS allowed the deletion before continuing with the bucket deletion
     if file_deleted:

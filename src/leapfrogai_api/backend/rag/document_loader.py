@@ -60,7 +60,7 @@ async def split(docs: list[Document]) -> list[Document]:
     ]
 
     text_splitter = RecursiveCharacterTextSplitter(
-        # Set a really small chunk size, just to show.
+        # TODO: This parameters might need to be tuned and/or exposed for configuration
         chunk_size=500,
         chunk_overlap=50,
         length_function=len,
