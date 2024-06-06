@@ -388,7 +388,7 @@ class RunCreateParams(BaseModel):
     max_completion_tokens: Optional[int] = Field(default=None)
     max_prompt_tokens: Optional[int] = Field(default=None)
     metadata: Optional[object] = Field(default=None)
-    model: Union[str, None] = Field(default="", examples=[""])
+    model: Union[str, None] = Field(default=None, examples=[None])
     response_format: Optional[AssistantResponseFormatOptionParam] = Field(default=None)
     temperature: Optional[float] = Field(default=None)
     tool_choice: Optional[AssistantToolChoiceOptionParam] = Field(default=None)
