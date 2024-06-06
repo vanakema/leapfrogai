@@ -88,6 +88,81 @@ async def create_thread(request: CreateThreadRequest, session: Session) -> Threa
         ) from exc
 
 
+async def generate_message_for_thread(session: Session, request: ThreadRunCreateParamsRequest | RunCreateParamsRequest,
+                                      chat_messages: list[ChatMessage]):
+    if request.stream:
+        raise NotImplementedError()
+    else:
+        # Generate a new message and add it to the thread creation request
+        chat_response: ChatCompletionResponse = await chat_complete(
+            req=ChatCompletionRequest(
+                model=request.model,
+                messages=chat_messages,
+                functions=None,
+                temperature=request.temperature,
+                top_p=request.top_p,
+                stream=False,
+                stop=None,
+                max_tokens=request.max_completion_tokens
+            ),
+            model_config=get_model_config(),
+            session=session
+        )
+        message_content: TextContentBlock = TextContentBlock(
+            text=Text(annotations=[], value=chat_response.choices[0].message.content),
+            type="text",
+        )
+
+        return Message(
+            id="",
+            created_at=0,
+            object="thread.message",
+            status="in_progress",
+            thread_id="",
+            content=[message_content],
+            role="assistant",
+        )
+
+
+async def update_request_with_assistant_data(
+        session: Session,
+        request: ThreadRunCreateParamsRequest | RunCreateParamsRequest
+) -> ThreadRunCreateParamsRequest | RunCreateParamsRequest:
+    assistant: Assistant | None = await retrieve_assistant(session=session, assistant_id=request.assistant_id)
+
+    model: str | None = request.model if request.model else assistant.model
+    temperature: float | None = request.temperature if request.temperature else assistant.temperature
+    top_p: float | None = request.top_p if request.top_p else assistant.top_p
+
+    # Create a copy of the request with proper values for model, temperature, and top_p
+    return request.model_copy(update={
+        "model": model,
+        "temperature": temperature,
+        "top_p": top_p
+    })
+
+
+def convert_content_param_to_content(
+        thread_message_content: Union[str, Iterable[MessageContentPartParam]]
+) -> TextContentBlock:
+    if isinstance(thread_message_content, str):
+        return TextContentBlock(
+            text=Text(annotations=[], value=thread_message_content),
+            type="text",
+        )
+    elif isinstance(thread_message_content, TextContentBlockParam):
+        return TextContentBlock(
+            text=Text(
+                annotations=[], value=thread_message_content.get("text")
+            ),
+            type="text",
+        )
+    else:
+        raise ValueError(
+            "Value error text is the only modality supported."
+        )
+
+
 @router.post("/{thread_id}/runs")
 async def create_run(
         thread_id: str, session: Session, request: RunCreateParamsRequest
@@ -95,16 +170,46 @@ async def create_run(
     """Create a run."""
 
     try:
+        run_request: RunCreateParamsRequest = await update_request_with_assistant_data(session, request)
+
+        if request.additional_messages:
+            """If additional messages exist, create them in the DB as a part of this thread"""
+            for additional_message in request.additional_messages:
+                await create_message(thread_id, CreateMessageRequest(
+                    role=additional_message.get("role"),
+                    content=convert_content_param_to_content(additional_message.get("content")),
+                    attachments=additional_message.get("attachments"),
+                    metadata=additional_message.get("role")
+                ), session)
+
+        # Get existing messages
+        thread_messages: list[Message] = await list_messages(thread_id, session)
+        # Convert messages to ChatMessages
+        chat_messages: list[ChatMessage] = [ChatMessage(
+            role=message.role,
+            content=message.content[0]
+        ) for message in thread_messages]
+
+        # Generate a new response based on the existing thread
+        new_message: Message = await generate_message_for_thread(session, run_request, chat_messages)
+        # Add the generated response to the db
+        await create_message(thread_id, CreateMessageRequest(
+            role=new_message.role,
+            content=new_message.content,
+            attachments=new_message.attachments,
+            metadata=new_message.metadata
+        ), session)
+
         crud_run = CRUDRun(db=session)
 
-        create_params: RunCreateParams = RunCreateParams(**request.__dict__)
+        create_params: RunCreateParams = RunCreateParams(**run_request.__dict__)
 
         run = Run(
             id="",  # Leave blank to have Postgres generate a UUID
             created_at=0,  # Leave blank to have Postgres generate a timestamp
             thread_id=thread_id,
             object="thread.run",
-            status="in_progress",
+            status="completed",
             **create_params.__dict__,
         )
         return await crud_run.create(object_=run)
@@ -131,26 +236,7 @@ async def create_thread_and_run(
             thread_messages: Iterable[ThreadMessage] = request.thread.get("messages")
             for message in thread_messages:
                 try:
-                    thread_message_content: Union[
-                        str, Iterable[MessageContentPartParam]
-                    ] = message.get("content")
-
-                    if isinstance(thread_message_content, str):
-                        message_content: TextContentBlock = TextContentBlock(
-                            text=Text(annotations=[], value=thread_message_content),
-                            type="text",
-                        )
-                    elif isinstance(thread_message_content, TextContentBlockParam):
-                        message_content: TextContentBlock = TextContentBlock(
-                            text=Text(
-                                annotations=[], value=thread_message_content.get("text")
-                            ),
-                            type="text",
-                        )
-                    else:
-                        raise ValueError(
-                            "Value error text is the only modality supported."
-                        )
+                    message_content = convert_content_param_to_content(message.get("content"))
 
                     thread_request.messages.append(
                         Message(
@@ -165,7 +251,7 @@ async def create_thread_and_run(
                             metadata=message.get("metadata"),
                         )
                     )
-                    
+
                     chat_messages.append(ChatMessage(
                         role=message.get("role"),
                         content=message_content.text.value
@@ -174,45 +260,11 @@ async def create_thread_and_run(
                     logging.error(f"\t{exc}")
                     continue
 
-        assistant: Assistant | None = await retrieve_assistant(session=session, assistant_id=request.assistant_id)
+        run_request: ThreadRunCreateParamsRequest = await update_request_with_assistant_data(session, request)
 
-        model: str | None = request.model if request.model else assistant.model
-        temperature: float | None = request.temperature if request.temperature else assistant.temperature
-        top_p: float | None = request.top_p if request.top_p else assistant.top_p
-
-        if request.stream:
-            raise NotImplementedError()
-        else:
-            # Generate a new message and add it to the thread creation request
-            chat_response: ChatCompletionResponse = await chat_complete(
-                req=ChatCompletionRequest(
-                    model=model,
-                    messages=chat_messages,
-                    functions=None,
-                    temperature=temperature,
-                    top_p=top_p,
-                    stream=False,
-                    stop=None,
-                    max_tokens=request.max_completion_tokens
-                ),
-                model_config=get_model_config(),
-                session=session
-            )
-            message_content: TextContentBlock = TextContentBlock(
-                text=Text(annotations=[], value=chat_response.choices[0].message.content),
-                type="text",
-            )
-            thread_request.messages.append(
-                Message(
-                    id="",
-                    created_at=0,
-                    object="thread.message",
-                    status="in_progress",
-                    thread_id="",
-                    content=[message_content],
-                    role="assistant",
-                )
-            )
+        thread_request.messages.append(
+            await generate_message_for_thread(session, run_request, chat_messages)
+        )
 
         new_thread: Thread = await create_thread(
             thread_request,
@@ -220,13 +272,6 @@ async def create_thread_and_run(
         )
 
         crud_run = CRUDRun(db=session)
-        
-        # Create a copy of the request with proper values for model, temperature, and top_p
-        run_request: ThreadRunCreateParamsRequest = request.model_copy(update={
-            "model": model,
-            "temperature": temperature,
-            "top_p": top_p
-        })
 
         create_params: RunCreateParams = RunCreateParams(**run_request.__dict__)
 
