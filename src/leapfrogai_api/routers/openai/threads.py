@@ -192,7 +192,11 @@ async def modify_message(
     """Modify a message."""
     message = CRUDMessage(db=session)
 
-    if not (old_message := await message.get(filters={"id": message_id, "thread_id": thread_id})):
+    if not (
+        old_message := await message.get(
+            filters={"id": message_id, "thread_id": thread_id}
+        )
+    ):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Message not found",
@@ -229,7 +233,9 @@ async def delete_message(
     """Delete message from a thread."""
 
     crud_message = CRUDMessage(db=session)
-    message_deleted = await crud_message.delete(filters={"id": message_id, "thread_id": thread_id})
+    message_deleted = await crud_message.delete(
+        filters={"id": message_id, "thread_id": thread_id}
+    )
     return MessageDeleted(
         id=message_id,
         deleted=bool(message_deleted),
