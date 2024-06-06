@@ -178,14 +178,19 @@ async def create_thread_and_run(
             raise NotImplementedError()
         else:
             assistant: Assistant | None = await retrieve_assistant(session=session, assistant_id=request.assistant_id)
+            
+            model: str | None = request.model if request.model else assistant.model
+            temperature: float | None = request.temperature if request.temperature else assistant.temperature
+            top_p: float | None = request.top_p if request.top_p else assistant.top_p
+            
             # Generate a new message and add it to the thread creation request
             chat_response: ChatCompletionResponse = await chat_complete(
                 req=ChatCompletionRequest(
-                    model=getattr(request, "model", assistant.model),
+                    model=model,
                     messages=chat_messages,
                     functions=None,
-                    temperature=getattr(request, "temperature", assistant.temperature),
-                    top_p=getattr(request, "top_p", assistant.top_p),
+                    temperature=temperature,
+                    top_p=top_p,
                     stream=False,
                     stop=None,
                     max_tokens=request.max_completion_tokens
