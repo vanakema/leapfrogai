@@ -11,7 +11,7 @@ from leapfrogai_api.backend.rag.document_loader import load_file, split
 from leapfrogai_api.backend.rag.leapfrogai_embeddings import LeapfrogAIEmbeddings
 from leapfrogai_api.data.async_supabase_vector_store import AsyncSupabaseVectorStore
 from leapfrogai_api.data.crud_file_bucket import CRUDFileBucket
-from leapfrogai_api.data.crud_file_object import CRUDFileObject
+from leapfrogai_api.data.crud_file_object import CRUDFileObject, FilterFileObject
 from leapfrogai_api.data.crud_vector_store_file import CRUDVectorStoreFile
 from leapfrogai_api.backend.types import VectorStoreFileStatus
 
@@ -44,7 +44,7 @@ class IndexingService:
         crud_file_object = CRUDFileObject(db=self.db)
         crud_file_bucket = CRUDFileBucket(db=self.db, model=UploadFile)
 
-        file_object = await crud_file_object.get(filters={"id": file_id})
+        file_object = await crud_file_object.get(filters=FilterFileObject(id=file_id))
 
         if not file_object:
             raise ValueError("File not found")

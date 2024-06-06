@@ -48,9 +48,15 @@ class CRUDBase(Generic[ModelType]):
             return self.model(**response[0])
         return None
 
-    async def list(self) -> list[ModelType] | None:
+    async def list(self, filters: dict | None = None) -> list[ModelType] | None:
         """List all rows."""
-        data, _count = await self.db.table(self.table_name).select("*").execute()
+        query = self.db.table(self.table_name).select("*")
+
+        if filters:
+            for key, value in filters.items():
+                query = query.eq(key, value)
+
+        data, _count = await query.execute()
 
         _, response = data
 

@@ -137,7 +137,7 @@ def test_get():
     assert get_response.status_code == status.HTTP_200_OK
     assert VectorStore.model_validate(
         get_response.json()
-    ), f"Get should return VectorStore {vector_store_id}."
+    ), f"Get should return VectorStore {vector_store_id}. Instead returned {get_response.json()}."
 
 
 def test_get_expired():
@@ -219,7 +219,7 @@ def test_get_modified():
     assert get_modified_response.status_code == status.HTTP_200_OK
     assert VectorStore.model_validate(
         get_modified_response.json()
-    ), f"Get should return modified VectorStore {vector_store_id}."
+    ), f"Get should return modified VectorStore {vector_store_id}. Instead returned {get_modified_response.json()}."
     assert get_modified_response.json()["name"] == "test1", "Should be modified."
 
 
