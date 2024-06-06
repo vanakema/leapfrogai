@@ -9,12 +9,12 @@ from fastapi.security import HTTPBearer
 from openai.types.beta import Thread, ThreadDeleted, Assistant
 from openai.types.beta.thread_create_and_run_params import (
     ThreadMessage,
-    MessageContentPartParam,
 )
-from openai.types.beta.threads import Message, MessageDeleted, Run
+from openai.types.beta.threads import Message, MessageDeleted, Run, Text
 from openai.types.beta.threads.message_content import MessageContent
-from openai.types.beta.threads.message_content_part_param import TextContentBlockParam
-from openai.types.beta.threads.text_content_block import TextContentBlock, Text
+from openai.types.beta.threads.message_content_part_param import MessageContentPartParam
+from openai.types.beta.threads.text_content_block import TextContentBlock
+from openai.types.beta.threads.text_content_block_param import TextContentBlockParam
 from openai.types.beta.threads.runs import RunStep
 
 from leapfrogai_api.backend.types import (
@@ -330,7 +330,7 @@ async def list_runs(thread_id: str, session: Session) -> list[Run]:
 async def retrieve_run(thread_id: str, run_id: str, session: Session) -> Run:
     """Retrieve a run."""
     crud_run = CRUDRun(db=session)
-    return await crud_run.get(id_=thread_id)
+    return await crud_run.get(filters={"id": run_id, "thread_id": thread_id})
 
 
 @router.post("/{thread_id}/runs/{run_id}")
@@ -340,7 +340,7 @@ async def modify_run(
     """Modify a run."""
     run = CRUDRun(db=session)
 
-    if not (old_run := await run.get(id_=run_id)):
+    if not (old_run := await run.get(filters={"id": run_id, "thread_id": thread_id})):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
             detail="Run not found",
