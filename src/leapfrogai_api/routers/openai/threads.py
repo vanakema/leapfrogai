@@ -128,38 +128,28 @@ async def create_thread_and_run(
             """If the thread exists, convert all of its messages into a form that can be used by create_thread."""
             messages: list[Message] = []
             thread_messages: Iterable[ThreadMessage] = request.thread.get("messages")
-            logging.info("Starting to process messages")
             for message in thread_messages:
-                logging.info("Starting message")
                 try:
                     thread_message_content: Union[
                         str, Iterable[MessageContentPartParam]
                     ] = message.get("content")
 
-                    logging.info("Extracted content")
-
                     if isinstance(thread_message_content, str):
-                        logging.info("Processing string")
                         message_content: TextContentBlock = TextContentBlock(
                             text=Text(annotations=[], value=thread_message_content),
                             type="text",
                         )
-                        logging.info("Processed string")
                     elif isinstance(thread_message_content, TextContentBlockParam):
-                        logging.info("Processing TextContentBlock")
                         message_content: TextContentBlock = TextContentBlock(
                             text=Text(
                                 annotations=[], value=thread_message_content.get("text")
                             ),
                             type="text",
                         )
-                        logging.info("Processed TextContentBlock")
                     else:
                         raise ValueError(
                             "Value error text is the only modality supported."
                         )
-                    
-                    logging.info("Appending new message")
 
                     messages.append(
                         Message(
@@ -174,12 +164,10 @@ async def create_thread_and_run(
                             metadata=message.get("metadata"),
                         )
                     )
-
-                    logging.info("Appended new message")
                 except ValueError as exc:
                     logging.error(f"\t{exc}")
                     continue
-            logging.info(f"Finished processing {len(messages)}")
+
             thread_request.messages = messages
 
         new_thread: Thread = await create_thread(
