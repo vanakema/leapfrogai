@@ -12,6 +12,7 @@ from openai.types.beta.thread_create_and_run_params import (
     MessageContentPartParam,
 )
 from openai.types.beta.threads import Message, MessageDeleted, Run
+from openai.types.beta.threads.message_content import MessageContent
 from openai.types.beta.threads.message_content_part_param import TextContentBlockParam
 from openai.types.beta.threads.text_content_block import TextContentBlock, Text
 from openai.types.beta.threads.runs import RunStep
@@ -89,7 +90,15 @@ async def create_thread(request: CreateThreadRequest, session: Session) -> Threa
 
 
 async def generate_message_for_thread(session: Session, request: ThreadRunCreateParamsRequest | RunCreateParamsRequest,
-                                      chat_messages: list[ChatMessage]):
+                                      thread_id: str):
+    # Get existing messages
+    thread_messages: list[Message] = await list_messages(thread_id, session)
+    # Convert messages to ChatMessages
+    chat_messages: list[ChatMessage] = [ChatMessage(
+        role=message.role,
+        content=message.content[0]
+    ) for message in thread_messages]
+
     if request.stream:
         raise NotImplementedError()
     else:
@@ -113,7 +122,7 @@ async def generate_message_for_thread(session: Session, request: ThreadRunCreate
             type="text",
         )
 
-        return Message(
+        new_message = Message(
             id="",
             created_at=0,
             object="thread.message",
@@ -122,6 +131,14 @@ async def generate_message_for_thread(session: Session, request: ThreadRunCreate
             content=[message_content],
             role="assistant",
         )
+        
+        # Add the generated response to the db
+        await create_message(thread_id, CreateMessageRequest(
+            role=new_message.role,
+            content=new_message.content,
+            attachments=new_message.attachments,
+            metadata=new_message.metadata
+        ), session)
 
 
 async def update_request_with_assistant_data(
@@ -144,7 +161,8 @@ async def update_request_with_assistant_data(
 
 def convert_content_param_to_content(
         thread_message_content: Union[str, Iterable[MessageContentPartParam]]
-) -> TextContentBlock:
+) -> MessageContent:
+    """Converts messages from MessageContentPartParam to MessageContent"""
     if isinstance(thread_message_content, str):
         return TextContentBlock(
             text=Text(annotations=[], value=thread_message_content),
@@ -175,30 +193,18 @@ async def create_run(
         if request.additional_messages:
             """If additional messages exist, create them in the DB as a part of this thread"""
             for additional_message in request.additional_messages:
+                # Convert the messages content into the correct format
+                message_content: MessageContent = convert_content_param_to_content(additional_message.get("content"))
+                
                 await create_message(thread_id, CreateMessageRequest(
                     role=additional_message.get("role"),
-                    content=convert_content_param_to_content(additional_message.get("content")),
+                    content=message_content,
                     attachments=additional_message.get("attachments"),
                     metadata=additional_message.get("role")
                 ), session)
 
-        # Get existing messages
-        thread_messages: list[Message] = await list_messages(thread_id, session)
-        # Convert messages to ChatMessages
-        chat_messages: list[ChatMessage] = [ChatMessage(
-            role=message.role,
-            content=message.content[0]
-        ) for message in thread_messages]
-
         # Generate a new response based on the existing thread
-        new_message: Message = await generate_message_for_thread(session, run_request, chat_messages)
-        # Add the generated response to the db
-        await create_message(thread_id, CreateMessageRequest(
-            role=new_message.role,
-            content=new_message.content,
-            attachments=new_message.attachments,
-            metadata=new_message.metadata
-        ), session)
+        await generate_message_for_thread(session, run_request, thread_id)
 
         crud_run = CRUDRun(db=session)
 
@@ -236,7 +242,8 @@ async def create_thread_and_run(
             thread_messages: Iterable[ThreadMessage] = request.thread.get("messages")
             for message in thread_messages:
                 try:
-                    message_content = convert_content_param_to_content(message.get("content"))
+                    # Convert the messages content into the correct format
+                    message_content: MessageContent = convert_content_param_to_content(message.get("content"))
 
                     thread_request.messages.append(
                         Message(
@@ -262,14 +269,12 @@ async def create_thread_and_run(
 
         run_request: ThreadRunCreateParamsRequest = await update_request_with_assistant_data(session, request)
 
-        thread_request.messages.append(
-            await generate_message_for_thread(session, run_request, chat_messages)
-        )
-
         new_thread: Thread = await create_thread(
             thread_request,
             session,
         )
+        
+        await generate_message_for_thread(session, run_request, new_thread.id)
 
         crud_run = CRUDRun(db=session)
 
