@@ -14,7 +14,7 @@ from leapfrogai_api.backend.types import (
     ModifyVectorStoreRequest,
 )
 from leapfrogai_api.data.async_supabase_vector_store import AsyncSupabaseVectorStore
-from leapfrogai_api.data.crud_vector_store import CRUDVectorStore
+from leapfrogai_api.data.crud_vector_store import CRUDVectorStore, FilterVectorStore
 from leapfrogai_api.data.crud_vector_store_file import (
     CRUDVectorStoreFile,
     FilterVectorStoreFile,
@@ -108,7 +108,7 @@ async def retrieve_vector_store(
     """Retrieve a vector store."""
 
     crud_vector_store = CRUDVectorStore(db=session)
-    return await crud_vector_store.get(filters={"id": vector_store_id})
+    return await crud_vector_store.get(filters=FilterVectorStore(id=vector_store_id))
 
 
 @router.post("/{vector_store_id}")
@@ -121,7 +121,9 @@ async def modify_vector_store(
     crud_vector_store = CRUDVectorStore(db=session)
 
     if not (
-        old_vector_store := await crud_vector_store.get(filters={"id": vector_store_id})
+        old_vector_store := await crud_vector_store.get(
+            filters=FilterVectorStore(id=vector_store_id)
+        )
     ):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -211,7 +213,7 @@ async def delete_vector_store(
     crud_vector_store = CRUDVectorStore(db=session)
 
     vector_store_deleted = await crud_vector_store.delete(
-        filters={"id": vector_store_id}
+        filters=FilterVectorStore(id=vector_store_id)
     )
     return VectorStoreDeleted(
         id=vector_store_id,
