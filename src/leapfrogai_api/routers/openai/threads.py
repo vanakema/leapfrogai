@@ -316,7 +316,7 @@ async def list_runs(thread_id: str, session: Session) -> list[Run]:
     """List all the runs in a thread."""
     try:
         crud_run = CRUDRun(db=session)
-        runs = await crud_run.list(thread_id=thread_id)
+        runs = await crud_run.list(filters={"thread_id": thread_id})
 
         return runs
     except Exception as exc:

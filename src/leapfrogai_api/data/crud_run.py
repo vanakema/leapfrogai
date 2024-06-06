@@ -30,21 +30,9 @@ class CRUDRun(CRUDBase[AuthRun]):
 
         return await super().get(filters)
 
-    async def list(self, thread_id: str) -> list[Run] | None:
+    async def list(self, filters: dict | None = None) -> list[Run] | None:
         """List all runs."""
-
-        data, _count = (
-            await self.db.table(self.table_name)
-            .select("*")
-            .eq("thread_id", thread_id)
-            .execute()
-        )
-
-        _, response = data
-
-        if response:
-            return [self.model(**item) for item in response]
-        return None
+        return await super().list(filters=filters)
 
     async def update(self, id_: str, object_: Run) -> Run | None:
         """Update a run by its ID."""
