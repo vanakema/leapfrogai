@@ -343,12 +343,13 @@ def modify_run(
     if not (old_run := await run.get(id_=run_id)):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
-            detail="Thread not found",
+            detail="Run not found",
         )
 
     try:
         new_run = Run(
-            id=thread_id,
+            id=run_id,
+            thread_id=thread_id,
             created_at=old_run.created_at,
             metadata=getattr(request, "metadata", old_run.metadata),
             object="thread.run",
