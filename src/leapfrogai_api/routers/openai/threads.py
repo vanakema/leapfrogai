@@ -226,7 +226,7 @@ async def create_thread_and_run(
             "model": model,
             "temperature": temperature,
             "top_p": top_p
-        }, deep=True)
+        })
 
         create_params: RunCreateParams = RunCreateParams(**run_request.__dict__)
 
