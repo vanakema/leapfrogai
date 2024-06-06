@@ -48,8 +48,6 @@ class CRUDFileObject(CRUDBase[AuthFileObject]):
             id_=id_, object_=AuthFileObject(user_id=user_id, **object_.model_dump())
         )
 
-    async def delete(
-        self, filters: FilterFileObject | None = None
-    ) -> FileObject | None:
+    async def delete(self, filters: FilterFileObject | None = None) -> bool:
         """Delete a file object by its ID."""
         return await super().delete(filters=filters.model_dump() if filters else None)

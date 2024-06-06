@@ -76,7 +76,7 @@ class CRUDVectorStore(CRUDBase[AuthVectorStore]):
             return self.model(**response[0])
         return None
 
-    async def delete(self, filters: dict | None = None) -> VectorStore | None:
+    async def delete(self, filters: dict | None = None) -> bool:
         """Delete a vector store by its ID."""
         return await super().delete(filters=filters)
 

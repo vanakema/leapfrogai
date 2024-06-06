@@ -65,8 +65,6 @@ class CRUDVectorStoreFile(CRUDBase[AuthVectorStoreFile]):
             return self.model(**response[0])
         return None
 
-    async def delete(
-        self, filters: FilterVectorStoreFile | None = None
-    ) -> VectorStoreFile | None:
+    async def delete(self, filters: FilterVectorStoreFile | None = None) -> bool:
         """Delete a vector store file by its ID."""
         return await super().delete(filters=filters)
