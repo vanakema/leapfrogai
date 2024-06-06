@@ -334,7 +334,7 @@ async def retrieve_run(thread_id: str, run_id: str, session: Session) -> Run:
 
 
 @router.post("/{thread_id}/runs/{run_id}")
-def modify_run(
+async def modify_run(
     thread_id: str, run_id: str, request: ModifyRunRequest, session: Session
 ) -> Run:
     """Modify a run."""
