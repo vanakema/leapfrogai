@@ -25,7 +25,10 @@ from leapfrogai_api.backend.types import (
     RunCreateParamsRequest,
     ThreadRunCreateParamsRequest,
     RunCreateParams,
-    ModifyRunRequest, ChatCompletionRequest, ChatCompletionResponse, ChatMessage,
+    ModifyRunRequest,
+    ChatCompletionRequest,
+    ChatCompletionResponse,
+    ChatMessage,
 )
 from leapfrogai_api.data.crud_message import CRUDMessage
 from leapfrogai_api.data.crud_run import CRUDRun
@@ -89,15 +92,18 @@ async def create_thread(request: CreateThreadRequest, session: Session) -> Threa
         ) from exc
 
 
-async def generate_message_for_thread(session: Session, request: ThreadRunCreateParamsRequest | RunCreateParamsRequest,
-                                      thread_id: str):
+async def generate_message_for_thread(
+    session: Session,
+    request: ThreadRunCreateParamsRequest | RunCreateParamsRequest,
+    thread_id: str,
+):
     # Get existing messages
     thread_messages: list[Message] = await list_messages(thread_id, session)
     # Convert messages to ChatMessages
-    chat_messages: list[ChatMessage] = [ChatMessage(
-        role=message.role,
-        content=message.content[0]
-    ) for message in thread_messages]
+    chat_messages: list[ChatMessage] = [
+        ChatMessage(role=message.role, content=message.content[0])
+        for message in thread_messages
+    ]
 
     if request.stream:
         raise NotImplementedError()
@@ -112,10 +118,10 @@ async def generate_message_for_thread(session: Session, request: ThreadRunCreate
                 top_p=request.top_p,
                 stream=False,
                 stop=None,
-                max_tokens=request.max_completion_tokens
+                max_tokens=request.max_completion_tokens,
             ),
             model_config=get_model_config(),
-            session=session
+            session=session,
         )
         message_content: TextContentBlock = TextContentBlock(
             text=Text(annotations=[], value=chat_response.choices[0].message.content),
@@ -131,36 +137,41 @@ async def generate_message_for_thread(session: Session, request: ThreadRunCreate
             content=[message_content],
             role="assistant",
         )
-        
+
         # Add the generated response to the db
-        await create_message(thread_id, CreateMessageRequest(
-            role=new_message.role,
-            content=new_message.content,
-            attachments=new_message.attachments,
-            metadata=new_message.metadata
-        ), session)
+        await create_message(
+            thread_id,
+            CreateMessageRequest(
+                role=new_message.role,
+                content=new_message.content,
+                attachments=new_message.attachments,
+                metadata=new_message.metadata,
+            ),
+            session,
+        )
 
 
 async def update_request_with_assistant_data(
-        session: Session,
-        request: ThreadRunCreateParamsRequest | RunCreateParamsRequest
+    session: Session, request: ThreadRunCreateParamsRequest | RunCreateParamsRequest
 ) -> ThreadRunCreateParamsRequest | RunCreateParamsRequest:
-    assistant: Assistant | None = await retrieve_assistant(session=session, assistant_id=request.assistant_id)
+    assistant: Assistant | None = await retrieve_assistant(
+        session=session, assistant_id=request.assistant_id
+    )
 
     model: str | None = request.model if request.model else assistant.model
-    temperature: float | None = request.temperature if request.temperature else assistant.temperature
+    temperature: float | None = (
+        request.temperature if request.temperature else assistant.temperature
+    )
     top_p: float | None = request.top_p if request.top_p else assistant.top_p
 
     # Create a copy of the request with proper values for model, temperature, and top_p
-    return request.model_copy(update={
-        "model": model,
-        "temperature": temperature,
-        "top_p": top_p
-    })
+    return request.model_copy(
+        update={"model": model, "temperature": temperature, "top_p": top_p}
+    )
 
 
 def convert_content_param_to_content(
-        thread_message_content: Union[str, Iterable[MessageContentPartParam]]
+    thread_message_content: Union[str, Iterable[MessageContentPartParam]],
 ) -> MessageContent:
     """Converts messages from MessageContentPartParam to MessageContent"""
     if isinstance(thread_message_content, str):
@@ -170,38 +181,42 @@ def convert_content_param_to_content(
         )
     elif isinstance(thread_message_content, TextContentBlockParam):
         return TextContentBlock(
-            text=Text(
-                annotations=[], value=thread_message_content.get("text")
-            ),
+            text=Text(annotations=[], value=thread_message_content.get("text")),
             type="text",
         )
     else:
-        raise ValueError(
-            "Value error text is the only modality supported."
-        )
+        raise ValueError("Value error text is the only modality supported.")
 
 
 @router.post("/{thread_id}/runs")
 async def create_run(
-        thread_id: str, session: Session, request: RunCreateParamsRequest
+    thread_id: str, session: Session, request: RunCreateParamsRequest
 ) -> Run:
     """Create a run."""
 
     try:
-        run_request: RunCreateParamsRequest = await update_request_with_assistant_data(session, request)
+        run_request: RunCreateParamsRequest = await update_request_with_assistant_data(
+            session, request
+        )
 
         if request.additional_messages:
             """If additional messages exist, create them in the DB as a part of this thread"""
             for additional_message in request.additional_messages:
                 # Convert the messages content into the correct format
-                message_content: MessageContent = convert_content_param_to_content(additional_message.get("content"))
-                
-                await create_message(thread_id, CreateMessageRequest(
-                    role=additional_message.get("role"),
-                    content=message_content,
-                    attachments=additional_message.get("attachments"),
-                    metadata=additional_message.get("role")
-                ), session)
+                message_content: MessageContent = convert_content_param_to_content(
+                    additional_message.get("content")
+                )
+
+                await create_message(
+                    thread_id,
+                    CreateMessageRequest(
+                        role=additional_message.get("role"),
+                        content=message_content,
+                        attachments=additional_message.get("attachments"),
+                        metadata=additional_message.get("role"),
+                    ),
+                    session,
+                )
 
         # Generate a new response based on the existing thread
         await generate_message_for_thread(session, run_request, thread_id)
@@ -229,7 +244,7 @@ async def create_run(
 
 @router.post("/runs")
 async def create_thread_and_run(
-        session: Session, request: ThreadRunCreateParamsRequest
+    session: Session, request: ThreadRunCreateParamsRequest
 ) -> Run:
     """Create a thread and run."""
 
@@ -243,7 +258,9 @@ async def create_thread_and_run(
             for message in thread_messages:
                 try:
                     # Convert the messages content into the correct format
-                    message_content: MessageContent = convert_content_param_to_content(message.get("content"))
+                    message_content: MessageContent = convert_content_param_to_content(
+                        message.get("content")
+                    )
 
                     thread_request.messages.append(
                         Message(
@@ -259,21 +276,24 @@ async def create_thread_and_run(
                         )
                     )
 
-                    chat_messages.append(ChatMessage(
-                        role=message.get("role"),
-                        content=message_content.text.value
-                    ))
+                    chat_messages.append(
+                        ChatMessage(
+                            role=message.get("role"), content=message_content.text.value
+                        )
+                    )
                 except ValueError as exc:
                     logging.error(f"\t{exc}")
                     continue
 
-        run_request: ThreadRunCreateParamsRequest = await update_request_with_assistant_data(session, request)
+        run_request: ThreadRunCreateParamsRequest = (
+            await update_request_with_assistant_data(session, request)
+        )
 
         new_thread: Thread = await create_thread(
             thread_request,
             session,
         )
-        
+
         await generate_message_for_thread(session, run_request, new_thread.id)
 
         crud_run = CRUDRun(db=session)
@@ -322,7 +342,7 @@ async def retrieve_run(thread_id: str, run_id: str, session: Session) -> Run:
 
 @router.post("/{thread_id}/runs/{run_id}")
 def modify_run(
-        thread_id: str, run_id: str, request: ModifyRunRequest, session: Session
+    thread_id: str, run_id: str, request: ModifyRunRequest, session: Session
 ) -> Run:
     """Modify a run."""
     # TODO: Implement this function
@@ -345,7 +365,7 @@ async def cancel_run(thread_id: str, run_id: str, session: Session) -> Run:
 
 @router.get("/{thread_id}/runs/{run_id}/steps")
 async def list_run_steps(
-        thread_id: str, run_id: str, session: Session
+    thread_id: str, run_id: str, session: Session
 ) -> list[RunStep]:
     """List all the steps in a run."""
     # TODO: Implement this function
@@ -354,7 +374,7 @@ async def list_run_steps(
 
 @router.get("/{thread_id}/runs/{run_id}/steps/{step_id}")
 async def retrieve_run_step(
-        thread_id: str, run_id: str, step_id: str, session: Session
+    thread_id: str, run_id: str, step_id: str, session: Session
 ) -> RunStep:
     """Retrieve a step."""
     # TODO: Implement this function
@@ -370,7 +390,7 @@ async def retrieve_thread(thread_id: str, session: Session) -> Thread | None:
 
 @router.post("/{thread_id}")
 async def modify_thread(
-        thread_id: str, request: ModifyThreadRequest, session: Session
+    thread_id: str, request: ModifyThreadRequest, session: Session
 ) -> Thread:
     """Modify a thread."""
     thread = CRUDThread(db=session)
@@ -424,7 +444,7 @@ async def delete_thread(thread_id: str, session: Session) -> ThreadDeleted:
 
 @router.post("/{thread_id}/messages")
 async def create_message(
-        thread_id: str, request: CreateMessageRequest, session: Session
+    thread_id: str, request: CreateMessageRequest, session: Session
 ) -> Message:
     """Create a message."""
     try:
@@ -467,7 +487,7 @@ async def list_messages(thread_id: str, session: Session) -> list[Message]:
 
 @router.get("/{thread_id}/messages/{message_id}")
 async def retrieve_message(
-        thread_id: str, message_id: str, session: Session
+    thread_id: str, message_id: str, session: Session
 ) -> Message | None:
     """Retrieve a message."""
     crud_message = CRUDMessage(db=session)
@@ -476,7 +496,7 @@ async def retrieve_message(
 
 @router.post("/{thread_id}/messages/{message_id}")
 async def modify_message(
-        thread_id: str, message_id: str, request: ModifyMessageRequest, session: Session
+    thread_id: str, message_id: str, request: ModifyMessageRequest, session: Session
 ) -> Message:
     """Modify a message."""
     message = CRUDMessage(db=session)
@@ -513,7 +533,7 @@ async def modify_message(
 
 @router.delete("/{thread_id}/messages/{message_id}")
 async def delete_message(
-        thread_id: str, message_id: str, session: Session
+    thread_id: str, message_id: str, session: Session
 ) -> MessageDeleted:
     """Delete message from a thread."""
 
