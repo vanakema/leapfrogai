@@ -2,7 +2,7 @@
 
 import tempfile
 
-from fastapi import UploadFile
+from fastapi import HTTPException, UploadFile, status
 from langchain_core.embeddings import Embeddings
 from openai.types.beta.vector_stores import VectorStoreFile
 from openai.types.beta.vector_stores.vector_store_file import LastError
@@ -21,10 +21,6 @@ embeddings_type: type[Embeddings] | type[LeapfrogAIEmbeddings] | None = (
 )
 
 
-class FileAlreadyIndexedError(Exception):
-    pass
-
-
 class IndexingService:
     """Service for indexing files into a vector store."""
 
@@ -39,7 +35,9 @@ class IndexingService:
         if await crud_vector_store_file.get(
             filters={"vector_store_id": vector_store_id, "id": file_id}
         ):
-            raise FileAlreadyIndexedError("File already indexed")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="File already indexed"
+            )
 
         crud_file_object = CRUDFileObject(db=self.db)
         crud_file_bucket = CRUDFileBucket(db=self.db, model=UploadFile)
