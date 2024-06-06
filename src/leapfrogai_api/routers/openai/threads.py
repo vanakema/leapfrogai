@@ -101,7 +101,7 @@ async def generate_message_for_thread(
     thread_messages: list[Message] = await list_messages(thread_id, session)
     # Convert messages to ChatMessages
     chat_messages: list[ChatMessage] = [
-        ChatMessage(role=message.role, content=message.content[0])
+        ChatMessage(role=message.role, content=message.content[0].text.value)
         for message in thread_messages
     ]
 
