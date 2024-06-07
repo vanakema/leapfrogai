@@ -170,7 +170,7 @@ class IndexingService:
             )
         except Exception as exc:
             traceback.print_exc()
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            raise HTTPException(  # noqa F821
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,  # noqa F821
                 detail="Unable to create vector store",
             ) from exc
