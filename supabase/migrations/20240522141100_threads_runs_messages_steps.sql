@@ -50,6 +50,7 @@ create table
     instructions text,
     tools jsonb,
     metadata jsonb,
+    parallel_tool_calls boolean,
     stream boolean,
     file_ids uuid[],
     incomplete_details jsonb,

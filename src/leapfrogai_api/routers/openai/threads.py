@@ -337,6 +337,7 @@ async def create_thread_and_run(
             thread_id=new_thread.id,
             object="thread.run",
             status="completed",  # This is always completed as the new message is already created by this point
+            parallel_tool_calls=False,
             **create_params.__dict__,
         )
 
