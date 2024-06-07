@@ -17,6 +17,7 @@ from openai.types.beta.threads.text_content_block import TextContentBlock
 from openai.types.beta.threads.text_content_block_param import TextContentBlockParam
 from openai.types.beta.threads.runs import RunStep
 
+from leapfrogai_api.backend.rag.query import QueryService
 from leapfrogai_api.backend.types import (
     CreateThreadRequest,
     ModifyThreadRequest,
@@ -29,6 +30,7 @@ from leapfrogai_api.backend.types import (
     ChatCompletionRequest,
     ChatCompletionResponse,
     ChatMessage,
+    RAGResponse
 )
 from leapfrogai_api.data.crud_message import CRUDMessage
 from leapfrogai_api.data.crud_run import CRUDRun
@@ -93,9 +95,10 @@ async def create_thread(request: CreateThreadRequest, session: Session) -> Threa
 
 
 async def generate_message_for_thread(
-    session: Session,
-    request: ThreadRunCreateParamsRequest | RunCreateParamsRequest,
-    thread_id: str,
+        session: Session,
+        request: ThreadRunCreateParamsRequest | RunCreateParamsRequest,
+        thread_id: str,
+        use_rag: bool = False
 ):
     # Get existing messages
     thread_messages: list[Message] = await list_messages(thread_id, session)
@@ -104,6 +107,15 @@ async def generate_message_for_thread(
         ChatMessage(role=message.role, content=message.content[0].text.value)
         for message in thread_messages
     ]
+
+    if use_rag:
+        query_service = QueryService(db=session)
+
+        rag_results_raw = await query_service.query_rag(
+            query=chat_messages[0].content,
+            vector_store_id=request.tool_resources.file_search.vector_store_ids[0],  # TODO: Search all vector stores
+        )
+        rag_results: RAGResponse = RAGResponse.parse_obj(rag_results_raw)
 
     if request.stream:
         raise NotImplementedError()
@@ -152,7 +164,7 @@ async def generate_message_for_thread(
 
 
 async def update_request_with_assistant_data(
-    session: Session, request: ThreadRunCreateParamsRequest | RunCreateParamsRequest
+        session: Session, request: ThreadRunCreateParamsRequest | RunCreateParamsRequest
 ) -> ThreadRunCreateParamsRequest | RunCreateParamsRequest:
     assistant: Assistant | None = await retrieve_assistant(
         session=session, assistant_id=request.assistant_id
@@ -171,7 +183,7 @@ async def update_request_with_assistant_data(
 
 
 def convert_content_param_to_content(
-    thread_message_content: Union[str, Iterable[MessageContentPartParam]],
+        thread_message_content: Union[str, Iterable[MessageContentPartParam]],
 ) -> MessageContent:
     """Converts messages from MessageContentPartParam to MessageContent"""
     if isinstance(thread_message_content, str):
@@ -190,7 +202,7 @@ def convert_content_param_to_content(
 
 @router.post("/{thread_id}/runs")
 async def create_run(
-    thread_id: str, session: Session, request: RunCreateParamsRequest
+        thread_id: str, session: Session, request: RunCreateParamsRequest
 ) -> Run:
     """Create a run."""
 
@@ -244,7 +256,7 @@ async def create_run(
 
 @router.post("/runs")
 async def create_thread_and_run(
-    session: Session, request: ThreadRunCreateParamsRequest
+        session: Session, request: ThreadRunCreateParamsRequest
 ) -> Run:
     """Create a thread and run."""
 
@@ -335,7 +347,7 @@ async def retrieve_run(thread_id: str, run_id: str, session: Session) -> Run:
 
 @router.post("/{thread_id}/runs/{run_id}")
 async def modify_run(
-    thread_id: str, run_id: str, request: ModifyRunRequest, session: Session
+        thread_id: str, run_id: str, request: ModifyRunRequest, session: Session
 ) -> Run:
     """Modify a run."""
     run = CRUDRun(db=session)
@@ -382,7 +394,7 @@ async def cancel_run(thread_id: str, run_id: str, session: Session) -> Run:
 
 @router.get("/{thread_id}/runs/{run_id}/steps")
 async def list_run_steps(
-    thread_id: str, run_id: str, session: Session
+        thread_id: str, run_id: str, session: Session
 ) -> list[RunStep]:
     """List all the steps in a run."""
     # TODO: Implement this function
@@ -391,7 +403,7 @@ async def list_run_steps(
 
 @router.get("/{thread_id}/runs/{run_id}/steps/{step_id}")
 async def retrieve_run_step(
-    thread_id: str, run_id: str, step_id: str, session: Session
+        thread_id: str, run_id: str, step_id: str, session: Session
 ) -> RunStep:
     """Retrieve a step."""
     # TODO: Implement this function
@@ -407,7 +419,7 @@ async def retrieve_thread(thread_id: str, session: Session) -> Thread | None:
 
 @router.post("/{thread_id}")
 async def modify_thread(
-    thread_id: str, request: ModifyThreadRequest, session: Session
+        thread_id: str, request: ModifyThreadRequest, session: Session
 ) -> Thread:
     """Modify a thread."""
     thread = CRUDThread(db=session)
@@ -461,7 +473,7 @@ async def delete_thread(thread_id: str, session: Session) -> ThreadDeleted:
 
 @router.post("/{thread_id}/messages")
 async def create_message(
-    thread_id: str, request: CreateMessageRequest, session: Session
+        thread_id: str, request: CreateMessageRequest, session: Session
 ) -> Message:
     """Create a message."""
     try:
@@ -504,7 +516,7 @@ async def list_messages(thread_id: str, session: Session) -> list[Message]:
 
 @router.get("/{thread_id}/messages/{message_id}")
 async def retrieve_message(
-    thread_id: str, message_id: str, session: Session
+        thread_id: str, message_id: str, session: Session
 ) -> Message | None:
     """Retrieve a message."""
     crud_message = CRUDMessage(db=session)
@@ -513,15 +525,15 @@ async def retrieve_message(
 
 @router.post("/{thread_id}/messages/{message_id}")
 async def modify_message(
-    thread_id: str, message_id: str, request: ModifyMessageRequest, session: Session
+        thread_id: str, message_id: str, request: ModifyMessageRequest, session: Session
 ) -> Message:
     """Modify a message."""
     message = CRUDMessage(db=session)
 
     if not (
-        old_message := await message.get(
-            filters={"id": message_id, "thread_id": thread_id}
-        )
+            old_message := await message.get(
+                filters={"id": message_id, "thread_id": thread_id}
+            )
     ):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -554,7 +566,7 @@ async def modify_message(
 
 @router.delete("/{thread_id}/messages/{message_id}")
 async def delete_message(
-    thread_id: str, message_id: str, session: Session
+        thread_id: str, message_id: str, session: Session
 ) -> MessageDeleted:
     """Delete message from a thread."""
 
