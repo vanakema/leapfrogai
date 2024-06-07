@@ -96,6 +96,20 @@ async def create_thread(request: CreateThreadRequest, session: Session) -> Threa
         ) from exc
 
 
+def can_use_rag(request: ThreadRunCreateParamsRequest | RunCreateParamsRequest) -> bool:
+    has_tool_choice: bool = request.tool_choice is not None
+    has_tool_resources: bool = bool(request.tool_resources and request.tool_resources.file_search
+                                    and request.tool_resources.file_search.vector_store_ids)
+
+    if has_tool_choice and has_tool_resources:
+        if isinstance(request.tool_choice, str):
+            return request.tool_choice == "auto" or request.tool_choice == "required"
+        elif isinstance(request.tool_choice, AssistantToolChoiceParam):
+            return request.tool_choice.get("type") == "file_search"
+
+    return False
+
+
 async def generate_message_for_thread(
         session: Session,
         request: ThreadRunCreateParamsRequest | RunCreateParamsRequest,
@@ -109,16 +123,7 @@ async def generate_message_for_thread(
         for message in thread_messages
     ]
 
-    use_rag: bool = False
-    has_tool_choice: bool = request.tool_choice is not None
-    has_tool_resources: bool = bool(request.tool_resources and request.tool_resources.file_search
-                                    and request.tool_resources.file_search.vector_store_ids)
-
-    if has_tool_choice and has_tool_resources:
-        if isinstance(request.tool_choice, str):
-            use_rag = request.tool_choice == "auto" or request.tool_choice == "required"
-        elif isinstance(request.tool_choice, AssistantToolChoiceParam):
-            use_rag = request.tool_choice.get("type") == "file_search"
+    use_rag: bool = can_use_rag(request)
 
     if use_rag:
         query_service = QueryService(db=session)
