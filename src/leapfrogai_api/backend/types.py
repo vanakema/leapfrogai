@@ -111,7 +111,7 @@ class ChatFunction(BaseModel):
 class ChatMessage(BaseModel):
     """Message object for chat completion."""
 
-    role: str
+    role: Literal["user", "assistant", "system", "function"]
     content: str
 
 

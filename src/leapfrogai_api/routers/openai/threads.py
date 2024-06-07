@@ -111,11 +111,16 @@ async def generate_message_for_thread(
     if use_rag:
         query_service = QueryService(db=session)
 
-        rag_results_raw = await query_service.query_rag(
-            query=chat_messages[0].content,
-            vector_store_id=request.tool_resources.file_search.vector_store_ids[0],  # TODO: Search all vector stores
-        )
-        rag_results: RAGResponse = RAGResponse.parse_obj(rag_results_raw)
+        for vector_store_id in request.tool_resources.file_search.vector_store_ids:
+            rag_results_raw = await query_service.query_rag(
+                query=chat_messages[0].content,
+                vector_store_id=vector_store_id,
+            )
+            rag_responses: RAGResponse = RAGResponse.parse_obj(rag_results_raw)
+
+            for rag_response in rag_responses.data:
+                """Insert the RAG response messages just before the user's query"""
+                chat_messages.insert(1, ChatMessage(role="user", content=rag_response.content))
 
     if request.stream:
         raise NotImplementedError()
