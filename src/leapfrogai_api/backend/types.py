@@ -11,7 +11,7 @@ from openai.types.beta.vector_store import ExpiresAfter
 from openai.types import FileObject
 from openai.types.beta import VectorStore
 from openai.types.beta import Assistant, AssistantTool
-from openai.types.beta.assistant_create_params import ToolResourcesFileSearch
+from openai.types.beta.assistant_create_params import ToolResources
 
 
 ##########
@@ -262,7 +262,7 @@ class CreateAssistantRequest(BaseModel):
     description: str | None = "A helpful assistant."
     instructions: str | None = "You are a helpful assistant."
     tools: list[AssistantTool] | None = []  # This is all we support right now
-    tool_resources: ToolResourcesFileSearch | None = ToolResourcesFileSearch()
+    tool_resources: ToolResources | None = ToolResources()
     metadata: object | None = {}
     temperature: float | None = 1.0
     top_p: float | None = 1.0

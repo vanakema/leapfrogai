@@ -4,6 +4,7 @@ import logging
 
 from fastapi import HTTPException, APIRouter, status
 from fastapi.security import HTTPBearer
+from leapfrogai_api.backend.rag.index import IndexingService
 from openai.types.beta import Assistant, AssistantDeleted
 from openai.types.beta.assistant import ToolResourcesCodeInterpreter
 from openai.types.beta.assistant_create_params import ToolResourcesFileSearch
@@ -28,6 +29,7 @@ async def create_assistant(
 ) -> Assistant:
     """Create an assistant."""
 
+    # check for unsupported tools
     if request.tools and (
         unsupported_tool := next(
             (tool for tool in request.tools if tool.type not in supported_tools), None
@@ -38,6 +40,7 @@ async def create_assistant(
             detail=f"Unsupported tool type: {unsupported_tool.type}",
         )
 
+    # check if the request includes a code interpreter
     if request.tool_resources and any(
         isinstance(tool_resource, ToolResourcesCodeInterpreter)
         and tool_resource.get("file_ids")
@@ -48,12 +51,29 @@ async def create_assistant(
             detail="Code interpreter tool is not supported",
         )
 
-    # if the length of both vector_store_ids and vector_stores are greater than 0, raise an error
-    # assert vector_store_ids has length 1
-    # add the id to the assistant
-    # assert vector_stores has length 1
-    # create new vector store using file_ids
-    # add new vector store id to assistant
+    # check if a vector store needs to be built or added to this assistant
+    if request.tool_resources and any(
+        isinstance(tool_resource, ToolResourcesFileSearch)
+        for tool_resource in request.tool_resources
+    ):
+        ids = request.tool_resources.get("vector_store_ids")
+        vector_stores = request.tool_resources.get("vector_stores")
+
+        ids_len = len(ids)
+        vector_stores_len = len(list(vector_stores))
+
+        if (ids_len + vector_stores_len) > 1:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="There can be a maximum of 1 vector store attached to the assistant",
+            )
+        elif ids_len == 1:
+            # add this id to the assistant
+            pass
+        elif vector_stores_len == 1:
+            indexing_service = IndexingService(db=session)
+            vector_store = indexing_service.create_vector_store(request)
+            print(vector_store)
 
     try:
         assistant = Assistant(
