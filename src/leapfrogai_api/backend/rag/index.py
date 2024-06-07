@@ -7,8 +7,8 @@ import traceback
 
 from fastapi import HTTPException, UploadFile, status
 from langchain_core.embeddings import Embeddings
-from openai.types.beta.vector_store import FileCounts
-from openai.types.beta.vector_stores import VectorStore, VectorStoreFile
+from openai.types.beta.vector_store import FileCounts, VectorStore
+from openai.types.beta.vector_stores import VectorStoreFile
 from openai.types.beta.vector_stores.vector_store_file import LastError
 from supabase_py_async import AsyncClient
 from leapfrogai_api.backend.rag.document_loader import load_file, split
