@@ -13,7 +13,6 @@ from openai.types.beta import VectorStore
 from openai.types.beta import Assistant, AssistantTool
 from openai.types.beta.assistant_create_params import ToolResources
 
-
 ##########
 # GENERIC
 ##########

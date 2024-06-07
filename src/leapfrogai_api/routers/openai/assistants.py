@@ -2,6 +2,7 @@
 
 import logging
 
+from contextlib import suppress
 from fastapi import HTTPException, APIRouter, status
 from fastapi.security import HTTPBearer
 from leapfrogai_api.backend.rag.index import IndexingService
@@ -56,24 +57,37 @@ async def create_assistant(
         isinstance(tool_resource, ToolResourcesFileSearch)
         for tool_resource in request.tool_resources
     ):
-        ids = request.tool_resources.get("vector_store_ids")
-        vector_stores = request.tool_resources.get("vector_stores")
+        ids = request.tool_resources["file_search"].get("vector_store_ids")
+        vector_stores = request.tool_resources["file_search"].get("vector_stores")
 
-        ids_len = len(ids)
-        vector_stores_len = len(list(vector_stores))
+        ids_len = len(ids) if ids is not None else 0
+        vector_stores_len = len(list(vector_stores)) if vector_stores is not None else 0
 
         if (ids_len + vector_stores_len) > 1:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
                 detail="There can be a maximum of 1 vector store attached to the assistant",
             )
-        elif ids_len == 1:
-            # add this id to the assistant
-            pass
         elif vector_stores_len == 1:
+            logging.debug("Creating vector store for new assistant")
             indexing_service = IndexingService(db=session)
             vector_store = indexing_service.create_vector_store(request)
-            print(vector_store)
+            request.tool_resources["file_search"]["vector_store_ids"] = vector_store[
+                "id"
+            ]
+        elif ids_len == 1:
+            logging.debug(
+                "Attaching vector store with id: {} to new assistant".format(ids[0])
+            )
+        else:
+            logging.debug(
+                "No files or vector store id found; assistant will be created with no vector store"
+            )
+
+        with suppress(KeyError):
+            request.tool_resources["file_search"].pop(
+                "vector_stores"
+            )  # remove vector_stores if it's there
 
     try:
         assistant = Assistant(
