@@ -11,7 +11,6 @@ from openai.types.beta.thread_create_and_run_params import (
     ThreadMessage,
 )
 from openai.types.beta.threads import Message, MessageDeleted, Run, Text
-from openai.types.beta.file_search_tool_param import FileSearchToolParam
 from openai.types.beta.assistant_tool_choice_param import AssistantToolChoiceParam
 from openai.types.beta.threads.message_content import MessageContent
 from openai.types.beta.threads.message_content_part_param import MessageContentPartParam
