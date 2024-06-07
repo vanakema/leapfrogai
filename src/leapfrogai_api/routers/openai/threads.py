@@ -11,6 +11,8 @@ from openai.types.beta.thread_create_and_run_params import (
     ThreadMessage,
 )
 from openai.types.beta.threads import Message, MessageDeleted, Run, Text
+from openai.types.beta.file_search_tool_param import FileSearchToolParam
+from openai.types.beta.assistant_tool_choice_param import AssistantToolChoiceParam
 from openai.types.beta.threads.message_content import MessageContent
 from openai.types.beta.threads.message_content_part_param import MessageContentPartParam
 from openai.types.beta.threads.text_content_block import TextContentBlock
@@ -107,9 +109,16 @@ async def generate_message_for_thread(
         for message in thread_messages
     ]
 
-    use_rag: bool = (len(request.tools) > 0 and request.tool_choice and request.tool_choice is not "none"
-                     and request.tool_resources and request.tool_resources.file_search
-                     and request.tool_resources.file_search.vector_store_ids)
+    use_rag: bool = False
+    has_tool_choice: bool = request.tool_choice is not None
+    has_tool_resources: bool = bool(request.tool_resources and request.tool_resources.file_search
+                                    and request.tool_resources.file_search.vector_store_ids)
+
+    if has_tool_choice and has_tool_resources:
+        if isinstance(request.tool_choice, str):
+            use_rag = request.tool_choice == "auto" or request.tool_choice == "required"
+        elif isinstance(request.tool_choice, AssistantToolChoiceParam):
+            use_rag = request.tool_choice.get("type") == "file_search"
 
     if use_rag:
         query_service = QueryService(db=session)
