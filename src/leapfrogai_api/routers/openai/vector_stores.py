@@ -13,7 +13,6 @@ from leapfrogai_api.backend.types import (
     ListVectorStoresResponse,
     ModifyVectorStoreRequest,
 )
-from leapfrogai_api.data.async_supabase_vector_store import AsyncSupabaseVectorStore
 from leapfrogai_api.data.crud_vector_store import CRUDVectorStore, FilterVectorStore
 from leapfrogai_api.data.crud_vector_store_file import (
     CRUDVectorStoreFile,
@@ -237,6 +236,7 @@ async def create_vector_store_file(
         )
         return vector_store_file
     except Exception as exc:
+        logging.exception("Error indexing file")
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail="Failed to create vector store file",
@@ -266,14 +266,14 @@ async def list_vector_store_files(
 @router.get("/{vector_store_id}/files/{file_id}")
 async def retrieve_vector_store_file(
     vector_store_id: str,
-    # file_id: str,
+    file_id: str,
     session: Session,
-):  # -> VectorStoreFile:
+) -> VectorStoreFile:
     """Retrieve a file in a vector store."""
 
     crud_vector_store_file = CRUDVectorStoreFile(db=session)
     return await crud_vector_store_file.get(
-        filters=FilterVectorStoreFile(vector_store_id=vector_store_id)
+        filters=FilterVectorStoreFile(vector_store_id=vector_store_id, id=file_id)
     )
 
 
@@ -285,7 +285,7 @@ async def delete_vector_store_file(
 ) -> VectorStoreFileDeleted:
     """Delete a file in a vector store."""
 
-    vector_store = AsyncSupabaseVectorStore(db=session)
+    vector_store = IndexingService(db=session)
     vectors_deleted = await vector_store.adelete_file(
         vector_store_id=vector_store_id, file_id=file_id
     )
