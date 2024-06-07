@@ -97,8 +97,7 @@ async def create_thread(request: CreateThreadRequest, session: Session) -> Threa
 async def generate_message_for_thread(
         session: Session,
         request: ThreadRunCreateParamsRequest | RunCreateParamsRequest,
-        thread_id: str,
-        use_rag: bool = False
+        thread_id: str
 ):
     # Get existing messages
     thread_messages: list[Message] = await list_messages(thread_id, session)
@@ -107,6 +106,10 @@ async def generate_message_for_thread(
         ChatMessage(role=message.role, content=message.content[0].text.value)
         for message in thread_messages
     ]
+
+    use_rag: bool = (len(request.tools) > 0 and request.tool_choice and request.tool_choice is not "none"
+                     and request.tool_resources and request.tool_resources.file_search
+                     and request.tool_resources.file_search.vector_store_ids)
 
     if use_rag:
         query_service = QueryService(db=session)
