@@ -132,7 +132,9 @@ async def generate_message_for_thread(
         query_service = QueryService(db=session)
 
         for vector_store_id in request.tool_resources.file_search.vector_store_ids:
-            rag_results_raw: SingleAPIResponse[RAGResponse] = await query_service.query_rag(
+            rag_results_raw: SingleAPIResponse[
+                RAGResponse
+            ] = await query_service.query_rag(
                 query=chat_messages[0].content,
                 vector_store_id=vector_store_id,
             )

@@ -12,7 +12,9 @@ class QueryService:
         """Initializes the QueryService."""
         self.db = db
 
-    async def query_rag(self, query: str, vector_store_id: str, k: int = 5) -> SingleAPIResponse:
+    async def query_rag(
+        self, query: str, vector_store_id: str, k: int = 5
+    ) -> SingleAPIResponse:
         """
         Query the Vector Store.
 
