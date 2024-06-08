@@ -136,7 +136,7 @@ async def generate_message_for_thread(
                 query=chat_messages[0].content,
                 vector_store_id=vector_store_id,
             )
-            rag_responses: RAGResponse = RAGResponse.parse_obj(rag_results_raw.data)
+            rag_responses: RAGResponse = RAGResponse(data=rag_results_raw.data)
 
             for rag_response in rag_responses.data:
                 """Insert the RAG response messages just before the user's query"""

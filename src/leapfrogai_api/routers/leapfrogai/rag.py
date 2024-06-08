@@ -35,4 +35,4 @@ async def query_rag(
         k=k,
     )
 
-    return result.data
+    return RAGResponse(data=result.data)
