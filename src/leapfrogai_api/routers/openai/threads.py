@@ -17,6 +17,7 @@ from openai.types.beta.threads.message_content_part_param import MessageContentP
 from openai.types.beta.threads.text_content_block import TextContentBlock
 from openai.types.beta.threads.text_content_block_param import TextContentBlockParam
 from openai.types.beta.threads.runs import RunStep
+from postgrest.base_request_builder import SingleAPIResponse
 
 from leapfrogai_api.backend.rag.query import QueryService
 from leapfrogai_api.backend.types import (
@@ -131,11 +132,11 @@ async def generate_message_for_thread(
         query_service = QueryService(db=session)
 
         for vector_store_id in request.tool_resources.file_search.vector_store_ids:
-            rag_results_raw: dict = await query_service.query_rag(
+            rag_results_raw: SingleAPIResponse[RAGResponse] = await query_service.query_rag(
                 query=chat_messages[0].content,
                 vector_store_id=vector_store_id,
             )
-            rag_responses: RAGResponse = RAGResponse.parse_obj(rag_results_raw.get("data"))
+            rag_responses: RAGResponse = RAGResponse.parse_obj(rag_results_raw.data)
 
             for rag_response in rag_responses.data:
                 """Insert the RAG response messages just before the user's query"""
