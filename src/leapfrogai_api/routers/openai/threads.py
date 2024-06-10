@@ -266,9 +266,9 @@ async def create_run(
     """Create a run."""
 
     try:
-        run_request: ThreadRunCreateParamsRequest | RunCreateParamsRequest = await update_request_with_assistant_data(
-            session, request
-        )
+        run_request: (
+            ThreadRunCreateParamsRequest | RunCreateParamsRequest
+        ) = await update_request_with_assistant_data(session, request)
 
         if request.additional_messages:
             """If additional messages exist, create them in the DB as a part of this thread"""
@@ -349,9 +349,9 @@ async def create_thread_and_run(
                     logging.error(f"\t{exc}")
                     continue
 
-        run_request: ThreadRunCreateParamsRequest | RunCreateParamsRequest = (
-            await update_request_with_assistant_data(session, request)
-        )
+        run_request: (
+            ThreadRunCreateParamsRequest | RunCreateParamsRequest
+        ) = await update_request_with_assistant_data(session, request)
 
         new_thread: Thread = await create_thread(
             thread_request,
