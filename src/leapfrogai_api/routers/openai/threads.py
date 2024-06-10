@@ -330,7 +330,11 @@ async def create_thread_and_run(
     """Create a thread and run."""
 
     try:
-        thread_request: CreateThreadRequest = CreateThreadRequest(messages=[])
+        thread_request: CreateThreadRequest = CreateThreadRequest(
+            messages=[],
+            tool_resources=request.tool_resources,
+            metadata=request.metadata
+        )
 
         if request.thread:
             """If the thread exists, convert all of its messages into a form that can be used by create_thread."""
