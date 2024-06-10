@@ -259,8 +259,8 @@ def convert_content_param_to_content(
         )
 
 
-@router.post("/{thread_id}/runs", response_model=Union[Run, StreamingResponse])
-async def create_run(thread_id: str, session: Session, request: RunCreateParamsRequest):
+@router.post("/{thread_id}/runs", response_model=None)
+async def create_run(thread_id: str, session: Session, request: RunCreateParamsRequest) -> Union[Run, StreamingResponse]:
     """Create a run."""
 
     try:
@@ -288,21 +288,24 @@ async def create_run(thread_id: str, session: Session, request: RunCreateParamsR
                 )
 
         # Generate a new response based on the existing thread
-        await generate_message_for_thread(session, run_request, thread_id)
+        message_or_stream = await generate_message_for_thread(session, run_request, thread_id)
 
-        crud_run = CRUDRun(db=session)
+        if request.stream:
+            pass
+        else:
+            crud_run = CRUDRun(db=session)
 
-        create_params: RunCreateParams = RunCreateParams(**run_request.__dict__)
+            create_params: RunCreateParams = RunCreateParams(**run_request.__dict__)
 
-        run = Run(
-            id="",  # Leave blank to have Postgres generate a UUID
-            created_at=0,  # Leave blank to have Postgres generate a timestamp
-            thread_id=thread_id,
-            object="thread.run",
-            status="completed",
-            **create_params.__dict__,
-        )
-        return await crud_run.create(object_=run)
+            run = Run(
+                id="",  # Leave blank to have Postgres generate a UUID
+                created_at=0,  # Leave blank to have Postgres generate a timestamp
+                thread_id=thread_id,
+                object="thread.run",
+                status="completed",
+                **create_params.__dict__,
+            )
+            return await crud_run.create(object_=run)
     except Exception as exc:
         traceback.print_exc()
         raise HTTPException(
@@ -311,10 +314,10 @@ async def create_run(thread_id: str, session: Session, request: RunCreateParamsR
         ) from exc
 
 
-@router.post("/runs", response_model=Union[Run, StreamingResponse])
+@router.post("/runs", response_model=None)
 async def create_thread_and_run(
     session: Session, request: ThreadRunCreateParamsRequest
-):
+) -> Union[Run, StreamingResponse]:
     """Create a thread and run."""
 
     try:
