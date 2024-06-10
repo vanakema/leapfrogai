@@ -91,6 +91,7 @@ class IndexingService:
                     ),
                     object="vector_store.file",
                     status=VectorStoreFileStatus.FAILED.value,
+                    usage_bytes=0,
                     vector_store_id=vector_store_id,
                 )
                 return await crud_vector_store_file.create(object_=vector_store_file)
@@ -101,6 +102,7 @@ class IndexingService:
                 last_error=None,
                 object="vector_store.file",
                 status=VectorStoreFileStatus.IN_PROGRESS.value,
+                usage_bytes=0,
                 vector_store_id=vector_store_id,
             )
 
@@ -131,7 +133,7 @@ class IndexingService:
             raise e
 
         return await crud_vector_store_file.get(
-            filters={"vector_store_id": vector_store_id, "id": file_id}
+            filters=FilterVectorStoreFile(vector_store_id=vector_store_id, id=file_id)
         )
 
     async def create_vector_store(
@@ -146,7 +148,7 @@ class IndexingService:
 
         vector_store = VectorStore(
             id="",  # Leave blank to have Postgres generate a UUID
-            bytes=0,  # Automatically calculated by DB
+            usage_bytes=0,  # Automatically calculated by DB
             created_at=0,  # Leave blank to have Postgres generate a timestamp
             file_counts=FileCounts(
                 cancelled=0, completed=0, failed=0, in_progress=0, total=0
@@ -185,8 +187,8 @@ class IndexingService:
             )
         except Exception as exc:
             traceback.print_exc()
-            raise HTTPException(  # noqa F821
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,  # noqa F821
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                 detail="Unable to create vector store",
             ) from exc
 
