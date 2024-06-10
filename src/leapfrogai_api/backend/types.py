@@ -4,7 +4,7 @@ from __future__ import annotations
 
 import datetime
 from enum import Enum
-from typing import Literal, Optional, List, Union
+from typing import Literal, Optional, List
 from pydantic import BaseModel, Field
 from fastapi import UploadFile, Form, File
 from openai.types.beta.vector_store import ExpiresAfter

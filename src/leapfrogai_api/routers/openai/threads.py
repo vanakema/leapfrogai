@@ -4,22 +4,20 @@ import logging
 import traceback
 from typing import Iterable, Union
 
-from fastapi.responses import StreamingResponse
 from fastapi import HTTPException, APIRouter, status
+from fastapi.responses import StreamingResponse
 from fastapi.security import HTTPBearer
 from openai.types.beta import Thread, ThreadDeleted, Assistant
 from openai.types.beta.thread_create_and_run_params import (
     ThreadMessage,
 )
 from openai.types.beta.threads import Message, MessageDeleted, Run, Text
-from openai.types.beta.assistant_stream_event import AssistantStreamEvent
 from openai.types.beta.threads.message_content import MessageContent
 from openai.types.beta.threads.message_content_part_param import MessageContentPartParam
 from openai.types.beta.threads.runs import RunStep
 from openai.types.beta.threads.text_content_block import TextContentBlock
 from postgrest.base_request_builder import SingleAPIResponse
 from pydantic_core import ValidationError
-from openai import AsyncStream
 
 from leapfrogai_api.backend.rag.query import QueryService
 from leapfrogai_api.backend.types import (
