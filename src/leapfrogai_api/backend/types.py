@@ -10,6 +10,7 @@ from fastapi import UploadFile, Form, File
 from openai.types.beta.vector_store import ExpiresAfter
 from openai.types import FileObject
 from openai.types.beta.assistant_tool_param import AssistantToolParam
+from openai.types.beta.file_search_tool_param import FileSearchToolParam
 from openai.types.beta.assistant_tool_choice_option_param import (
     AssistantToolChoiceOptionParam,
 )
@@ -21,7 +22,8 @@ from openai.types.beta.threads.run_create_params import TruncationStrategy
 from openai.types.beta import VectorStore
 from openai.types.beta.assistant_tool import FileSearchTool
 from openai.types.beta import Assistant, AssistantTool
-from openai.types.beta.thread_create_and_run_params import Thread
+from openai.types.beta.thread_create_and_run_params import Thread, ThreadMessage, ThreadMessageAttachment, \
+    ThreadMessageAttachmentToolFileSearch
 from openai.types.beta.threads import Message, MessageContent, TextContentBlock, Text
 from openai.types.beta.threads.message import Attachment
 from openai.types.beta.assistant import ToolResources, ToolResourcesFileSearch
@@ -212,13 +214,13 @@ class CreateTranscriptionRequest(BaseModel):
 
     @classmethod
     def as_form(
-        cls,
-        file: UploadFile = File(...),
-        model: str = Form(...),
-        language: str | None = Form(""),
-        prompt: str | None = Form(""),
-        response_format: str | None = Form(""),
-        temperature: float | None = Form(1.0),
+            cls,
+            file: UploadFile = File(...),
+            model: str = Form(...),
+            language: str | None = Form(""),
+            prompt: str | None = Form(""),
+            response_format: str | None = Form(""),
+            temperature: float | None = Form(1.0),
     ) -> CreateTranscriptionRequest:
         return cls(
             file=file,
@@ -247,9 +249,9 @@ class UploadFileRequest(BaseModel):
 
     @classmethod
     def as_form(
-        cls,
-        file: UploadFile = File(...),
-        purpose: str | None = Form("assistants"),
+            cls,
+            file: UploadFile = File(...),
+            purpose: str | None = Form("assistants"),
     ) -> UploadFileRequest:
         """Create an instance of the class from form data."""
         return cls(file=file, purpose=purpose)
@@ -390,16 +392,16 @@ class ListVectorStoresResponse(BaseModel):
 class RunCreateParams(BaseModel):
     assistant_id: str = Field(default="", examples=["123ab"])
     instructions: str = Field(default="", examples=[""])
-    max_completion_tokens: Optional[int] = Field(default=None)
-    max_prompt_tokens: Optional[int] = Field(default=None)
-    metadata: Optional[object] = Field(default=None)
-    model: Union[str, None] = Field(default=None, examples=[None])
-    response_format: Optional[AssistantResponseFormatOptionParam] = Field(default=None)
+    max_completion_tokens: Optional[int] = Field(default=None, examples=[None])
+    max_prompt_tokens: Optional[int] = Field(default=None, examples=[None])
+    metadata: Optional[dict] = Field(default=None)
+    model: Optional[str] = Field(default=None, examples=[None])
+    response_format: Optional[AssistantResponseFormatOptionParam] = Field(default=None, examples=[None])
     temperature: Optional[float] = Field(default=None)
-    tool_choice: Optional[AssistantToolChoiceOptionParam] = Field(default=None)
-    tools: list[AssistantToolParam] = Field(default=[], examples=[[]])
-    top_p: Optional[float] = Field(default=None)
-    truncation_strategy: Optional[TruncationStrategy] = Field(default=None)
+    tool_choice: Optional[AssistantToolChoiceOptionParam] = Field(default=None, examples=["auto"])
+    tools: list[AssistantToolParam] = Field(default=[], examples=[[FileSearchToolParam(type="file_search")]])
+    top_p: Optional[float] = Field(default=None, examples=[None])
+    truncation_strategy: Optional[TruncationStrategy] = Field(default=None, examples=[None])
 
 
 class RunCreateParamsRequest(RunCreateParams):
@@ -411,10 +413,26 @@ class RunCreateParamsRequest(RunCreateParams):
 
 
 class ThreadRunCreateParamsRequest(RunCreateParams):
-    thread: Optional[Thread] = Field(default=None)
-    tool_resources: Optional[ToolResources] = Field(default=None)
-    top_p: Optional[float] = Field(default=None)
-    stream: Optional[bool] = Field(default=None)
+    thread: Optional[Thread] = Field(
+        default=None,
+        examples=[Thread(messages=[
+            ThreadMessage(
+                content="This is a test",
+                role="user",
+                attachments=[ThreadMessageAttachment(
+                    file_id="",
+                    tools=[ThreadMessageAttachmentToolFileSearch(type="file_search")]
+                )],
+                metadata={}
+            )
+        ])]
+    )
+    tool_resources: Optional[ToolResources] = Field(
+        default=None,
+        examples=[ToolResourcesFileSearch(vector_store_ids=[])]
+    )
+    top_p: Optional[float] = Field(default=None, examples=[None])
+    stream: Optional[bool] = Field(default=None, examples=[False])
 
 
 class ModifyRunRequest(BaseModel):
