@@ -275,7 +275,9 @@ class CreateAssistantRequest(BaseModel):
     description: str | None = "A helpful assistant."
     instructions: str | None = "You are a helpful assistant."
     tools: list[AssistantTool] | None = [FileSearchTool(type="file_search")]
-    tool_resources: ToolResources | None = ToolResources(file_search=ToolResourcesFileSearch(vector_store_ids=[]))
+    tool_resources: ToolResources | None = ToolResources(
+        file_search=ToolResourcesFileSearch(vector_store_ids=[])
+    )
     metadata: object | None = {}
     temperature: float | None = 1.0
     top_p: float | None = 1.0
