@@ -4,6 +4,7 @@ import logging
 import traceback
 from typing import Iterable, Union
 
+from fastapi.responses import StreamingResponse
 from fastapi import HTTPException, APIRouter, status
 from fastapi.security import HTTPBearer
 from openai.types.beta import Thread, ThreadDeleted, Assistant
@@ -261,11 +262,11 @@ def convert_content_param_to_content(
 @router.post("/{thread_id}/runs")
 async def create_run(
     thread_id: str, session: Session, request: RunCreateParamsRequest
-) -> Run | AsyncStream[AssistantStreamEvent]:
+) -> Run | StreamingResponse:
     """Create a run."""
 
     try:
-        run_request: RunCreateParamsRequest = await update_request_with_assistant_data(
+        run_request: ThreadRunCreateParamsRequest | RunCreateParamsRequest = await update_request_with_assistant_data(
             session, request
         )
 
@@ -315,7 +316,7 @@ async def create_run(
 @router.post("/runs")
 async def create_thread_and_run(
     session: Session, request: ThreadRunCreateParamsRequest
-) -> Run | AsyncStream[AssistantStreamEvent]:
+) -> Run | StreamingResponse:
     """Create a thread and run."""
 
     try:
@@ -348,7 +349,7 @@ async def create_thread_and_run(
                     logging.error(f"\t{exc}")
                     continue
 
-        run_request: ThreadRunCreateParamsRequest = (
+        run_request: ThreadRunCreateParamsRequest | RunCreateParamsRequest = (
             await update_request_with_assistant_data(session, request)
         )
 
