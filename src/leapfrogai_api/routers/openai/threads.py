@@ -114,11 +114,15 @@ def can_use_rag(request: ThreadRunCreateParamsRequest | RunCreateParamsRequest) 
             return request.tool_choice == "auto" or request.tool_choice == "required"
         else:
             try:
-                if AssistantToolChoiceParamValidator.validate_python(request.tool_choice):
+                if AssistantToolChoiceParamValidator.validate_python(
+                    request.tool_choice
+                ):
                     return request.tool_choice.get("type") == "file_search"
             except ValidationError:
                 traceback.print_exc()
-                logging.error("Cannot use RAG for request, failed to validate tool for thread")
+                logging.error(
+                    "Cannot use RAG for request, failed to validate tool for thread"
+                )
                 return False
 
     return False

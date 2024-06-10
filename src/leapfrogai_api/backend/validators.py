@@ -6,4 +6,3 @@ from pydantic import TypeAdapter
 
 AssistantToolChoiceParamValidator = TypeAdapter(AssistantToolChoiceParam)
 TextContentBlockParamValidator = TypeAdapter(TextContentBlockParam)
-
