@@ -19,11 +19,12 @@ from openai.types.beta.assistant_response_format_option_param import (
 from openai.types.beta.threads.run_create_params import AdditionalMessage
 from openai.types.beta.threads.run_create_params import TruncationStrategy
 from openai.types.beta import VectorStore
+from openai.types.beta.assistant_tool import FileSearchTool
 from openai.types.beta import Assistant, AssistantTool
 from openai.types.beta.thread_create_and_run_params import Thread
 from openai.types.beta.threads import Message, MessageContent, TextContentBlock, Text
 from openai.types.beta.threads.message import Attachment
-from openai.types.beta.assistant import ToolResources
+from openai.types.beta.assistant import ToolResources, ToolResourcesFileSearch
 
 
 ##########
@@ -269,12 +270,12 @@ class ListFilesResponse(BaseModel):
 class CreateAssistantRequest(BaseModel):
     """Request object for creating an assistant."""
 
-    model: str = "mistral"
+    model: str = "llama-cpp-python"
     name: str | None = "Froggy Assistant"
     description: str | None = "A helpful assistant."
     instructions: str | None = "You are a helpful assistant."
-    tools: list[AssistantTool] | None = []  # This is all we support right now
-    tool_resources: ToolResources | None = ToolResources()
+    tools: list[AssistantTool] | None = [FileSearchTool(type="file_search")]
+    tool_resources: ToolResources | None = ToolResources(file_search=ToolResourcesFileSearch(vector_store_ids=[]))
     metadata: object | None = {}
     temperature: float | None = 1.0
     top_p: float | None = 1.0
