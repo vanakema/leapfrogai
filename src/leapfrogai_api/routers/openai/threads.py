@@ -333,7 +333,7 @@ async def create_thread_and_run(
         thread_request: CreateThreadRequest = CreateThreadRequest(
             messages=[],
             tool_resources=request.tool_resources,
-            metadata=request.metadata
+            metadata=request.metadata,
         )
 
         if request.thread:
