@@ -17,8 +17,8 @@ from openai.types.beta.threads.message_content_part_param import MessageContentP
 from openai.types.beta.threads.runs import RunStep
 from openai.types.beta.threads.text_content_block import TextContentBlock
 from postgrest.base_request_builder import SingleAPIResponse
-from pydantic_core._pydantic_core import ValidationError
-from openai._streaming import AsyncStream
+from pydantic_core import ValidationError
+from openai import AsyncStream
 
 from leapfrogai_api.backend.rag.query import QueryService
 from leapfrogai_api.backend.types import (
