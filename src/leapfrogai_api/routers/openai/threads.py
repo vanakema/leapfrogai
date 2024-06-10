@@ -260,9 +260,7 @@ def convert_content_param_to_content(
 
 
 @router.post("/{thread_id}/runs", response_model=Union[Run, StreamingResponse])
-async def create_run(
-    thread_id: str, session: Session, request: RunCreateParamsRequest
-):
+async def create_run(thread_id: str, session: Session, request: RunCreateParamsRequest):
     """Create a run."""
 
     try:
