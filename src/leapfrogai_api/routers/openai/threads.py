@@ -104,11 +104,15 @@ async def create_thread(request: CreateThreadRequest, session: Session) -> Threa
 
 def can_use_rag(request: ThreadRunCreateParamsRequest | RunCreateParamsRequest) -> bool:
     has_tool_choice: bool = request.tool_choice is not None
-    has_tool_resources: bool = bool(
-        request.tool_resources
-        and request.tool_resources.file_search
-        and request.tool_resources.file_search.vector_store_ids
-    )
+    has_tool_resources: bool = True
+
+    if isinstance(request, ThreadRunCreateParamsRequest):
+        """'Create thread and run' requires 'tool_resources' while 'Create run' does not"""
+        has_tool_resources = bool(
+            request.tool_resources
+            and request.tool_resources.file_search
+            and request.tool_resources.file_search.vector_store_ids
+        )
 
     if has_tool_choice and has_tool_resources:
         if isinstance(request.tool_choice, str):
@@ -167,24 +171,25 @@ async def generate_message_for_thread(
                     1, ChatMessage(role="user", content=response_with_instructions)
                 )
 
+    # Generate a new message and add it to the thread creation request
+    chat_response: ChatCompletionResponse | StreamingResponse = await chat_complete(
+        req=ChatCompletionRequest(
+            model=str(request.model),
+            messages=chat_messages,
+            functions=None,
+            temperature=request.temperature,
+            top_p=request.top_p,
+            stream=request.stream,
+            stop=None,
+            max_tokens=request.max_completion_tokens,
+        ),
+        model_config=get_model_config(),
+        session=session,
+    )
+
     if request.stream:
         raise NotImplementedError()
     else:
-        # Generate a new message and add it to the thread creation request
-        chat_response: ChatCompletionResponse = await chat_complete(
-            req=ChatCompletionRequest(
-                model=request.model,
-                messages=chat_messages,
-                functions=None,
-                temperature=request.temperature,
-                top_p=request.top_p,
-                stream=False,
-                stop=None,
-                max_tokens=request.max_completion_tokens,
-            ),
-            model_config=get_model_config(),
-            session=session,
-        )
         message_content: TextContentBlock = TextContentBlock(
             text=Text(annotations=[], value=chat_response.choices[0].message.content),
             type="text",
@@ -363,23 +368,28 @@ async def create_thread_and_run(
             session,
         )
 
-        await generate_message_for_thread(session, run_request, new_thread.id)
-
-        crud_run = CRUDRun(db=session)
-
-        create_params: RunCreateParams = RunCreateParams(**run_request.__dict__)
-
-        run = Run(
-            id="",  # Leave blank to have Postgres generate a UUID
-            created_at=0,  # Leave blank to have Postgres generate a timestamp
-            thread_id=new_thread.id,
-            object="thread.run",
-            status="completed",  # This is always completed as the new message is already created by this point
-            parallel_tool_calls=False,
-            **create_params.__dict__,
+        message_or_stream = await generate_message_for_thread(
+            session, run_request, new_thread.id
         )
 
-        return await crud_run.create(object_=run)
+        if request.stream:
+            pass
+        else:
+            crud_run = CRUDRun(db=session)
+
+            create_params: RunCreateParams = RunCreateParams(**run_request.__dict__)
+
+            run = Run(
+                id="",  # Leave blank to have Postgres generate a UUID
+                created_at=0,  # Leave blank to have Postgres generate a timestamp
+                thread_id=new_thread.id,
+                object="thread.run",
+                status="completed",  # This is always completed as the new message is already created by this point
+                parallel_tool_calls=False,
+                **create_params.__dict__,
+            )
+
+            return await crud_run.create(object_=run)
     except Exception as exc:
         traceback.print_exc()
         raise HTTPException(
