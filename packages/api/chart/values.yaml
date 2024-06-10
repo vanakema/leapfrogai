@@ -5,7 +5,7 @@ image:
   kiwigridTag: 1.23.3
 
 supabase:
-  url: "https://supabase-kong.###ZARF_VAR_HOSTED_DOMAIN###"
+  url: "###ZARF_VAR_SUPABASE_CLUSTER_URL###"
 
 api:
   replicas: 1
