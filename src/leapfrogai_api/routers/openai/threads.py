@@ -260,7 +260,9 @@ def convert_content_param_to_content(
 
 
 @router.post("/{thread_id}/runs", response_model=None)
-async def create_run(thread_id: str, session: Session, request: RunCreateParamsRequest) -> Union[Run, StreamingResponse]:
+async def create_run(
+    thread_id: str, session: Session, request: RunCreateParamsRequest
+) -> Union[Run, StreamingResponse]:
     """Create a run."""
 
     try:
@@ -288,7 +290,9 @@ async def create_run(thread_id: str, session: Session, request: RunCreateParamsR
                 )
 
         # Generate a new response based on the existing thread
-        message_or_stream = await generate_message_for_thread(session, run_request, thread_id)
+        message_or_stream = await generate_message_for_thread(
+            session, run_request, thread_id
+        )
 
         if request.stream:
             pass
