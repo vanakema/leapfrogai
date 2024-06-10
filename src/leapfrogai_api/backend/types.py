@@ -17,7 +17,8 @@ from openai.types.beta.assistant_tool_choice_option_param import (
 from openai.types.beta.assistant_response_format_option_param import (
     AssistantResponseFormatOptionParam,
 )
-from openai.types.beta.threads.run_create_params import AdditionalMessage
+from openai.types.beta.threads.run_create_params import AdditionalMessage, AdditionalMessageAttachment, \
+    AdditionalMessageAttachmentToolFileSearch
 from openai.types.beta.threads.run_create_params import TruncationStrategy
 from openai.types.beta import VectorStore
 from openai.types.beta.assistant_tool import FileSearchTool
@@ -397,7 +398,7 @@ class RunCreateParams(BaseModel):
     metadata: Optional[dict] = Field(default=None)
     model: Optional[str] = Field(default=None, examples=[None])
     response_format: Optional[AssistantResponseFormatOptionParam] = Field(default=None, examples=[None])
-    temperature: Optional[float] = Field(default=None)
+    temperature: Optional[float] = Field(default=None, examples=[1.0])
     tool_choice: Optional[AssistantToolChoiceOptionParam] = Field(default=None, examples=["auto"])
     tools: list[AssistantToolParam] = Field(default=[], examples=[[FileSearchToolParam(type="file_search")]])
     top_p: Optional[float] = Field(default=None, examples=[None])
@@ -405,11 +406,19 @@ class RunCreateParams(BaseModel):
 
 
 class RunCreateParamsRequest(RunCreateParams):
-    additional_instructions: Optional[str] = Field(default=None)
+    additional_instructions: Optional[str] = Field(default=None, examples=[None])
     additional_messages: Optional[list[AdditionalMessage]] = Field(
-        default=None, examples=[None]
+        default=None, examples=[AdditionalMessage(
+            content="This is a test",
+            role="user",
+            attachments=[AdditionalMessageAttachment(
+                file_id="",
+                tools=[AdditionalMessageAttachmentToolFileSearch(type="file_search")]
+            )],
+            metadata={}
+        )]
     )
-    stream: Optional[bool] = Field(default=None)
+    stream: Optional[bool] = Field(default=None, example=[False])
 
 
 class ThreadRunCreateParamsRequest(RunCreateParams):

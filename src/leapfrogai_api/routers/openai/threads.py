@@ -254,7 +254,7 @@ async def create_run(
                         role=additional_message.get("role"),
                         content=message_content,
                         attachments=additional_message.get("attachments"),
-                        metadata=additional_message.get("role"),
+                        metadata=additional_message.get("metadata"),
                     ),
                     session,
                 )
@@ -517,7 +517,7 @@ async def create_message(
             metadata=request.metadata,
             object="thread.message",
             role=request.role,
-            status="in_progress",
+            status="completed",
             thread_id=thread_id,
         )
         return await crud_message.create(object_=message)
