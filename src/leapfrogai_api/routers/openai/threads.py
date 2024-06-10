@@ -259,10 +259,10 @@ def convert_content_param_to_content(
         )
 
 
-@router.post("/{thread_id}/runs")
+@router.post("/{thread_id}/runs", response_model=Union[Run, StreamingResponse])
 async def create_run(
     thread_id: str, session: Session, request: RunCreateParamsRequest
-) -> Run | StreamingResponse:
+):
     """Create a run."""
 
     try:
@@ -313,10 +313,10 @@ async def create_run(
         ) from exc
 
 
-@router.post("/runs")
+@router.post("/runs", response_model=Union[Run, StreamingResponse])
 async def create_thread_and_run(
     session: Session, request: ThreadRunCreateParamsRequest
-) -> Run | StreamingResponse:
+):
     """Create a thread and run."""
 
     try:
