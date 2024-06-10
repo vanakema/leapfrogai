@@ -11,13 +11,13 @@ from openai.types.beta.thread_create_and_run_params import (
     ThreadMessage,
 )
 from openai.types.beta.threads import Message, MessageDeleted, Run, Text
-from openai.types.beta.assistant_tool_choice_param import AssistantToolChoiceParam
 from openai.types.beta.threads.message_content import MessageContent
 from openai.types.beta.threads.message_content_part_param import MessageContentPartParam
 from openai.types.beta.threads.text_content_block import TextContentBlock
 from openai.types.beta.threads.text_content_block_param import TextContentBlockParam
 from openai.types.beta.threads.runs import RunStep
 from postgrest.base_request_builder import SingleAPIResponse
+from pydantic_core._pydantic_core import ValidationError
 
 from leapfrogai_api.backend.rag.query import QueryService
 from leapfrogai_api.backend.types import (
@@ -33,6 +33,11 @@ from leapfrogai_api.backend.types import (
     ChatCompletionResponse,
     ChatMessage,
     RAGResponse,
+)
+from leapfrogai_api.backend.validators import (
+    AssistantToolChoiceParamValidator,
+    IterableTextContentBlockParamValidator,
+    TextContentBlockParamValidator,
 )
 from leapfrogai_api.data.crud_message import CRUDMessage
 from leapfrogai_api.data.crud_run import CRUDRun
@@ -107,8 +112,14 @@ def can_use_rag(request: ThreadRunCreateParamsRequest | RunCreateParamsRequest) 
     if has_tool_choice and has_tool_resources:
         if isinstance(request.tool_choice, str):
             return request.tool_choice == "auto" or request.tool_choice == "required"
-        elif isinstance(request.tool_choice, AssistantToolChoiceParam):
-            return request.tool_choice.get("type") == "file_search"
+        else:
+            try:
+                if AssistantToolChoiceParamValidator.validate_python(request.tool_choice):
+                    return request.tool_choice.get("type") == "file_search"
+            except ValidationError:
+                traceback.print_exc()
+                logging.error("Cannot use RAG for request, failed to validate tool for thread")
+                return False
 
     return False
 
@@ -225,13 +236,22 @@ def convert_content_param_to_content(
             text=Text(annotations=[], value=thread_message_content),
             type="text",
         )
-    elif isinstance(thread_message_content, TextContentBlockParam):
+    else:
+        result: str = ""
+
+        for message_content_part in thread_message_content:
+            try:
+                if TextContentBlockParamValidator.validate_python(message_content_part):
+                    result += message_content_part.get("text")
+            except ValidationError:
+                traceback.print_exc()
+                logging.error(f"Failed to validate message content part")
+                continue
+
         return TextContentBlock(
-            text=Text(annotations=[], value=thread_message_content.get("text")),
+            text=Text(annotations=[], value=result),
             type="text",
         )
-    else:
-        raise ValueError("Value error text is the only modality supported.")
 
 
 @router.post("/{thread_id}/runs")
