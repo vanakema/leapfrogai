@@ -13,9 +13,8 @@ from openai.types.beta.thread_create_and_run_params import (
 from openai.types.beta.threads import Message, MessageDeleted, Run, Text
 from openai.types.beta.threads.message_content import MessageContent
 from openai.types.beta.threads.message_content_part_param import MessageContentPartParam
-from openai.types.beta.threads.text_content_block import TextContentBlock
-from openai.types.beta.threads.text_content_block_param import TextContentBlockParam
 from openai.types.beta.threads.runs import RunStep
+from openai.types.beta.threads.text_content_block import TextContentBlock
 from postgrest.base_request_builder import SingleAPIResponse
 from pydantic_core._pydantic_core import ValidationError
 
@@ -36,7 +35,6 @@ from leapfrogai_api.backend.types import (
 )
 from leapfrogai_api.backend.validators import (
     AssistantToolChoiceParamValidator,
-    IterableTextContentBlockParamValidator,
     TextContentBlockParamValidator,
 )
 from leapfrogai_api.data.crud_message import CRUDMessage
