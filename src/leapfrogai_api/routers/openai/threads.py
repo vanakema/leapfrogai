@@ -140,10 +140,15 @@ async def generate_message_for_thread(
             )
             rag_responses: RAGResponse = RAGResponse(data=rag_results_raw.data)
 
-            for rag_response in rag_responses.data:
+            for count, rag_response in enumerate(rag_responses.data):
                 """Insert the RAG response messages just before the user's query"""
+                response_with_instructions: str = (
+                    f"<start attached file {count}'s content>\n"
+                    f"{rag_response.content}"
+                    f"\n<end attached file {count}'s content>"
+                )
                 chat_messages.insert(
-                    1, ChatMessage(role="user", content=rag_response.content)
+                    1, ChatMessage(role="user", content=response_with_instructions)
                 )
 
     if request.stream:
