@@ -15,8 +15,8 @@ create table
     id uuid primary key DEFAULT uuid_generate_v4(),
     user_id uuid references auth.users not null,
     object text check (object in ('thread.message')),
-    created_at bigint default extract(epoch FROM NOW()) NOT NULL,
-    thread_id uuid,
+    created_at bigint default extract(epoch FROM NOW()) not null,
+    thread_id uuid references thread_objects (id) on delete cascade not null,
     status text,
     incomplete_details jsonb,
     completed_at bigint,
@@ -32,12 +32,12 @@ create table
 -- Create a table to store the OpenAI Run Objects
 create table
   run_objects (
-    id uuid primary key DEFAULT uuid_generate_v4(),
+    id uuid primary key default uuid_generate_v4(),
     user_id uuid references auth.users not null,
     object text check (object in ('thread.run')),
-    created_at bigint default extract(epoch FROM NOW()) NOT NULL,
-    thread_id uuid,
-    assistant_id uuid,
+    created_at bigint default extract(epoch FROM NOW()) not null,
+    thread_id uuid references thread_objects (id) on delete cascade ,
+    assistant_id uuid references assistant_objects (id) on delete set null,
     status text,
     required_action jsonb,
     last_error jsonb,
@@ -69,10 +69,10 @@ create table
     id uuid primary key DEFAULT uuid_generate_v4(),
     user_id uuid references auth.users not null,
     object text check (object in ('thread.run.step')),
-    created_at bigint default extract(epoch FROM NOW()) NOT NULL,
-    assistant_id uuid,
-    thread_id uuid,
-    run_id uuid,
+    created_at bigint default extract(epoch FROM NOW()) not null,
+    assistant_id uuid references assistant_objects (id) on delete set null,
+    thread_id uuid references thread_objects (id) on delete cascade not null,
+    run_id uuid references run_objects (id) on delete cascade not null,
     step_type text,
     status text,
     step_details jsonb,
@@ -84,31 +84,6 @@ create table
     metadata jsonb,
     token_usage jsonb
   );
-
--- Foreign key constraints for message_objects
-alter table message_objects add constraint fk_message_objects_thread_objects
-    foreign key (thread_id)
-    REFERENCES thread_objects (id)
-    ON DELETE CASCADE;
-
--- Foreign key constraints for run_objects
-alter table run_objects add constraint fk_run_objects_thread_objects
-    foreign key (thread_id)
-    REFERENCES thread_objects (id);
-alter table run_objects add constraint fk_run_objects_assistant_objects
-    foreign key (assistant_id)
-    REFERENCES assistant_objects (id);
-
--- Foreign key constraints for run_step_objects
-alter table run_step_objects add constraint fk_run_step_objects_thread_objects
-    foreign key (thread_id)
-    REFERENCES thread_objects (id);
-alter table run_step_objects add constraint fk_run_step_objects_assistant_objects
-    foreign key (assistant_id)
-    REFERENCES assistant_objects (id);
-alter table run_step_objects add constraint fk_run_step_objects_run_objects
-    foreign key (run_id)
-    REFERENCES run_objects (id);
 
 -- RLS policies
 alter table thread_objects enable row level security;
