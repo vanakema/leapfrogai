@@ -275,10 +275,18 @@ async def update_request_with_assistant_data(
         request.temperature if request.temperature else assistant.temperature
     )
     top_p: float | None = request.top_p if request.top_p else assistant.top_p
+    instructions: str | None = (
+        request.instructions if request.instructions else assistant.instructions
+    )
 
     # Create a copy of the request with proper values for model, temperature, and top_p
     return request.model_copy(
-        update={"model": model, "temperature": temperature, "top_p": top_p}
+        update={
+            "model": model,
+            "temperature": temperature,
+            "top_p": top_p,
+            "instructions": instructions,
+        }
     )
 
 
