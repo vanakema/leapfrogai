@@ -397,12 +397,12 @@ class ListVectorStoresResponse(BaseModel):
 class RunCreateParams(BaseModel):
     assistant_id: str = Field(default="", examples=["123ab"])
     instructions: str = Field(default="", examples=[""])
-    max_completion_tokens: int | None = Field(default=None, examples=[None])
-    max_prompt_tokens: int | None = Field(default=None, examples=[None])
+    max_completion_tokens: int | None = Field(default=None, examples=[])
+    max_prompt_tokens: int | None = Field(default=None, examples=[])
     metadata: dict | None = Field(default=None, examples=[{}])
-    model: str | None = Field(default=None, examples=[None])
+    model: str | None = Field(default=None, examples=["llama-cpp-python"])
     response_format: AssistantResponseFormatOptionParam | None = Field(
-        default=None, examples=[None]
+        default=None, examples=[]
     )
     temperature: float | None = Field(default=None, examples=[1.0])
     tool_choice: AssistantToolChoiceOptionParam | None = Field(
