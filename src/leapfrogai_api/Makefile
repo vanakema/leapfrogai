@@ -20,13 +20,13 @@ define get_jwt_token
 	echo "Extracting token from $(TOKEN_RESPONSE)"; \
 	JWT=$$(echo $$TOKEN_RESPONSE | grep -oP '(?<="access_token":")[^"]*'); \
 	echo -n "$$JWT" | xclip -selection clipboard; \
-	echo "SUPABASE_USER_JWT=$$JWT" > .jwt; \
-	echo "SUPABASE_URL=$$SUPABASE_URL" >> .jwt; \
-	echo "SUPABASE_ANON_KEY=$$SUPABASE_ANON_KEY" >> .jwt; \
+	echo "SUPABASE_USER_JWT=$$JWT" > .env; \
+	echo "SUPABASE_URL=$$SUPABASE_URL" >> .env; \
+	echo "SUPABASE_ANON_KEY=$$SUPABASE_ANON_KEY" >> .env; \
 	echo "DONE - JWT token copied to clipboard"
 endef
 
-new-api-user:
+user:
 	@read -s -p "Enter a new DEV API password: " SUPABASE_PASS; echo; \
 	echo "Creating new supabase user..."; \
 	$(call get_jwt_token,"${SUPABASE_URL}/auth/v1/signup")
@@ -36,7 +36,4 @@ jwt:
 	$(call get_jwt_token,"${SUPABASE_URL}/auth/v1/token?grant_type=password")
 
 test-integration:
-	export PYTHONPATH=$(PYTHONPATH):$(pwd); \
-	cd ../../; \
-	pytest --env-dir=src/leapfrogai_api tests/integration/api
-
+	cd ../../ && python -m pytest tests/integration/api
