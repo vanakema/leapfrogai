@@ -142,11 +142,11 @@ def can_use_rag(request: ThreadRunCreateParamsRequest | RunCreateParamsRequest) 
     return False
 
 
-async def generate_message_for_thread(
+async def generate_chat_messages(
     session: Session,
     request: ThreadRunCreateParamsRequest | RunCreateParamsRequest,
     thread_id: str,
-) -> Union[Message, AsyncGenerator[ThreadMessageDelta, Any]]:
+) -> list[ChatMessage]:
     # Get existing messages
     thread_messages: list[Message] = await list_messages(thread_id, session)
     # Convert messages to ChatMessages
@@ -180,87 +180,109 @@ async def generate_message_for_thread(
                     1, ChatMessage(role="user", content=response_with_instructions)
                 )
 
-    if request.stream:
-        chat_response: AsyncGenerator[
-            ChatCompletionResponse, Any
-        ] = await complete_stream_raw(
-            req=ChatCompletionRequest(
-                model=str(request.model),
-                messages=chat_messages,
-                functions=None,
-                temperature=request.temperature,
-                top_p=request.top_p,
-                stream=request.stream,
-                stop=None,
-                max_tokens=request.max_completion_tokens,
-            ),
-            model_config=get_model_config(),
-            session=session,
-        )
-        async for streaming_response in chat_response:
-            random_uuid: UUID = uuid.uuid4()
-            thread_message_event: ThreadMessageDelta = ThreadMessageDelta(
-                data=MessageDeltaEvent(
-                    id=str(random_uuid),
-                    delta=MessageDelta(
-                        content=TextDeltaBlock(
-                            index=128281482814,
-                            type="text",
-                            text=TextDelta(
-                                annotations=[],
-                                value=streaming_response.choices[0].message.content,
-                            ),
+    return chat_messages
+
+
+async def generate_message_for_thread(
+    session: Session,
+    request: ThreadRunCreateParamsRequest | RunCreateParamsRequest,
+    thread_id: str,
+):
+    chat_messages: list[ChatMessage] = await generate_chat_messages(
+        session, request, thread_id
+    )
+
+    # Generate a new message and add it to the thread creation request
+    chat_response: ChatCompletionResponse | StreamingResponse = await chat_complete(
+        req=ChatCompletionRequest(
+            model=str(request.model),
+            messages=chat_messages,
+            functions=None,
+            temperature=request.temperature,
+            top_p=request.top_p,
+            stream=request.stream,
+            stop=None,
+            max_tokens=request.max_completion_tokens,
+        ),
+        model_config=get_model_config(),
+        session=session,
+    )
+
+    message_content: TextContentBlock = TextContentBlock(
+        text=Text(annotations=[], value=chat_response.choices[0].message.content),
+        type="text",
+    )
+
+    new_message = Message(
+        id="",
+        created_at=0,
+        object="thread.message",
+        status="in_progress",
+        thread_id="",
+        content=[message_content],
+        role="assistant",
+    )
+
+    # Add the generated response to the db
+    await create_message(
+        thread_id,
+        CreateMessageRequest(
+            role=new_message.role,
+            content=new_message.content,
+            attachments=new_message.attachments,
+            metadata=new_message.metadata,
+        ),
+        session,
+    )
+
+
+async def agenerate_message_for_thread(
+    session: Session,
+    request: ThreadRunCreateParamsRequest | RunCreateParamsRequest,
+    thread_id: str,
+) -> AsyncGenerator[ThreadMessageDelta, Any]:
+    chat_messages: list[ChatMessage] = await generate_chat_messages(
+        session, request, thread_id
+    )
+
+    chat_response: AsyncGenerator[
+        ChatCompletionResponse, Any
+    ] = await complete_stream_raw(
+        req=ChatCompletionRequest(
+            model=str(request.model),
+            messages=chat_messages,
+            functions=None,
+            temperature=request.temperature,
+            top_p=request.top_p,
+            stream=request.stream,
+            stop=None,
+            max_tokens=request.max_completion_tokens,
+        ),
+        model_config=get_model_config(),
+        session=session,
+    )
+
+    async for streaming_response in chat_response:
+        random_uuid: UUID = uuid.uuid4()
+        thread_message_event: ThreadMessageDelta = ThreadMessageDelta(
+            data=MessageDeltaEvent(
+                id=str(random_uuid),
+                delta=MessageDelta(
+                    content=TextDeltaBlock(
+                        index=128281482814,
+                        type="text",
+                        text=TextDelta(
+                            annotations=[],
+                            value=streaming_response.choices[0].message.content,
                         ),
-                        role="assistant",
                     ),
-                    object="thread.message.delta",
+                    role="assistant",
                 ),
-                event="thread.message.delta",
-            )
-            yield thread_message_event
-    else:
-        # Generate a new message and add it to the thread creation request
-        chat_response: ChatCompletionResponse | StreamingResponse = await chat_complete(
-            req=ChatCompletionRequest(
-                model=str(request.model),
-                messages=chat_messages,
-                functions=None,
-                temperature=request.temperature,
-                top_p=request.top_p,
-                stream=request.stream,
-                stop=None,
-                max_tokens=request.max_completion_tokens,
+                object="thread.message.delta",
             ),
-            model_config=get_model_config(),
-            session=session,
+            event="thread.message.delta",
         )
-
-        message_content: TextContentBlock = TextContentBlock(
-            text=Text(annotations=[], value=chat_response.choices[0].message.content),
-            type="text",
-        )
-
-        new_message = Message(
-            id="",
-            created_at=0,
-            object="thread.message",
-            status="in_progress",
-            thread_id="",
-            content=[message_content],
-            role="assistant",
-        )
-
-        # Add the generated response to the db
-        return await create_message(
-            thread_id,
-            CreateMessageRequest(
-                role=new_message.role,
-                content=new_message.content,
-                attachments=new_message.attachments,
-                metadata=new_message.metadata,
-            ),
-            session,
-        )
+        yield thread_message_event
 
 
 async def update_request_with_assistant_data(
@@ -291,7 +313,7 @@ async def update_request_with_assistant_data(
 
 
 def convert_content_param_to_content(
-    thread_message_content: Union[str, Iterable[MessageContentPartParam]],
+    thread_message_content: str | Iterable[MessageContentPartParam],
 ) -> MessageContent:
     """Converts messages from MessageContentPartParam to MessageContent"""
     if isinstance(thread_message_content, str):
@@ -320,7 +342,7 @@ def convert_content_param_to_content(
 @router.post("/{thread_id}/runs", response_model=None)
 async def create_run(
     thread_id: str, session: Session, request: RunCreateParamsRequest
-) -> Union[Run, StreamingResponse]:
+) -> Run | StreamingResponse:
     """Create a run."""
 
     try:
@@ -347,15 +369,17 @@ async def create_run(
                     session,
                 )
 
-        # Generate a new response based on the existing thread
-        message_or_stream: (
-            Message | AsyncGenerator[ThreadMessageDelta, Any]
-        ) = await generate_message_for_thread(session, run_request, thread_id)
-
         if request.stream:
-            async for message in message_or_stream:
+            # Generate a new response based on the existing thread
+            stream: AsyncGenerator[ThreadMessageDelta, Any] = (
+                agenerate_message_for_thread(session, run_request, thread_id)
+            )
+
+            async for message in stream:
                 yield message
         else:
+            await generate_message_for_thread(session, run_request, thread_id)
+
             crud_run = CRUDRun(db=session)
 
             create_params: RunCreateParams = RunCreateParams(**run_request.__dict__)
@@ -380,7 +404,7 @@ async def create_run(
 @router.post("/runs", response_model=None)
 async def create_thread_and_run(
     session: Session, request: ThreadRunCreateParamsRequest
-) -> Union[Run, StreamingResponse]:
+) -> Run | StreamingResponse:
     """Create a thread and run."""
 
     try:
