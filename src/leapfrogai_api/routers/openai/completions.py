@@ -3,8 +3,16 @@
 from typing import Annotated, AsyncGenerator, Any
 from fastapi import HTTPException, APIRouter, Depends
 from fastapi.security import HTTPBearer
-from leapfrogai_api.backend.grpc_client import completion, stream_completion, stream_chat_completion_raw
-from leapfrogai_api.backend.types import CompletionRequest, ChatCompletionResponse, ChatCompletionRequest
+from leapfrogai_api.backend.grpc_client import (
+    completion,
+    stream_completion,
+    stream_chat_completion_raw,
+)
+from leapfrogai_api.backend.types import (
+    CompletionRequest,
+    ChatCompletionResponse,
+    ChatCompletionRequest,
+)
 from leapfrogai_api.routers.supabase_session import Session
 from leapfrogai_api.utils import get_model_config
 from leapfrogai_api.utils.config import Config
@@ -16,9 +24,9 @@ security = HTTPBearer()
 
 @router.post("")
 async def complete(
-        session: Session,
-        req: CompletionRequest,
-        model_config: Annotated[Config, Depends(get_model_config)],
+    session: Session,
+    req: CompletionRequest,
+    model_config: Annotated[Config, Depends(get_model_config)],
 ):
     """Complete a prompt with the given model."""
     # Get the model backend configuration
@@ -42,9 +50,9 @@ async def complete(
 
 
 async def complete_stream_raw(
-        session: Session,
-        req: ChatCompletionRequest,
-        model_config: Annotated[Config, Depends(get_model_config)],
+    session: Session,
+    req: ChatCompletionRequest,
+    model_config: Annotated[Config, Depends(get_model_config)],
 ) -> AsyncGenerator[ChatCompletionResponse, Any]:
     """Complete a prompt with the given model."""
     # Get the model backend configuration

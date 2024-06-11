@@ -18,7 +18,11 @@ from openai.types.beta.threads.message_content import MessageContent
 from openai.types.beta.threads.text_delta_block import TextDeltaBlock
 from openai.types.beta.threads.text_delta import TextDelta
 from openai.types.beta.threads.message_delta import MessageDelta
-from openai.types.beta.assistant_stream_event import AssistantStreamEvent, MessageDeltaEvent, ThreadMessageDelta
+from openai.types.beta.assistant_stream_event import (
+    AssistantStreamEvent,
+    MessageDeltaEvent,
+    ThreadMessageDelta,
+)
 from openai.types.beta.threads.message_content_part_param import MessageContentPartParam
 from openai.types.beta.threads.runs import RunStep
 from openai.types.beta.threads.text_content_block import TextContentBlock
@@ -125,7 +129,7 @@ def can_use_rag(request: ThreadRunCreateParamsRequest | RunCreateParamsRequest) 
         else:
             try:
                 if AssistantToolChoiceParamValidator.validate_python(
-                        request.tool_choice
+                    request.tool_choice
                 ):
                     return request.tool_choice.get("type") == "file_search"
             except ValidationError:
@@ -139,9 +143,9 @@ def can_use_rag(request: ThreadRunCreateParamsRequest | RunCreateParamsRequest) 
 
 
 async def generate_message_for_thread(
-        session: Session,
-        request: ThreadRunCreateParamsRequest | RunCreateParamsRequest,
-        thread_id: str,
+    session: Session,
+    request: ThreadRunCreateParamsRequest | RunCreateParamsRequest,
+    thread_id: str,
 ) -> Union[Message, AsyncGenerator[ThreadMessageDelta, Any]]:
     # Get existing messages
     thread_messages: list[Message] = await list_messages(thread_id, session)
@@ -177,7 +181,9 @@ async def generate_message_for_thread(
                 )
 
     if request.stream:
-        chat_response: AsyncGenerator[ChatCompletionResponse, Any] = await complete_stream_raw(
+        chat_response: AsyncGenerator[
+            ChatCompletionResponse, Any
+        ] = await complete_stream_raw(
             req=ChatCompletionRequest(
                 model=str(request.model),
                 messages=chat_messages,
@@ -189,24 +195,27 @@ async def generate_message_for_thread(
                 max_tokens=request.max_completion_tokens,
             ),
             model_config=get_model_config(),
-            session=session)
+            session=session,
+        )
         async for streaming_response in chat_response:
             random_uuid: UUID = uuid.uuid4()
             thread_message_event: ThreadMessageDelta = ThreadMessageDelta(
                 data=MessageDeltaEvent(
                     id=str(random_uuid),
-                    delta=MessageDelta(content=TextDeltaBlock(
-                        index=128281482814,
-                        type="text",
-                        text=TextDelta(
-                            annotations=[],
-                            value=streaming_response.choices[0].message.content
-                        )
+                    delta=MessageDelta(
+                        content=TextDeltaBlock(
+                            index=128281482814,
+                            type="text",
+                            text=TextDelta(
+                                annotations=[],
+                                value=streaming_response.choices[0].message.content,
+                            ),
+                        ),
+                        role="assistant",
                     ),
-                        role="assistant"),
-                    object="thread.message.delta"
+                    object="thread.message.delta",
                 ),
-                event="thread.message.delta"
+                event="thread.message.delta",
             )
             yield thread_message_event
     else:
@@ -255,7 +264,7 @@ async def generate_message_for_thread(
 
 
 async def update_request_with_assistant_data(
-        session: Session, request: ThreadRunCreateParamsRequest | RunCreateParamsRequest
+    session: Session, request: ThreadRunCreateParamsRequest | RunCreateParamsRequest
 ) -> ThreadRunCreateParamsRequest | RunCreateParamsRequest:
     assistant: Assistant | None = await retrieve_assistant(
         session=session, assistant_id=request.assistant_id
@@ -274,7 +283,7 @@ async def update_request_with_assistant_data(
 
 
 def convert_content_param_to_content(
-        thread_message_content: Union[str, Iterable[MessageContentPartParam]],
+    thread_message_content: Union[str, Iterable[MessageContentPartParam]],
 ) -> MessageContent:
     """Converts messages from MessageContentPartParam to MessageContent"""
     if isinstance(thread_message_content, str):
@@ -302,13 +311,13 @@ def convert_content_param_to_content(
 
 @router.post("/{thread_id}/runs", response_model=None)
 async def create_run(
-        thread_id: str, session: Session, request: RunCreateParamsRequest
+    thread_id: str, session: Session, request: RunCreateParamsRequest
 ) -> Union[Run, StreamingResponse]:
     """Create a run."""
 
     try:
         run_request: (
-                ThreadRunCreateParamsRequest | RunCreateParamsRequest
+            ThreadRunCreateParamsRequest | RunCreateParamsRequest
         ) = await update_request_with_assistant_data(session, request)
 
         if request.additional_messages:
@@ -331,9 +340,9 @@ async def create_run(
                 )
 
         # Generate a new response based on the existing thread
-        message_or_stream: Message | AsyncGenerator[ThreadMessageDelta, Any] = await generate_message_for_thread(
-            session, run_request, thread_id
-        )
+        message_or_stream: (
+            Message | AsyncGenerator[ThreadMessageDelta, Any]
+        ) = await generate_message_for_thread(session, run_request, thread_id)
 
         if request.stream:
             async for message in message_or_stream:
@@ -362,7 +371,7 @@ async def create_run(
 
 @router.post("/runs", response_model=None)
 async def create_thread_and_run(
-        session: Session, request: ThreadRunCreateParamsRequest
+    session: Session, request: ThreadRunCreateParamsRequest
 ) -> Union[Run, StreamingResponse]:
     """Create a thread and run."""
 
@@ -401,7 +410,7 @@ async def create_thread_and_run(
                     continue
 
         run_request: (
-                ThreadRunCreateParamsRequest | RunCreateParamsRequest
+            ThreadRunCreateParamsRequest | RunCreateParamsRequest
         ) = await update_request_with_assistant_data(session, request)
 
         new_thread: Thread = await create_thread(
@@ -463,7 +472,7 @@ async def retrieve_run(thread_id: str, run_id: str, session: Session) -> Run:
 
 @router.post("/{thread_id}/runs/{run_id}")
 async def modify_run(
-        thread_id: str, run_id: str, request: ModifyRunRequest, session: Session
+    thread_id: str, run_id: str, request: ModifyRunRequest, session: Session
 ) -> Run:
     """Modify a run."""
     run = CRUDRun(db=session)
@@ -510,7 +519,7 @@ async def cancel_run(thread_id: str, run_id: str, session: Session) -> Run:
 
 @router.get("/{thread_id}/runs/{run_id}/steps")
 async def list_run_steps(
-        thread_id: str, run_id: str, session: Session
+    thread_id: str, run_id: str, session: Session
 ) -> list[RunStep]:
     """List all the steps in a run."""
     # TODO: Implement this function
@@ -519,7 +528,7 @@ async def list_run_steps(
 
 @router.get("/{thread_id}/runs/{run_id}/steps/{step_id}")
 async def retrieve_run_step(
-        thread_id: str, run_id: str, step_id: str, session: Session
+    thread_id: str, run_id: str, step_id: str, session: Session
 ) -> RunStep:
     """Retrieve a step."""
     # TODO: Implement this function
@@ -535,7 +544,7 @@ async def retrieve_thread(thread_id: str, session: Session) -> Thread | None:
 
 @router.post("/{thread_id}")
 async def modify_thread(
-        thread_id: str, request: ModifyThreadRequest, session: Session
+    thread_id: str, request: ModifyThreadRequest, session: Session
 ) -> Thread:
     """Modify a thread."""
     thread = CRUDThread(db=session)
@@ -589,7 +598,7 @@ async def delete_thread(thread_id: str, session: Session) -> ThreadDeleted:
 
 @router.post("/{thread_id}/messages")
 async def create_message(
-        thread_id: str, request: CreateMessageRequest, session: Session
+    thread_id: str, request: CreateMessageRequest, session: Session
 ) -> Message:
     """Create a message."""
     try:
@@ -632,7 +641,7 @@ async def list_messages(thread_id: str, session: Session) -> list[Message]:
 
 @router.get("/{thread_id}/messages/{message_id}")
 async def retrieve_message(
-        thread_id: str, message_id: str, session: Session
+    thread_id: str, message_id: str, session: Session
 ) -> Message | None:
     """Retrieve a message."""
     crud_message = CRUDMessage(db=session)
@@ -641,15 +650,15 @@ async def retrieve_message(
 
 @router.post("/{thread_id}/messages/{message_id}")
 async def modify_message(
-        thread_id: str, message_id: str, request: ModifyMessageRequest, session: Session
+    thread_id: str, message_id: str, request: ModifyMessageRequest, session: Session
 ) -> Message:
     """Modify a message."""
     message = CRUDMessage(db=session)
 
     if not (
-            old_message := await message.get(
-                filters={"id": message_id, "thread_id": thread_id}
-            )
+        old_message := await message.get(
+            filters={"id": message_id, "thread_id": thread_id}
+        )
     ):
         raise HTTPException(
             status_code=status.HTTP_404_NOT_FOUND,
@@ -682,7 +691,7 @@ async def modify_message(
 
 @router.delete("/{thread_id}/messages/{message_id}")
 async def delete_message(
-        thread_id: str, message_id: str, session: Session
+    thread_id: str, message_id: str, session: Session
 ) -> MessageDeleted:
     """Delete message from a thread."""
 

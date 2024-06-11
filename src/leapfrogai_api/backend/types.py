@@ -397,29 +397,29 @@ class ListVectorStoresResponse(BaseModel):
 class RunCreateParams(BaseModel):
     assistant_id: str = Field(default="", examples=["123ab"])
     instructions: str = Field(default="", examples=[""])
-    max_completion_tokens: Optional[int] = Field(default=None, examples=[None])
-    max_prompt_tokens: Optional[int] = Field(default=None, examples=[None])
-    metadata: Optional[dict] = Field(default=None)
-    model: Optional[str] = Field(default=None, examples=[None])
-    response_format: Optional[AssistantResponseFormatOptionParam] = Field(
+    max_completion_tokens: int | None = Field(default=None, examples=[None])
+    max_prompt_tokens: int | None = Field(default=None, examples=[None])
+    metadata: dict | None = Field(default=None, examples=[{}])
+    model: str | None = Field(default=None, examples=[None])
+    response_format: AssistantResponseFormatOptionParam | None = Field(
         default=None, examples=[None]
     )
-    temperature: Optional[float] = Field(default=None, examples=[1.0])
-    tool_choice: Optional[AssistantToolChoiceOptionParam] = Field(
+    temperature: float | None = Field(default=None, examples=[1.0])
+    tool_choice: AssistantToolChoiceOptionParam | None = Field(
         default=None, examples=["auto"]
     )
     tools: list[AssistantToolParam] = Field(
         default=[], examples=[[FileSearchToolParam(type="file_search")]]
     )
-    top_p: Optional[float] = Field(default=None, examples=[None])
-    truncation_strategy: Optional[TruncationStrategy] = Field(
+    top_p: float | None = Field(default=None, examples=[None])
+    truncation_strategy: TruncationStrategy | None = Field(
         default=None, examples=[None]
     )
 
 
 class RunCreateParamsRequest(RunCreateParams):
-    additional_instructions: Optional[str] = Field(default=None, examples=[None])
-    additional_messages: Optional[list[AdditionalMessage]] = Field(
+    additional_instructions: str | None = Field(default=None, examples=[None])
+    additional_messages: list[AdditionalMessage] | None = Field(
         default=None,
         examples=[
             AdditionalMessage(
@@ -439,11 +439,11 @@ class RunCreateParamsRequest(RunCreateParams):
             )
         ],
     )
-    stream: Optional[bool] = Field(default=None, example=[False])
+    stream: bool | None = Field(default=None, example=[False])
 
 
 class ThreadRunCreateParamsRequest(RunCreateParams):
-    thread: Optional[Thread] = Field(
+    thread: Thread | None = Field(
         default=None,
         examples=[
             Thread(
@@ -467,17 +467,17 @@ class ThreadRunCreateParamsRequest(RunCreateParams):
             )
         ],
     )
-    tool_resources: Optional[ToolResources] = Field(
+    tool_resources: ToolResources | None = Field(
         default=None, examples=[ToolResourcesFileSearch(vector_store_ids=[])]
     )
-    top_p: Optional[float] = Field(default=None, examples=[None])
-    stream: Optional[bool] = Field(default=None, examples=[False])
+    top_p: float | None = Field(default=None, examples=[None])
+    stream: bool | None = Field(default=None, examples=[False])
 
 
 class ModifyRunRequest(BaseModel):
     """Request object for modifying a run."""
 
-    metadata: Optional[dict] = Field(default=None)
+    metadata: dict | None = Field(default=None, examples=[{}])
 
 
 class CreateThreadRequest(BaseModel):
