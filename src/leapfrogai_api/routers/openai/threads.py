@@ -3,7 +3,7 @@
 import logging
 import traceback
 import uuid
-from typing import Iterable, Union, AsyncGenerator, Any
+from typing import Iterable, AsyncGenerator, Any
 from uuid import UUID
 
 from fastapi import HTTPException, APIRouter, status
@@ -19,7 +19,6 @@ from openai.types.beta.threads.text_delta_block import TextDeltaBlock
 from openai.types.beta.threads.text_delta import TextDelta
 from openai.types.beta.threads.message_delta import MessageDelta
 from openai.types.beta.assistant_stream_event import (
-    AssistantStreamEvent,
     MessageDeltaEvent,
     ThreadMessageDelta,
 )
@@ -239,8 +238,9 @@ async def generate_message_for_thread(
 async def agenerate_message_for_thread(
     session: Session,
     request: ThreadRunCreateParamsRequest | RunCreateParamsRequest,
+    initial_messages: list[str],
     thread_id: str,
-) -> AsyncGenerator[ThreadMessageDelta, Any]:
+) -> AsyncGenerator[str, Any]:
     chat_messages: list[ChatMessage] = await generate_chat_messages(
         session, request, thread_id
     )
@@ -262,27 +262,33 @@ async def agenerate_message_for_thread(
         session=session,
     )
 
+    for message in initial_messages:
+        yield message
+
     async for streaming_response in chat_response:
         random_uuid: UUID = uuid.uuid4()
         thread_message_event: ThreadMessageDelta = ThreadMessageDelta(
             data=MessageDeltaEvent(
                 id=str(random_uuid),
                 delta=MessageDelta(
-                    content=TextDeltaBlock(
-                        index=128281482814,
-                        type="text",
-                        text=TextDelta(
-                            annotations=[],
-                            value=streaming_response.choices[0].message.content,
-                        ),
-                    ),
+                    content=[
+                        TextDeltaBlock(
+                            index=128281482814,
+                            type="text",
+                            text=TextDelta(
+                                annotations=[],
+                                value=streaming_response.choices[0].message.content,
+                            ),
+                        )
+                    ],
                     role="assistant",
                 ),
                 object="thread.message.delta",
             ),
             event="thread.message.delta",
         )
-        yield thread_message_event
+        # TODO: Move into helpers
+        yield f"event: {thread_message_event.event}, data: {thread_message_event.data.model_dump_json()}"
 
 
 async def update_request_with_assistant_data(
@@ -330,7 +336,7 @@ def convert_content_param_to_content(
                     result += message_content_part.get("text")
             except ValidationError:
                 traceback.print_exc()
-                logging.error(f"Failed to validate message content part")
+                logging.error("Failed to validate message content part")
                 continue
 
         return TextContentBlock(
@@ -370,13 +376,13 @@ async def create_run(
                 )
 
         if request.stream:
+            initial_messages: list[str] = ["one", "two", "three"]
             # Generate a new response based on the existing thread
-            stream: AsyncGenerator[ThreadMessageDelta, Any] = (
-                agenerate_message_for_thread(session, run_request, thread_id)
+            stream: AsyncGenerator[str, Any] = agenerate_message_for_thread(
+                session, run_request, initial_messages, thread_id
             )
 
-            async for message in stream:
-                yield message
+            return StreamingResponse(stream, media_type="text/event-stream")
         else:
             await generate_message_for_thread(session, run_request, thread_id)
 
