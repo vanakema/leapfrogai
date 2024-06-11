@@ -396,13 +396,13 @@ class ListVectorStoresResponse(BaseModel):
 
 class RunCreateParams(BaseModel):
     assistant_id: str = Field(default="", examples=["123ab"])
-    instructions: str = Field(default="", examples=[""])
-    max_completion_tokens: int | None = Field(default=None, examples=[])
-    max_prompt_tokens: int | None = Field(default=None, examples=[])
+    instructions: str = Field(default="", examples=["You are a helpful AI assistant."])
+    max_completion_tokens: int | None = Field(default=None, examples=[4096])
+    max_prompt_tokens: int | None = Field(default=None, examples=[32768])
     metadata: dict | None = Field(default=None, examples=[{}])
     model: str | None = Field(default=None, examples=["llama-cpp-python"])
     response_format: AssistantResponseFormatOptionParam | None = Field(
-        default=None, examples=[]
+        default=None, examples=["auto"]
     )
     temperature: float | None = Field(default=None, examples=[1.0])
     tool_choice: AssistantToolChoiceOptionParam | None = Field(
@@ -413,12 +413,12 @@ class RunCreateParams(BaseModel):
     )
     top_p: float | None = Field(default=None, examples=[None])
     truncation_strategy: TruncationStrategy | None = Field(
-        default=None, examples=[None]
+        default=None, examples=[TruncationStrategy(type="auto", last_messages=None)]
     )
 
 
 class RunCreateParamsRequest(RunCreateParams):
-    additional_instructions: str | None = Field(default=None, examples=[None])
+    additional_instructions: str | None = Field(default=None, examples=[""])
     additional_messages: list[AdditionalMessage] | None = Field(
         default=None,
         examples=[
@@ -470,7 +470,7 @@ class ThreadRunCreateParamsRequest(RunCreateParams):
     tool_resources: ToolResources | None = Field(
         default=None, examples=[ToolResourcesFileSearch(vector_store_ids=[])]
     )
-    top_p: float | None = Field(default=None, examples=[None])
+    top_p: float | None = Field(default=None, examples=[1])
     stream: bool | None = Field(default=None, examples=[False])
 
 
