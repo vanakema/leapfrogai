@@ -31,7 +31,7 @@ user:
 	echo "Creating new supabase user..."; \
 	$(call get_jwt_token,"${SUPABASE_URL}/auth/v1/signup")
 
-jwt:
+env:
 	@read -s -p "Enter your DEV API password: " SUPABASE_PASS; echo; \
 	$(call get_jwt_token,"${SUPABASE_URL}/auth/v1/token?grant_type=password")
 
