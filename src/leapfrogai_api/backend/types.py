@@ -31,10 +31,13 @@ from openai.types.beta.thread_create_and_run_params import (
     ThreadMessage,
     ThreadMessageAttachment,
     ThreadMessageAttachmentToolFileSearch,
+    ThreadToolResources, ThreadToolResourcesFileSearch
 )
 from openai.types.beta.threads import Message, MessageContent, TextContentBlock, Text
 from openai.types.beta.threads.message import Attachment
-from openai.types.beta.assistant import ToolResources, ToolResourcesFileSearch
+from openai.types.beta.assistant import ToolResources as BetaAssistantToolResources, ToolResourcesFileSearch
+from openai.types.beta.thread import ToolResources as BetaThreadToolResources
+from openai.types.beta.thread import ToolResourcesFileSearch as BetaThreadToolResourcesFileSearch
 
 
 ##########
@@ -222,13 +225,13 @@ class CreateTranscriptionRequest(BaseModel):
 
     @classmethod
     def as_form(
-        cls,
-        file: UploadFile = File(...),
-        model: str = Form(...),
-        language: str | None = Form(""),
-        prompt: str | None = Form(""),
-        response_format: str | None = Form(""),
-        temperature: float | None = Form(1.0),
+            cls,
+            file: UploadFile = File(...),
+            model: str = Form(...),
+            language: str | None = Form(""),
+            prompt: str | None = Form(""),
+            response_format: str | None = Form(""),
+            temperature: float | None = Form(1.0),
     ) -> CreateTranscriptionRequest:
         return cls(
             file=file,
@@ -257,9 +260,9 @@ class UploadFileRequest(BaseModel):
 
     @classmethod
     def as_form(
-        cls,
-        file: UploadFile = File(...),
-        purpose: str | None = Form("assistants"),
+            cls,
+            file: UploadFile = File(...),
+            purpose: str | None = Form("assistants"),
     ) -> UploadFileRequest:
         """Create an instance of the class from form data."""
         return cls(file=file, purpose=purpose)
@@ -285,7 +288,7 @@ class CreateAssistantRequest(BaseModel):
     description: str | None = "A helpful assistant."
     instructions: str | None = "You are a helpful assistant."
     tools: list[AssistantTool] | None = [FileSearchTool(type="file_search")]
-    tool_resources: ToolResources | None = ToolResources(
+    tool_resources: BetaAssistantToolResources | None = BetaAssistantToolResources(
         file_search=ToolResourcesFileSearch(vector_store_ids=[])
     )
     metadata: dict | None = Field(default=None, examples=[{}])
@@ -447,6 +450,7 @@ class ThreadRunCreateParamsRequest(RunCreateParams):
         default=None,
         examples=[
             Thread(
+                tool_resources=ThreadToolResources(file_search=ThreadToolResourcesFileSearch(vector_store_ids=[])),
                 messages=[
                     ThreadMessage(
                         content="This is a test",
@@ -467,8 +471,8 @@ class ThreadRunCreateParamsRequest(RunCreateParams):
             )
         ],
     )
-    tool_resources: ToolResources | None = Field(
-        default=None, examples=[ToolResourcesFileSearch(vector_store_ids=[])]
+    tool_resources: BetaThreadToolResources | None = Field(
+        default=None, examples=[BetaThreadToolResourcesFileSearch(vector_store_ids=[])]
     )
     top_p: float | None = Field(default=None, examples=[1])
     stream: bool | None = Field(default=None, examples=[False])
@@ -484,14 +488,14 @@ class CreateThreadRequest(BaseModel):
     """Request object for creating a thread."""
 
     messages: list[Message] | None = Field(default=None, examples=[None])
-    tool_resources: ToolResources | None = Field(default=None, examples=[None])
+    tool_resources: BetaThreadToolResources | None = Field(default=None, examples=[None])
     metadata: dict | None = Field(default=None, examples=[{}])
 
 
 class ModifyThreadRequest(BaseModel):
     """Request object for modifying a thread."""
 
-    tool_resources: ToolResources | None = Field(default=None, examples=[None])
+    tool_resources: BetaThreadToolResources | None = Field(default=None, examples=[None])
     metadata: dict | None = Field(default=None, examples=[{}])
 
 

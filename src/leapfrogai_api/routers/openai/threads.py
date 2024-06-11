@@ -78,23 +78,26 @@ async def create_thread(request: CreateThreadRequest, session: Session) -> Threa
 
         new_thread = await crud_thread.create(object_=thread)
 
-        if new_thread and request.messages:
-            """Once the thread has been created, add all of the request's messages to the DB"""
-            for message in request.messages:
-                new_messages.append(
-                    await create_message(
-                        new_thread.id,
-                        CreateMessageRequest(
-                            role=message.role,
-                            content=message.content,
-                            attachments=message.attachments,
-                            metadata=message.metadata,
-                        ),
-                        session,
+        if new_thread:
+            if request.messages:
+                """Once the thread has been created, add all of the request's messages to the DB"""
+                for message in request.messages:
+                    new_messages.append(
+                        await create_message(
+                            new_thread.id,
+                            CreateMessageRequest(
+                                role=message.role,
+                                content=message.content,
+                                attachments=message.attachments,
+                                metadata=message.metadata.__dict__,
+                            ),
+                            session,
+                        )
                     )
-                )
 
-        return new_thread
+            return new_thread
+        else:
+            raise Exception("Thread creation failed!")
     except Exception as exc:
         if new_thread:
             for message in new_messages:
