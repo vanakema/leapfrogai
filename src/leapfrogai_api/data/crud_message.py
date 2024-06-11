@@ -18,22 +18,22 @@ class CRUDMessage(CRUDBase[AuthMessage]):
     def __init__(self, db: AsyncClient):
         super().__init__(db=db, model=AuthMessage, table_name="message_objects")
 
-    async def create(self, object_: Message) -> AuthMessage | None:
+    async def create(self, object_: Message) -> Message | None:
         """Create new message."""
         user_id: str = (await self.db.auth.get_user()).user.id
         return await super().create(
             object_=AuthMessage(user_id=user_id, **object_.model_dump())
         )
 
-    async def get(self, filters: dict | None = None) -> AuthMessage | None:
+    async def get(self, filters: dict | None = None) -> Message | None:
         """Get a message by its ID."""
         return await super().get(filters=filters)
 
-    async def list(self, filters: dict | None = None) -> list[AuthMessage] | None:
+    async def list(self, filters: dict | None = None) -> list[Message] | None:
         """List all messages by thread ID."""
         return await super().list(filters=filters)
 
-    async def update(self, id_: str, object_: Message) -> AuthMessage | None:
+    async def update(self, id_: str, object_: Message) -> Message | None:
         """Update a message by its ID."""
 
         dict_ = object_.model_dump()
