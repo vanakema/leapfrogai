@@ -59,8 +59,7 @@ from leapfrogai_api.data.crud_message import CRUDMessage
 from leapfrogai_api.data.crud_run import CRUDRun
 from leapfrogai_api.data.crud_thread import CRUDThread
 from leapfrogai_api.routers.openai.assistants import retrieve_assistant
-from leapfrogai_api.routers.openai.chat import chat_complete
-from leapfrogai_api.routers.openai.completions import complete_stream_raw
+from leapfrogai_api.routers.openai.chat import chat_complete, chat_complete_stream_raw
 from leapfrogai_api.routers.supabase_session import Session
 from leapfrogai_api.utils import get_model_config
 
@@ -269,7 +268,7 @@ async def agenerate_message_for_thread(
 
     chat_response: AsyncGenerator[
         ChatCompletionResponse, Any
-    ] = await complete_stream_raw(
+    ] = await chat_complete_stream_raw(
         req=ChatCompletionRequest(
             model=str(request.model),
             messages=chat_messages,
@@ -281,7 +280,6 @@ async def agenerate_message_for_thread(
             max_tokens=request.max_completion_tokens,
         ),
         model_config=get_model_config(),
-        session=session,
     )
 
     for message in initial_messages:
