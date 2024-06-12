@@ -1,7 +1,7 @@
 import pytest
 from unittest.mock import MagicMock, AsyncMock
 
-from tests.utils.crud_utils import DummyModel, execute_response_format
+from tests.utils.crud_utils import MockModel, execute_response_format
 
 from src.leapfrogai_api.data.crud_base import CRUDBase
 
@@ -34,4 +34,4 @@ def mock_crud_base():
     mock_delete.eq = MagicMock(return_value = mock_delete)
     mock_table.delete.return_value = mock_delete
 
-    return CRUDBase(db=db, model=DummyModel, table_name="dummy_table")
+    return CRUDBase(db=db, model=MockModel, table_name="dummy_table")

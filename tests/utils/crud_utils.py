@@ -1,7 +1,7 @@
 from pydantic import BaseModel
 
 
-class DummyModel(BaseModel):
+class MockModel(BaseModel):
     id: int
     name: str
 
