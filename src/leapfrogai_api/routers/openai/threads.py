@@ -51,6 +51,7 @@ from leapfrogai_api.backend.types import (
     ChatCompletionResponse,
     ChatMessage,
     RAGResponse,
+    ChatChoice,
 )
 from leapfrogai_api.backend.validators import (
     AssistantToolChoiceParamValidator,
@@ -207,33 +208,9 @@ def convert_assistant_stream_event_to_str(stream_event: AssistantStreamEvent):
     return f"event: {stream_event.event}\ndata: {stream_event.data.model_dump_json()}"
 
 
-async def generate_message_for_thread(
-    session: Session,
-    request: ThreadRunCreateParamsRequest | RunCreateParamsRequest,
-    thread: Thread,
-):
-    chat_messages: list[ChatMessage] = await generate_chat_messages(
-        session, request, thread
-    )
-
-    # Generate a new message and add it to the thread creation request
-    chat_response: ChatCompletionResponse | StreamingResponse = await chat_complete(
-        req=ChatCompletionRequest(
-            model=str(request.model),
-            messages=chat_messages,
-            functions=None,
-            temperature=request.temperature,
-            top_p=request.top_p,
-            stream=request.stream,
-            stop=None,
-            max_tokens=request.max_completion_tokens,
-        ),
-        model_config=get_model_config(),
-        session=session,
-    )
-
+async def create_message_from_text(text: str, thread: Thread, session: Session):
     message_content: TextContentBlock = TextContentBlock(
-        text=Text(annotations=[], value=chat_response.choices[0].message.content),
+        text=Text(annotations=[], value=text),
         type="text",
     )
 
@@ -258,6 +235,36 @@ async def generate_message_for_thread(
         ),
         session,
     )
+
+
+async def generate_message_for_thread(
+    session: Session,
+    request: ThreadRunCreateParamsRequest | RunCreateParamsRequest,
+    thread: Thread,
+):
+    chat_messages: list[ChatMessage] = await generate_chat_messages(
+        session, request, thread
+    )
+
+    # Generate a new message and add it to the thread creation request
+    chat_response: ChatCompletionResponse = await chat_complete(
+        req=ChatCompletionRequest(
+            model=str(request.model),
+            messages=chat_messages,
+            functions=None,
+            temperature=request.temperature,
+            top_p=request.top_p,
+            stream=request.stream,
+            stop=None,
+            max_tokens=request.max_completion_tokens,
+        ),
+        model_config=get_model_config(),
+        session=session,
+    )
+
+    choice: ChatChoice = cast(ChatChoice, chat_response.choices[0])
+
+    await create_message_from_text(choice.message.content, thread, session)
 
 
 async def agenerate_message_for_thread(
@@ -289,8 +296,13 @@ async def agenerate_message_for_thread(
     for message in initial_messages:
         yield message
 
+    # The accumulated streaming response
+    response: str = ""
+
     async for streaming_response in chat_response:
         random_uuid: UUID = uuid.uuid4()
+        # Build up the llm response so that it can be committed to the db as a new message
+        response += streaming_response.choices[0].chat_item.content
         thread_message_event: ThreadMessageDelta = ThreadMessageDelta(
             data=MessageDeltaEvent(
                 id=str(random_uuid),
@@ -316,6 +328,8 @@ async def agenerate_message_for_thread(
         yield "\n\n"
 
     yield "event: done\ndata: [DONE]"
+
+    await create_message_from_text(response, thread, session)
 
 
 async def update_request_with_assistant_data(
