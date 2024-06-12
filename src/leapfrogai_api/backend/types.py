@@ -424,6 +424,7 @@ class RunCreateParams(BaseModel):
     truncation_strategy: TruncationStrategy | None = Field(
         default=None, examples=[TruncationStrategy(type="auto", last_messages=None)]
     )
+    parallel_tool_calls: bool | None = Field(default=None, examples=[False])
 
 
 class RunCreateParamsRequest(RunCreateParams):
