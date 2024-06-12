@@ -267,20 +267,20 @@ async def agenerate_message_for_thread(
         session, request, thread
     )
 
-    chat_response: AsyncGenerator[
-        ChatCompletionResponse, Any
-    ] = await chat_complete_stream_raw(
-        req=ChatCompletionRequest(
-            model=str(request.model),
-            messages=chat_messages,
-            functions=None,
-            temperature=request.temperature,
-            top_p=request.top_p,
-            stream=request.stream,
-            stop=None,
-            max_tokens=request.max_completion_tokens,
-        ),
-        model_config=get_model_config(),
+    chat_response: AsyncGenerator[ChatCompletionResponse, Any] = (
+        chat_complete_stream_raw(
+            req=ChatCompletionRequest(
+                model=str(request.model),
+                messages=chat_messages,
+                functions=None,
+                temperature=request.temperature,
+                top_p=request.top_p,
+                stream=request.stream,
+                stop=None,
+                max_tokens=request.max_completion_tokens,
+            ),
+            model_config=get_model_config(),
+        )
     )
 
     for message in initial_messages:

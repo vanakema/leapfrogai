@@ -71,4 +71,5 @@ async def chat_complete_stream_raw(
         temperature=req.temperature,
     )
 
-    return stream_chat_completion_raw(model, request)
+    async for response in stream_chat_completion_raw(model, request):
+        yield response
