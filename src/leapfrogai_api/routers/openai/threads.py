@@ -22,7 +22,7 @@ from openai.types.beta.assistant_stream_event import (
     MessageDeltaEvent,
     ThreadMessageDelta,
     AssistantStreamEvent,
-    ThreadRunCreated,
+    ThreadRunCreated, ThreadRunQueued, ThreadRunInProgress,
 )
 from openai.types.beta.threads.message_content_part_param import MessageContentPartParam
 from openai.types.beta.threads.runs import RunStep
@@ -422,6 +422,12 @@ async def create_run(
             initial_messages: list[str] = [
                 convert_assistant_stream_event_to_str(
                     ThreadRunCreated(data=new_run, event="thread.run.created")
+                ),                
+                convert_assistant_stream_event_to_str(
+                    ThreadRunQueued(data=new_run, event="thread.run.queued")
+                ),                
+                convert_assistant_stream_event_to_str(
+                    ThreadRunInProgress(data=new_run, event="thread.run.in_progress")
                 ),
                 "one",
                 "two",
@@ -517,6 +523,12 @@ async def create_thread_and_run(
             initial_messages: list[str] = [
                 convert_assistant_stream_event_to_str(
                     ThreadRunCreated(data=new_run, event="thread.run.created")
+                ),
+                convert_assistant_stream_event_to_str(
+                    ThreadRunQueued(data=new_run, event="thread.run.queued")
+                ),
+                convert_assistant_stream_event_to_str(
+                    ThreadRunInProgress(data=new_run, event="thread.run.in_progress")
                 ),
                 "one",
                 "two",
