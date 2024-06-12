@@ -124,7 +124,9 @@ async def create_thread(request: CreateThreadRequest, session: Session) -> Threa
         ) from exc
 
 
-def can_use_rag(request: ThreadRunCreateParamsRequest | RunCreateParamsRequest, thread: Thread) -> bool:
+def can_use_rag(
+    request: ThreadRunCreateParamsRequest | RunCreateParamsRequest, thread: Thread
+) -> bool:
     has_tool_choice: bool = request.tool_choice is not None
 
     """'Create thread and run' requires 'tool_resources' while 'Create run' does not"""
@@ -331,16 +333,14 @@ async def update_request_with_assistant_data(
     instructions: str | None = (
         request.instructions if request.instructions else assistant.instructions
     )
-    
+
     if isinstance(request, ThreadRunCreateParamsRequest):
         tool_resources: BetaThreadToolResources = (
-            request.tool_resources if request.tool_resources else assistant.tool_resources
+            request.tool_resources
+            if request.tool_resources
+            else assistant.tool_resources
         )
-        request = request.model_copy(
-            update={
-                "tool_resources": tool_resources
-            }
-        )
+        request = request.model_copy(update={"tool_resources": tool_resources})
 
     # Create a copy of the request with proper values for model, temperature, and top_p
     return request.model_copy(
@@ -378,6 +378,7 @@ def convert_content_param_to_content(
             text=Text(annotations=[], value=result),
             type="text",
         )
+
 
 @router.post("/{thread_id}/runs", response_model=None)
 async def create_run(
@@ -472,7 +473,7 @@ async def create_thread_and_run(
         run_request: (
             ThreadRunCreateParamsRequest | RunCreateParamsRequest
         ) = await update_request_with_assistant_data(session, request)
-        
+
         thread_request: CreateThreadRequest = CreateThreadRequest(
             messages=[],
             tool_resources=run_request.tool_resources,

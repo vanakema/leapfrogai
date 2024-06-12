@@ -494,6 +494,7 @@ class ModifyRunRequest(BaseModel):
 
     metadata: dict | None = Field(default=None, examples=[{}])
 
+
 class CreateThreadRequest(BaseModel):
     """Request object for creating a thread."""
 
