@@ -297,7 +297,7 @@ async def agenerate_message_for_thread(
                             type="text",
                             text=TextDelta(
                                 annotations=[],
-                                value=streaming_response.choices[0].message.content,
+                                value=streaming_response.choices[0].chat_delta.content,
                             ),
                         )
                     ],
