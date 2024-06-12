@@ -61,9 +61,6 @@ from leapfrogai_api.data.crud_run import CRUDRun
 from leapfrogai_api.data.crud_thread import CRUDThread
 from leapfrogai_api.routers.openai.assistants import retrieve_assistant
 from leapfrogai_api.routers.openai.chat import chat_complete, chat_complete_stream_raw
-)
-from leapfrogai_api.data.crud_message import CRUDMessage
-from leapfrogai_api.data.crud_thread import CRUDThread
 from leapfrogai_api.routers.supabase_session import Session
 from leapfrogai_api.utils import get_model_config
 from leapfrogai_sdk.chat.chat_pb2 import (
