@@ -12,7 +12,10 @@ from leapfrogai_api.backend.helpers import grpc_chat_role
 from leapfrogai_api.routers.supabase_session import Session
 from leapfrogai_api.utils import get_model_config
 from leapfrogai_api.utils.config import Config
-from leapfrogai_api.backend.types import ChatCompletionRequest, ChatCompletionResponse
+from leapfrogai_api.backend.types import ChatCompletionRequest
+from leapfrogai_sdk.chat.chat_pb2 import (
+    ChatCompletionResponse as ProtobufChatCompletionResponse,
+)
 import leapfrogai_sdk as lfai
 
 router = APIRouter(prefix="/openai/v1/chat", tags=["openai/chat"])
@@ -52,7 +55,7 @@ async def chat_complete(
 async def chat_complete_stream_raw(
     req: ChatCompletionRequest,
     model_config: Annotated[Config, Depends(get_model_config)],
-) -> AsyncGenerator[ChatCompletionResponse, Any]:
+) -> AsyncGenerator[ProtobufChatCompletionResponse, Any]:
     """Complete a prompt with the given model."""
     # Get the model backend configuration
     model = model_config.get_model_backend(req.model)

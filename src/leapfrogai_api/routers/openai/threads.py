@@ -50,7 +50,6 @@ from leapfrogai_api.backend.types import (
     ChatCompletionResponse,
     ChatMessage,
     RAGResponse,
-    ChatStreamChoice,
 )
 from leapfrogai_api.backend.validators import (
     AssistantToolChoiceParamValidator,
@@ -63,6 +62,9 @@ from leapfrogai_api.routers.openai.assistants import retrieve_assistant
 from leapfrogai_api.routers.openai.chat import chat_complete, chat_complete_stream_raw
 from leapfrogai_api.routers.supabase_session import Session
 from leapfrogai_api.utils import get_model_config
+from leapfrogai_sdk.chat.chat_pb2 import (
+    ChatCompletionResponse as ProtobufChatCompletionResponse,
+)
 
 router = APIRouter(prefix="/openai/v1/threads", tags=["openai/threads"])
 security = HTTPBearer()
@@ -267,7 +269,7 @@ async def agenerate_message_for_thread(
         session, request, thread
     )
 
-    chat_response: AsyncGenerator[ChatCompletionResponse, Any] = (
+    chat_response: AsyncGenerator[ProtobufChatCompletionResponse, Any] = (
         chat_complete_stream_raw(
             req=ChatCompletionRequest(
                 model=str(request.model),
@@ -288,9 +290,6 @@ async def agenerate_message_for_thread(
 
     async for streaming_response in chat_response:
         random_uuid: UUID = uuid.uuid4()
-        streaming_choice: ChatStreamChoice = cast(
-            ChatStreamChoice, streaming_response.choices[0]
-        )
         thread_message_event: ThreadMessageDelta = ThreadMessageDelta(
             data=MessageDeltaEvent(
                 id=str(random_uuid),
@@ -301,7 +300,7 @@ async def agenerate_message_for_thread(
                             type="text",
                             text=TextDelta(
                                 annotations=[],
-                                value=streaming_choice.delta.content,
+                                value=streaming_response.choices[0].chat_item.content,
                             ),
                         )
                     ],
