@@ -89,7 +89,7 @@ async def create_thread(request: CreateThreadRequest, session: Session) -> Threa
                                 role=message.role,
                                 content=message.content,
                                 attachments=message.attachments,
-                                metadata=message.metadata.__dict__,
+                                metadata=message.metadata,
                             ),
                             session,
                         )
