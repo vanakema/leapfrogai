@@ -37,6 +37,7 @@ from postgrest.base_request_builder import SingleAPIResponse
 from pydantic_core import ValidationError
 
 from leapfrogai_api.backend.rag.query import QueryService
+
 from leapfrogai_api.backend.types import (
     CreateThreadRequest,
     ModifyThreadRequest,
@@ -60,6 +61,9 @@ from leapfrogai_api.data.crud_run import CRUDRun
 from leapfrogai_api.data.crud_thread import CRUDThread
 from leapfrogai_api.routers.openai.assistants import retrieve_assistant
 from leapfrogai_api.routers.openai.chat import chat_complete, chat_complete_stream_raw
+)
+from leapfrogai_api.data.crud_message import CRUDMessage
+from leapfrogai_api.data.crud_thread import CRUDThread
 from leapfrogai_api.routers.supabase_session import Session
 from leapfrogai_api.utils import get_model_config
 from leapfrogai_sdk.chat.chat_pb2 import (
@@ -369,7 +373,6 @@ def convert_content_param_to_content(
             text=Text(annotations=[], value=result),
             type="text",
         )
-
 
 @router.post("/{thread_id}/runs", response_model=None)
 async def create_run(
