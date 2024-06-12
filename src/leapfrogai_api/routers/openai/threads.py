@@ -124,17 +124,15 @@ async def create_thread(request: CreateThreadRequest, session: Session) -> Threa
         ) from exc
 
 
-def can_use_rag(request: ThreadRunCreateParamsRequest | RunCreateParamsRequest) -> bool:
+def can_use_rag(request: ThreadRunCreateParamsRequest | RunCreateParamsRequest, thread: Thread) -> bool:
     has_tool_choice: bool = request.tool_choice is not None
-    has_tool_resources: bool = True
 
-    if isinstance(request, ThreadRunCreateParamsRequest):
-        """'Create thread and run' requires 'tool_resources' while 'Create run' does not"""
-        has_tool_resources = bool(
-            request.tool_resources
-            and request.tool_resources.file_search
-            and request.tool_resources.file_search.vector_store_ids
-        )
+    """'Create thread and run' requires 'tool_resources' while 'Create run' does not"""
+    has_tool_resources: bool = bool(
+        thread.tool_resources
+        and thread.tool_resources.file_search
+        and thread.tool_resources.file_search.vector_store_ids
+    )
 
     if has_tool_choice and has_tool_resources:
         if isinstance(request.tool_choice, str):
@@ -168,7 +166,7 @@ async def generate_chat_messages(
         for message in thread_messages
     ]
 
-    use_rag: bool = can_use_rag(request)
+    use_rag: bool = can_use_rag(request, thread)
 
     if use_rag:
         query_service = QueryService(db=session)
@@ -333,6 +331,16 @@ async def update_request_with_assistant_data(
     instructions: str | None = (
         request.instructions if request.instructions else assistant.instructions
     )
+    
+    if isinstance(request, ThreadRunCreateParamsRequest):
+        tool_resources: BetaThreadToolResources = (
+            request.tool_resources if request.tool_resources else assistant.tool_resources
+        )
+        request = request.model_copy(
+            update={
+                "tool_resources": tool_resources
+            }
+        )
 
     # Create a copy of the request with proper values for model, temperature, and top_p
     return request.model_copy(
@@ -461,10 +469,14 @@ async def create_thread_and_run(
     """Create a thread and run."""
 
     try:
+        run_request: (
+            ThreadRunCreateParamsRequest | RunCreateParamsRequest
+        ) = await update_request_with_assistant_data(session, request)
+        
         thread_request: CreateThreadRequest = CreateThreadRequest(
             messages=[],
-            tool_resources=request.tool_resources,
-            metadata=request.metadata,
+            tool_resources=run_request.tool_resources,
+            metadata=run_request.metadata,
         )
 
         if request.thread:
@@ -499,10 +511,6 @@ async def create_thread_and_run(
             thread_request,
             session,
         )
-
-        run_request: (
-            ThreadRunCreateParamsRequest | RunCreateParamsRequest
-        ) = await update_request_with_assistant_data(session, request)
 
         crud_run = CRUDRun(db=session)
 
