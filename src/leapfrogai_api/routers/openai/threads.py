@@ -3,7 +3,7 @@
 import logging
 import traceback
 import uuid
-from typing import Iterable, AsyncGenerator, Any
+from typing import Iterable, AsyncGenerator, Any, cast
 from uuid import UUID
 
 from fastapi import HTTPException, APIRouter, status
@@ -26,6 +26,10 @@ from openai.types.beta.assistant_stream_event import (
 )
 from openai.types.beta.threads.message_content_part_param import MessageContentPartParam
 from openai.types.beta.threads.runs import RunStep
+from openai.types.beta.thread import (
+    ToolResources as BetaThreadToolResources,
+    ToolResourcesFileSearch as BetaThreadToolResourcesFileSearch,
+)
 from openai.types.beta.threads.text_content_block import TextContentBlock
 from postgrest.base_request_builder import SingleAPIResponse
 from pydantic_core import ValidationError
@@ -163,8 +167,15 @@ async def generate_chat_messages(
 
     if use_rag:
         query_service = QueryService(db=session)
+        tool_resources: BetaThreadToolResources = cast(
+            BetaThreadToolResources, thread.tool_resources
+        )
+        file_search: BetaThreadToolResourcesFileSearch = cast(
+            BetaThreadToolResourcesFileSearch, tool_resources.file_search
+        )
+        vector_store_ids: list[str] = cast(list[str], file_search.vector_store_ids)
 
-        for vector_store_id in request.tool_resources.file_search.vector_store_ids:
+        for vector_store_id in vector_store_ids:
             rag_results_raw: SingleAPIResponse[
                 RAGResponse
             ] = await query_service.query_rag(
