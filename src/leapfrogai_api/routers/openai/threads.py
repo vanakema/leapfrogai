@@ -49,7 +49,7 @@ from leapfrogai_api.backend.types import (
     ChatCompletionRequest,
     ChatCompletionResponse,
     ChatMessage,
-    RAGResponse,
+    RAGResponse, ChatStreamChoice,
 )
 from leapfrogai_api.backend.validators import (
     AssistantToolChoiceParamValidator,
@@ -287,6 +287,7 @@ async def agenerate_message_for_thread(
 
     async for streaming_response in chat_response:
         random_uuid: UUID = uuid.uuid4()
+        streaming_choice: ChatStreamChoice = cast(ChatStreamChoice, streaming_response.choices[0])
         thread_message_event: ThreadMessageDelta = ThreadMessageDelta(
             data=MessageDeltaEvent(
                 id=str(random_uuid),
@@ -297,7 +298,7 @@ async def agenerate_message_for_thread(
                             type="text",
                             text=TextDelta(
                                 annotations=[],
-                                value=streaming_response.choices[0].chat_delta.content,
+                                value=streaming_choice.delta.content,
                             ),
                         )
                     ],
