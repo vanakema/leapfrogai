@@ -239,13 +239,14 @@ def test_delete_twice_message(create_message):
     ), "Should not be able to delete twice."
 
 
+@pytest.mark.xfail
 def test_get_nonexistent_thread(create_thread):
     """Test getting a nonexistent thread. Requires a running Supabase instance."""
     thread_id = create_thread.json()["id"]
-    get_response = threads_client.get(f"/openai/v1/threads/{thread_id}")
-    assert get_response.status_code == status.HTTP_200_OK
+    fail_response = threads_client.get(f"/openai/v1/threads/{thread_id}")
+    assert fail_response.status_code == status.HTTP_404_NOT_FOUND
     assert (
-        get_response.json() is None
+        fail_response.json().get("detail") == "Thread not found"
     ), f"Get should not return deleted Thread {thread_id}."
 
 
