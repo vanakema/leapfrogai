@@ -402,6 +402,8 @@ async def create_run(
 
         create_params: RunCreateParams = RunCreateParams(**run_request.__dict__)
 
+        crud_run = CRUDRun(db=session)
+
         run = Run(
             id="",  # Leave blank to have Postgres generate a UUID
             created_at=0,  # Leave blank to have Postgres generate a timestamp
@@ -411,10 +413,15 @@ async def create_run(
             **create_params.__dict__,
         )
 
+        new_run: Run | None = await crud_run.create(object_=run)
+
+        if not new_run:
+            raise Exception("The DB failed to create the run")
+
         if request.stream:
             initial_messages: list[str] = [
                 convert_assistant_stream_event_to_str(
-                    ThreadRunCreated(data=run, event="thread.run.created")
+                    ThreadRunCreated(data=new_run, event="thread.run.created")
                 ),
                 "one",
                 "two",
@@ -429,8 +436,7 @@ async def create_run(
         else:
             await generate_message_for_thread(session, run_request, existing_thread)
 
-            crud_run = CRUDRun(db=session)
-            return await crud_run.create(object_=run)
+            return new_run
     except Exception as exc:
         traceback.print_exc()
         raise HTTPException(
@@ -488,28 +494,44 @@ async def create_thread_and_run(
             ThreadRunCreateParamsRequest | RunCreateParamsRequest
         ) = await update_request_with_assistant_data(session, request)
 
-        message_or_stream = await generate_message_for_thread(
-            session, run_request, new_thread
+        crud_run = CRUDRun(db=session)
+
+        create_params: RunCreateParams = RunCreateParams(**run_request.__dict__)
+
+        run = Run(
+            id="",  # Leave blank to have Postgres generate a UUID
+            created_at=0,  # Leave blank to have Postgres generate a timestamp
+            thread_id=new_thread.id,
+            object="thread.run",
+            status="completed",  # This is always completed as the new message is already created by this point
+            parallel_tool_calls=False,
+            **create_params.__dict__,
         )
 
+        new_run: Run | None = await crud_run.create(object_=run)
+
+        if not new_run:
+            raise Exception("The DB failed to create the run")
+
         if request.stream:
-            pass
-        else:
-            crud_run = CRUDRun(db=session)
-
-            create_params: RunCreateParams = RunCreateParams(**run_request.__dict__)
-
-            run = Run(
-                id="",  # Leave blank to have Postgres generate a UUID
-                created_at=0,  # Leave blank to have Postgres generate a timestamp
-                thread_id=new_thread.id,
-                object="thread.run",
-                status="completed",  # This is always completed as the new message is already created by this point
-                parallel_tool_calls=False,
-                **create_params.__dict__,
+            initial_messages: list[str] = [
+                convert_assistant_stream_event_to_str(
+                    ThreadRunCreated(data=new_run, event="thread.run.created")
+                ),
+                "one",
+                "two",
+                "three",
+            ]
+            # Generate a new response based on the existing thread
+            stream: AsyncGenerator[str, Any] = agenerate_message_for_thread(
+                session, run_request, initial_messages, new_thread
             )
 
-            return await crud_run.create(object_=run)
+            return StreamingResponse(stream, media_type="text/event-stream")
+        else:
+            await generate_message_for_thread(session, run_request, new_thread)
+
+            return new_run
     except Exception as exc:
         traceback.print_exc()
         raise HTTPException(
