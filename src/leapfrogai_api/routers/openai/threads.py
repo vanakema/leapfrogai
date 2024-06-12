@@ -21,6 +21,8 @@ from openai.types.beta.threads.message_delta import MessageDelta
 from openai.types.beta.assistant_stream_event import (
     MessageDeltaEvent,
     ThreadMessageDelta,
+    AssistantStreamEvent,
+    ThreadRunCreated,
 )
 from openai.types.beta.threads.message_content_part_param import MessageContentPartParam
 from openai.types.beta.threads.runs import RunStep
@@ -147,10 +149,10 @@ def can_use_rag(request: ThreadRunCreateParamsRequest | RunCreateParamsRequest) 
 async def generate_chat_messages(
     session: Session,
     request: ThreadRunCreateParamsRequest | RunCreateParamsRequest,
-    thread_id: str,
+    thread: Thread,
 ) -> list[ChatMessage]:
     # Get existing messages
-    thread_messages: list[Message] = await list_messages(thread_id, session)
+    thread_messages: list[Message] = await list_messages(thread.id, session)
     # Convert messages to ChatMessages
     chat_messages: list[ChatMessage] = [
         ChatMessage(role=message.role, content=message.content[0].text.value)
@@ -185,13 +187,17 @@ async def generate_chat_messages(
     return chat_messages
 
 
+def convert_assistant_stream_event_to_str(stream_event: AssistantStreamEvent):
+    return f"event: {stream_event.event}, data: {stream_event.data.model_dump_json()}"
+
+
 async def generate_message_for_thread(
     session: Session,
     request: ThreadRunCreateParamsRequest | RunCreateParamsRequest,
-    thread_id: str,
+    thread: Thread,
 ):
     chat_messages: list[ChatMessage] = await generate_chat_messages(
-        session, request, thread_id
+        session, request, thread
     )
 
     # Generate a new message and add it to the thread creation request
@@ -242,10 +248,10 @@ async def agenerate_message_for_thread(
     session: Session,
     request: ThreadRunCreateParamsRequest | RunCreateParamsRequest,
     initial_messages: list[str],
-    thread_id: str,
+    thread: Thread,
 ) -> AsyncGenerator[str, Any]:
     chat_messages: list[ChatMessage] = await generate_chat_messages(
-        session, request, thread_id
+        session, request, thread
     )
 
     chat_response: AsyncGenerator[
@@ -291,7 +297,7 @@ async def agenerate_message_for_thread(
             event="thread.message.delta",
         )
         # TODO: Move into helpers
-        yield f"event: {thread_message_event.event}, data: {thread_message_event.data.model_dump_json()}"
+        yield convert_assistant_stream_event_to_str(thread_message_event)
 
 
 async def update_request_with_assistant_data(
@@ -355,6 +361,11 @@ async def create_run(
     """Create a run."""
 
     try:
+        existing_thread: Thread = await retrieve_thread(
+            thread_id,
+            session,
+        )
+
         run_request: (
             ThreadRunCreateParamsRequest | RunCreateParamsRequest
         ) = await update_request_with_assistant_data(session, request)
@@ -378,29 +389,36 @@ async def create_run(
                     session,
                 )
 
+        create_params: RunCreateParams = RunCreateParams(**run_request.__dict__)
+
+        run = Run(
+            id="",  # Leave blank to have Postgres generate a UUID
+            created_at=0,  # Leave blank to have Postgres generate a timestamp
+            thread_id=thread_id,
+            object="thread.run",
+            status="completed",
+            **create_params.__dict__,
+        )
+
         if request.stream:
-            initial_messages: list[str] = ["one", "two", "three"]
+            initial_messages: list[str] = [
+                convert_assistant_stream_event_to_str(
+                    ThreadRunCreated(data=run, event="thread.run.created")
+                ),
+                "one",
+                "two",
+                "three",
+            ]
             # Generate a new response based on the existing thread
             stream: AsyncGenerator[str, Any] = agenerate_message_for_thread(
-                session, run_request, initial_messages, thread_id
+                session, run_request, initial_messages, existing_thread
             )
 
             return StreamingResponse(stream, media_type="text/event-stream")
         else:
-            await generate_message_for_thread(session, run_request, thread_id)
+            await generate_message_for_thread(session, run_request, existing_thread)
 
             crud_run = CRUDRun(db=session)
-
-            create_params: RunCreateParams = RunCreateParams(**run_request.__dict__)
-
-            run = Run(
-                id="",  # Leave blank to have Postgres generate a UUID
-                created_at=0,  # Leave blank to have Postgres generate a timestamp
-                thread_id=thread_id,
-                object="thread.run",
-                status="completed",
-                **create_params.__dict__,
-            )
             return await crud_run.create(object_=run)
     except Exception as exc:
         traceback.print_exc()
@@ -450,17 +468,17 @@ async def create_thread_and_run(
                     logging.error(f"\t{exc}")
                     continue
 
-        run_request: (
-            ThreadRunCreateParamsRequest | RunCreateParamsRequest
-        ) = await update_request_with_assistant_data(session, request)
-
         new_thread: Thread = await create_thread(
             thread_request,
             session,
         )
 
+        run_request: (
+            ThreadRunCreateParamsRequest | RunCreateParamsRequest
+        ) = await update_request_with_assistant_data(session, request)
+
         message_or_stream = await generate_message_for_thread(
-            session, run_request, new_thread.id
+            session, run_request, new_thread
         )
 
         if request.stream:
@@ -577,10 +595,17 @@ async def retrieve_run_step(
 
 
 @router.get("/{thread_id}")
-async def retrieve_thread(thread_id: str, session: Session) -> Thread | None:
+async def retrieve_thread(thread_id: str, session: Session) -> Thread:
     """Retrieve a thread."""
     crud_thread = CRUDThread(db=session)
-    return await crud_thread.get(filters={"id": thread_id})
+
+    if not (thread := await crud_thread.get(filters={"id": thread_id})):
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="Thread not found",
+        )
+
+    return thread
 
 
 @router.post("/{thread_id}")

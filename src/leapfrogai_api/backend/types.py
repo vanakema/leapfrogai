@@ -31,13 +31,19 @@ from openai.types.beta.thread_create_and_run_params import (
     ThreadMessage,
     ThreadMessageAttachment,
     ThreadMessageAttachmentToolFileSearch,
-    ThreadToolResources, ThreadToolResourcesFileSearch
+    ThreadToolResources,
+    ThreadToolResourcesFileSearch,
 )
 from openai.types.beta.threads import Message, MessageContent, TextContentBlock, Text
 from openai.types.beta.threads.message import Attachment
-from openai.types.beta.assistant import ToolResources as BetaAssistantToolResources, ToolResourcesFileSearch
+from openai.types.beta.assistant import (
+    ToolResources as BetaAssistantToolResources,
+    ToolResourcesFileSearch,
+)
 from openai.types.beta.thread import ToolResources as BetaThreadToolResources
-from openai.types.beta.thread import ToolResourcesFileSearch as BetaThreadToolResourcesFileSearch
+from openai.types.beta.thread import (
+    ToolResourcesFileSearch as BetaThreadToolResourcesFileSearch,
+)
 
 
 ##########
@@ -225,13 +231,13 @@ class CreateTranscriptionRequest(BaseModel):
 
     @classmethod
     def as_form(
-            cls,
-            file: UploadFile = File(...),
-            model: str = Form(...),
-            language: str | None = Form(""),
-            prompt: str | None = Form(""),
-            response_format: str | None = Form(""),
-            temperature: float | None = Form(1.0),
+        cls,
+        file: UploadFile = File(...),
+        model: str = Form(...),
+        language: str | None = Form(""),
+        prompt: str | None = Form(""),
+        response_format: str | None = Form(""),
+        temperature: float | None = Form(1.0),
     ) -> CreateTranscriptionRequest:
         return cls(
             file=file,
@@ -260,9 +266,9 @@ class UploadFileRequest(BaseModel):
 
     @classmethod
     def as_form(
-            cls,
-            file: UploadFile = File(...),
-            purpose: str | None = Form("assistants"),
+        cls,
+        file: UploadFile = File(...),
+        purpose: str | None = Form("assistants"),
     ) -> UploadFileRequest:
         """Create an instance of the class from form data."""
         return cls(file=file, purpose=purpose)
@@ -414,7 +420,7 @@ class RunCreateParams(BaseModel):
     tools: list[AssistantToolParam] = Field(
         default=[], examples=[[FileSearchToolParam(type="file_search")]]
     )
-    top_p: float | None = Field(default=None, examples=[None])
+    top_p: float | None = Field(default=None, examples=[1.0])
     truncation_strategy: TruncationStrategy | None = Field(
         default=None, examples=[TruncationStrategy(type="auto", last_messages=None)]
     )
@@ -425,24 +431,26 @@ class RunCreateParamsRequest(RunCreateParams):
     additional_messages: list[AdditionalMessage] | None = Field(
         default=None,
         examples=[
-            AdditionalMessage(
-                content="This is a test",
-                role="user",
-                attachments=[
-                    AdditionalMessageAttachment(
-                        file_id="",
-                        tools=[
-                            AdditionalMessageAttachmentToolFileSearch(
-                                type="file_search"
-                            )
-                        ],
-                    )
-                ],
-                metadata={},
-            )
+            [
+                AdditionalMessage(
+                    content="This is a test",
+                    role="user",
+                    attachments=[
+                        AdditionalMessageAttachment(
+                            file_id="",
+                            tools=[
+                                AdditionalMessageAttachmentToolFileSearch(
+                                    type="file_search"
+                                )
+                            ],
+                        )
+                    ],
+                    metadata={},
+                )
+            ]
         ],
     )
-    stream: bool | None = Field(default=None, example=[False])
+    stream: bool | None = Field(default=None, examples=[False])
 
 
 class ThreadRunCreateParamsRequest(RunCreateParams):
@@ -450,7 +458,9 @@ class ThreadRunCreateParamsRequest(RunCreateParams):
         default=None,
         examples=[
             Thread(
-                tool_resources=ThreadToolResources(file_search=ThreadToolResourcesFileSearch(vector_store_ids=[])),
+                tool_resources=ThreadToolResources(
+                    file_search=ThreadToolResourcesFileSearch(vector_store_ids=[])
+                ),
                 messages=[
                     ThreadMessage(
                         content="This is a test",
@@ -467,7 +477,7 @@ class ThreadRunCreateParamsRequest(RunCreateParams):
                         ],
                         metadata={},
                     )
-                ]
+                ],
             )
         ],
     )
@@ -488,14 +498,18 @@ class CreateThreadRequest(BaseModel):
     """Request object for creating a thread."""
 
     messages: list[Message] | None = Field(default=None, examples=[None])
-    tool_resources: BetaThreadToolResources | None = Field(default=None, examples=[None])
+    tool_resources: BetaThreadToolResources | None = Field(
+        default=None, examples=[None]
+    )
     metadata: dict | None = Field(default=None, examples=[{}])
 
 
 class ModifyThreadRequest(BaseModel):
     """Request object for modifying a thread."""
 
-    tool_resources: BetaThreadToolResources | None = Field(default=None, examples=[None])
+    tool_resources: BetaThreadToolResources | None = Field(
+        default=None, examples=[None]
+    )
     metadata: dict | None = Field(default=None, examples=[{}])
 
 
