@@ -246,7 +246,7 @@ async def generate_message_for_thread(
 
     # Add the generated response to the db
     await create_message(
-        thread_id,
+        thread.id,
         CreateMessageRequest(
             role=new_message.role,
             content=new_message.content,
@@ -493,6 +493,7 @@ async def create_thread_and_run(
                     logging.error(f"\t{exc}")
                     continue
 
+        # Creating this first so that there is an ID to reference
         new_thread: Thread = await create_thread(
             thread_request,
             session,
