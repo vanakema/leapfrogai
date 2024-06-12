@@ -433,9 +433,6 @@ async def create_run(
                 convert_assistant_stream_event_to_str(
                     ThreadRunInProgress(data=new_run, event="thread.run.in_progress")
                 ),
-                "one",
-                "two",
-                "three",
             ]
             # Generate a new response based on the existing thread
             stream: AsyncGenerator[str, Any] = agenerate_message_for_thread(
@@ -535,9 +532,6 @@ async def create_thread_and_run(
                 convert_assistant_stream_event_to_str(
                     ThreadRunInProgress(data=new_run, event="thread.run.in_progress")
                 ),
-                "one",
-                "two",
-                "three",
             ]
             # Generate a new response based on the existing thread
             stream: AsyncGenerator[str, Any] = agenerate_message_for_thread(
