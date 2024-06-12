@@ -203,7 +203,7 @@ async def generate_chat_messages(
 
 
 def convert_assistant_stream_event_to_str(stream_event: AssistantStreamEvent):
-    return f"event: {stream_event.event}, data: {stream_event.data.model_dump_json()}"
+    return f"event: {stream_event.event}\ndata: {stream_event.data.model_dump_json()}"
 
 
 async def generate_message_for_thread(
@@ -312,6 +312,9 @@ async def agenerate_message_for_thread(
         )
         # TODO: Move into helpers
         yield convert_assistant_stream_event_to_str(thread_message_event)
+        yield "\n\n"
+
+    yield "event: done\ndata: [DONE]"
 
 
 async def update_request_with_assistant_data(

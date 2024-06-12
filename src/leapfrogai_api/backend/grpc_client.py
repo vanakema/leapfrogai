@@ -16,6 +16,9 @@ from leapfrogai_api.backend.types import (
     EmbeddingResponseData,
     Usage,
 )
+from leapfrogai_sdk.chat.chat_pb2 import (
+    ChatCompletionResponse as ProtobufChatCompletionResponse,
+)
 from leapfrogai_api.utils.config import Model
 
 
@@ -68,7 +71,7 @@ async def stream_chat_completion(model: Model, request: lfai.ChatCompletionReque
 
 async def stream_chat_completion_raw(
     model: Model, request: lfai.ChatCompletionRequest
-) -> AsyncGenerator[ChatCompletionResponse, Any]:
+) -> AsyncGenerator[ProtobufChatCompletionResponse, Any]:
     """Stream chat completion using the specified model."""
     async with grpc.aio.insecure_channel(model.backend) as channel:
         stub = lfai.ChatCompletionStreamServiceStub(channel)
